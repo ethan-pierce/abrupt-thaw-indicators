@@ -9,7 +9,7 @@ from settings import DATA
 import os
 import numpy as np
 import pandas as pd
-import geopandas as gpd
+import geemap
 import matplotlib.pyplot as plt
 
 def sample_raster(
@@ -31,6 +31,13 @@ coords = [ee.Feature(ee.Geometry.Point([lon, lat])) for lon, lat in zip(feats['L
 points = ee.FeatureCollection(coords)
 
 # VARIABLE: Land cover
-landcover = ee.Image('projects/ee-abrupt-thaw/assets/NLCD-2016')
-landcover_vals = points.map(lambda feat: sample_raster(landcover, feat, 30, 'Land Cover', landcover.bandNames().get(0)))
+# landcover = ee.Image('projects/ee-abrupt-thaw/assets/NLCD-2016')
+# landcover_vals = points.map(lambda feat: sample_raster(landcover, feat, 30, 'Land Cover', landcover.bandNames().get(0)))
+# landcover_df = ee.data.computeFeatures({
+#     'expression': landcover_vals,
+#     'fileFormat': 'PANDAS_DATAFRAME'
+# })
+# feats['Land cover class'] = landcover_df['Land Cover']
+# feats.to_csv(os.path.join(DATA, 'feature-table.csv'), index = False)
+
 

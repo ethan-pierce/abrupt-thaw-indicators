@@ -35,3 +35,5 @@ controls.drop(
 )
 
 thawdb = pd.merge(thawdb, controls, how = 'outer')
+
+thawdb.to_csv(os.path.join(DATA, 'feature-points.csv'), index = False)

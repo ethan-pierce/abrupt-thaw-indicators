@@ -73,8 +73,7 @@ monthmap = {
     1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
     7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'
 }
-# for var in ['tavg', 'tmin', 'tmax', 'prec']:
-for var in ['prec']:
+for var in ['tavg', 'prec']:
     print('Adding', varmap[var], 'to features...')
     for month in range(1, 13):
         if var != 'prec':
@@ -85,7 +84,7 @@ for var in ['prec']:
         add_feature(clim, ee.Reducer.mean(), 1000, f'{monthmap[month]} {varmap[var]}', var)
 
         print('Added', monthmap[month], varmap[var])
-        break
+
 
 print(feats.head)
 # Save the updated feature table

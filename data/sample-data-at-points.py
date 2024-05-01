@@ -211,34 +211,14 @@ points = ee.FeatureCollection(coords)
 # swe = ee.Image('projects/ee-abrupt-thaw/assets/ee-mean-annual-swe')
 # add_feature(swe, ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
 
-# swe_time = annual_swe.map(lambda image: image.addBands(image.metadata('year').subtract(1990)))
-# swe_fit = swe_time.select(['year', 'swe']).reduce(ee.Reducer.linearFit())
-# swe_fit_sample = points.map(lambda feat: sample_raster(swe_fit.select('scale'), feat, ee.Reducer.mean(), 1000, 'EPSG:4326'))
-# task = ee.batch.Export.table.toAsset(
-#     collection = swe_fit_sample,
-#     description = 'Trend in SWE',
-#     assetId = 'projects/ee-abrupt-thaw/assets/trend-in-swe'
-# )
-# task.start()
+# swe_trend = ee.Image('projects/ee-abrupt-thaw/assets/annual-swe-trend')
+# add_feature(swe_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
 
-# prcp_sum_by_year = lambda year: (
-#     daymet.select('prcp').filterDate(
-#         ee.Date.fromYMD(year, 1, 1), ee.Date.fromYMD(year, 1, 1).advance(1, 'year')
-#     ).sum().set({'year': year, 'system:time_start': ee.Date.fromYMD(year, 1, 1)})
-# )
-# annual_prcp = ee.ImageCollection(ee.List.sequence(1990, 2020).map(prcp_sum_by_year)).toBands()
-# precip_fit = annual_prcp.select(['system:time_start', 'prcp']).reduce(ee.Reducer.linearFit())
-# precip_fit_sample = points.map(lambda feat: sample_raster(precip_fit.select('scale'), feat, ee.Reducer.mean(), 1000, 'EPSG:4326'))
-# task = ee.batch.Export.table.toAsset(
-#     collection = precip_fit_sample,
-#     description = 'Trend in precipitation',
-#     assetId = 'projects/ee-abrupt-thaw/assets/trend-in-precip'
-# )
-# task.start()
+# precip_trend = ee.Image('projects/ee-abrupt-thaw/assets/annual-precip-trend')
+# add_feature(precip_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
 
-# tmax_fit = daymet.select(['system:time_start', 'tmax']).reduce(ee.Reducer.linearFit())
-# add_feature(tmax_fit, ee.Reducer.mean(), 1000, 'Trend in maximum temperature', 'scale')
-# print('Added trend in daily max temperature')
+# tmax_trend = ee.Image('projects/ee-abrupt-thaw/assets/temp-trend')
+# add_feature(tmax_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
 
 # Save the updated feature table
 print(feats.head)

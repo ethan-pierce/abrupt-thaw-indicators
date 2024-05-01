@@ -204,43 +204,22 @@ points = ee.FeatureCollection(coords)
 # add_feature(vegetation, ee.Reducer.mode(), 1000, 'Vegetation Mode', 'b1')
 
 # VARIABLES: maximum fire temperature
-# firms = ee.ImageCollection('FIRMS').filterDate(
-#     ee.Date('2000-01-01'), ee.Date('2020-01-01')
-# ).select(
-#     'T21'
-# ).map(
-#     lambda image: image.clip(ee.Geometry.BBox(-169, 55, -140, 72))
-# )
-# firms_sample = points.map(lambda feat: sample_raster(firms.max(), feat, ee.Reducer.max(), 1000, 'EPSG:4326'))
-# task = ee.batch.Export.table.toDrive(
-#     collection = firms_sample,
-#     description = 'max-fire-temperature',
-#     fileFormat = 'CSV'
-# )
-# task.start()
+# firms = ee.Image('projects/ee-abrupt-thaw/assets/max-fire-temp')
+# add_feature(firms, ee.Reducer.mean(), 1000, 'Maximum Fire Temperature', 'T21')
 
 # VARIABLES: swe, change in swe, change in tmax, change in prcp
-# addtime = lambda image: image.addBands(image.metadata('system:time_start').divide(1e18))
-# daymet = ee.ImageCollection("NASA/ORNL/DAYMET_V4").filterDate(
-#     ee.Date('1990-01-01'), ee.Date('2020-01-01')
-# ).filterBounds(
-#     ee.Geometry.BBox(-167, 57, -140, 71)
-# ).map(addtime)
+# swe = ee.Image('projects/ee-abrupt-thaw/assets/ee-mean-annual-swe')
+# add_feature(swe, ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
 
-# sum_by_year = lambda year: (
-#     daymet.select('swe').filterDate(
-#         ee.Date.fromYMD(year, 1, 1), ee.Date.fromYMD(year, 1, 1).advance(1, 'year')
-#     ).sum().set({'year': year, 'system:time_start': ee.Date.fromYMD(year, 1, 1)})
+# swe_time = annual_swe.map(lambda image: image.addBands(image.metadata('year').subtract(1990)))
+# swe_fit = swe_time.select(['year', 'swe']).reduce(ee.Reducer.linearFit())
+# swe_fit_sample = points.map(lambda feat: sample_raster(swe_fit.select('scale'), feat, ee.Reducer.mean(), 1000, 'EPSG:4326'))
+# task = ee.batch.Export.table.toAsset(
+#     collection = swe_fit_sample,
+#     description = 'Trend in SWE',
+#     assetId = 'projects/ee-abrupt-thaw/assets/trend-in-swe'
 # )
-# annual_swe = ee.ImageCollection(ee.List.sequence(1990, 2020).map(sum_by_year).map(addtime))
-# print(annual_swe.bandNames().getInfo())
-# mean_annual_swe = annual_swe.reduce(ee.Reducer.mean())
-# add_feature(mean_annual_swe, ee.Reducer.mean(), 1000, 'Snow Water Equivalent', 'mean')
-# print('Added mean annual SWE')
-
-# swe_fit = annual_swe.select(['system:time_start', 'swe']).reduce(ee.Reducer.linearFit())
-# add_feature(swe_fit, ee.Reducer.mean(), 1000, 'Trend in snow water equivalent', 'scale')
-# print('Added trend in SWE')
+# task.start()
 
 # prcp_sum_by_year = lambda year: (
 #     daymet.select('prcp').filterDate(
@@ -249,8 +228,13 @@ points = ee.FeatureCollection(coords)
 # )
 # annual_prcp = ee.ImageCollection(ee.List.sequence(1990, 2020).map(prcp_sum_by_year)).toBands()
 # precip_fit = annual_prcp.select(['system:time_start', 'prcp']).reduce(ee.Reducer.linearFit())
-# add_feature(precip_fit, ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
-# print('Added trend in precipitation')
+# precip_fit_sample = points.map(lambda feat: sample_raster(precip_fit.select('scale'), feat, ee.Reducer.mean(), 1000, 'EPSG:4326'))
+# task = ee.batch.Export.table.toAsset(
+#     collection = precip_fit_sample,
+#     description = 'Trend in precipitation',
+#     assetId = 'projects/ee-abrupt-thaw/assets/trend-in-precip'
+# )
+# task.start()
 
 # tmax_fit = daymet.select(['system:time_start', 'tmax']).reduce(ee.Reducer.linearFit())
 # add_feature(tmax_fit, ee.Reducer.mean(), 1000, 'Trend in maximum temperature', 'scale')

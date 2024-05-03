@@ -2,6 +2,7 @@
 
 import tensorflow as tf
 from tensorflow import keras
+import shap
 
 import os
 from settings import DATA, MODELS, OUTPUT
@@ -200,21 +201,28 @@ if __name__ == '__main__':
     for key, val in baseline_results.items():
         print(key, val)
 
-    train_predictions_baseline = thaw.model.predict(thaw.training['array'], batch_size=BATCH_SIZE)
-    test_predictions_baseline = thaw.model.predict(thaw.testing['array'], batch_size=BATCH_SIZE)
+    print({i: thaw.testing['df'].columns[i] for i in range(len(thaw.testing['df'].columns))})
 
-    plot_metrics(baseline_history)
-    plt.show()
+    # train_predictions_baseline = thaw.model.predict(thaw.training['array'], batch_size=BATCH_SIZE)
+    # test_predictions_baseline = thaw.model.predict(thaw.testing['array'], batch_size=BATCH_SIZE)
+
+    # plot_metrics(baseline_history)
+    # plt.show()
     
-    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.5)
-    plt.show()
-    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.1)
-    plt.show()
-    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.9)
-    plt.show()
+    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.5)
+    # plt.show()
+    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.1)
+    # plt.show()
+    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.9)
+    # plt.show()
 
-    plot_roc("Train Baseline", thaw.training['labels'], train_predictions_baseline, color=colors[0])
-    plot_roc("Test Baseline", thaw.testing['labels'], test_predictions_baseline, color=colors[0], linestyle='--')
-    plt.legend(loc='lower right')
-    plt.show()
+    # plot_roc("Train Baseline", thaw.training['labels'], train_predictions_baseline, color=colors[0])
+    # plot_roc("Test Baseline", thaw.testing['labels'], test_predictions_baseline, color=colors[0], linestyle='--')
+    # plt.legend(loc='lower right')
+    # plt.show()
 
+    sample = shap.sample(thaw.testing['array'], nsamples = 50)
+    explainer = shap.Explainer(thaw.model.predict, sample)
+    shap_values = explainer(shap.sample(thaw.testing['array'], nsamples = 500))
+
+    shap.plots.bar(shap_values, max_display = 20)

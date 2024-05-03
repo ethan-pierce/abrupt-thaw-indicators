@@ -72,7 +72,29 @@ for col in clean.columns:
         clean = clean.drop(col, axis=1)
     else:
         continue
+
+for variable in ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Silt', 'Clay']:
+    clean[variable] = np.mean(
+        [
+            clean[variable + ' (0-5 cm)'],
+            clean[variable + ' (5-15 cm)'],
+            clean[variable + ' (15-30 cm)'],
+            clean[variable + ' (30-60 cm)'],
+            clean[variable + ' (60-100 cm)'],
+            clean[variable + ' (100-200 cm)']
+        ],
+        axis = 0
+    )
+    for depth in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
+        clean.drop(variable + ' (' + depth + ')', axis = 1, inplace = True)
     
 clean = clean.dropna(axis = 0, how = 'any')
 
+clean.drop('Land Cover (NaN)', axis = 1, inplace = True)
+clean.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
+for month in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']:
+    clean.drop(month + ' mean temperature', axis = 1, inplace = True)
+    clean.drop(month + ' precipitation', axis = 1, inplace = True)
+
+print(clean.columns)
 clean.to_csv(os.path.join(DATA, 'clean-feature-table.csv'))

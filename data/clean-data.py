@@ -13,7 +13,10 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 feats = pd.read_csv(os.path.join(DATA, 'feature-table.csv'))
 clean = feats.copy()
 
-label = ['Type']
+clean['Class'] = clean['Type']
+clean = clean.drop('Type', axis = 1)
+
+label = ['Class']
 fillna = ['Maximum Fire Temperature']
 categorical = ['Land Cover', 'Vegetation Mode']
 land_cover_labels = {
@@ -52,9 +55,6 @@ vegetation_mode_labels = {
     8: 'Temperate rainforest'
 }
 
-def standardize(column):
-    return (column - column.mean()) / column.std()
-
 for col in clean.columns:
     if col in label:
         continue
@@ -71,14 +71,8 @@ for col in clean.columns:
                 clean[col + ' (' + vegetation_mode_labels[cat] + ')'] = np.where(clean[col] == cat, 1, 0)
         clean = clean.drop(col, axis=1)
     else:
-        clean[col] = standardize(clean[col])
-clean = clean.dropna(axis = 0, how = 'any')
-
-for column in clean.columns:
-    if column in label:
         continue
-    plt.hist(clean[column], bins=50)
-    plt.title(column)
-    plt.show()
+    
+clean = clean.dropna(axis = 0, how = 'any')
 
 clean.to_csv(os.path.join(DATA, 'clean-feature-table.csv'))

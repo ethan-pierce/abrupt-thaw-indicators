@@ -201,6 +201,9 @@ if __name__ == '__main__':
 
     train_predictions_baseline = thaw.model.predict(thaw.training['array'], batch_size=BATCH_SIZE)
     test_predictions_baseline = thaw.model.predict(thaw.testing['array'], batch_size=BATCH_SIZE)
+
+    plot_metrics(baseline_history)
+    plt.show()
     
     plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.5)
     plt.show()

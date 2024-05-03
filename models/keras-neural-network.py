@@ -108,6 +108,7 @@ class AbruptThawPredictor:
             [   
                 keras.layers.Input(shape = (self.training['array'].shape[1],)),
                 keras.layers.Dense(16, activation = 'relu'),
+                keras.layers.Dense(16, activation = 'relu'),
                 keras.layers.Dropout(0.5),
                 keras.layers.Dense(1, activation = 'sigmoid', bias_initializer = initial_bias)
             ]
@@ -124,7 +125,7 @@ class AbruptThawPredictor:
     def create_callbacks(self):
         """Create a list of callbacks for the model."""
         return keras.callbacks.EarlyStopping(
-            monitor = 'val_prc',
+            monitor = 'val_recall',
             verbose = 1,
             patience = 10,
             mode = 'max',
@@ -186,7 +187,7 @@ def plot_roc(name, labels, predictions, **kwargs):
 if __name__ == '__main__':
     thaw = AbruptThawPredictor(os.path.join(DATA, "clean-feature-table.csv"))
 
-    BATCH_SIZE = 256
+    BATCH_SIZE = 128
     baseline_history = thaw.train_model(epochs = 100, batch_size = BATCH_SIZE)
     baseline_results = thaw.model.evaluate(
         thaw.testing['array'], 

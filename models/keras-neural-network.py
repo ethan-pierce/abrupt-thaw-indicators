@@ -110,7 +110,7 @@ class AbruptThawPredictor:
                 keras.layers.Input(shape = (self.training['array'].shape[1],)),
                 keras.layers.Dense(16, activation = 'relu'),
                 keras.layers.Dense(16, activation = 'relu'),
-                keras.layers.Dropout(0.5),
+                keras.layers.Dropout(0.25),
                 keras.layers.Dense(1, activation = 'sigmoid', bias_initializer = initial_bias)
             ]
         )
@@ -186,9 +186,9 @@ def plot_roc(name, labels, predictions, **kwargs):
 
 
 if __name__ == '__main__':
-    thaw = AbruptThawPredictor(os.path.join(DATA, "clean-feature-table.csv"))
+    thaw = AbruptThawPredictor(os.path.join(DATA, "clean-feature-table-verified.csv"))
 
-    BATCH_SIZE = 128
+    BATCH_SIZE = 256
     baseline_history = thaw.train_model(epochs = 100, batch_size = BATCH_SIZE)
     baseline_results = thaw.model.evaluate(
         thaw.testing['array'], 
@@ -203,26 +203,26 @@ if __name__ == '__main__':
 
     print({i: thaw.testing['df'].columns[i] for i in range(len(thaw.testing['df'].columns))})
 
-    # train_predictions_baseline = thaw.model.predict(thaw.training['array'], batch_size=BATCH_SIZE)
-    # test_predictions_baseline = thaw.model.predict(thaw.testing['array'], batch_size=BATCH_SIZE)
+    train_predictions_baseline = thaw.model.predict(thaw.training['array'], batch_size=BATCH_SIZE)
+    test_predictions_baseline = thaw.model.predict(thaw.testing['array'], batch_size=BATCH_SIZE)
 
-    # plot_metrics(baseline_history)
-    # plt.show()
+    plot_metrics(baseline_history)
+    plt.show()
     
-    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.5)
-    # plt.show()
-    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.1)
-    # plt.show()
-    # plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.9)
-    # plt.show()
+    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.5)
+    plt.show()
+    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.1)
+    plt.show()
+    plot_cm(thaw.testing['labels'], test_predictions_baseline, threshold = 0.9)
+    plt.show()
 
-    # plot_roc("Train Baseline", thaw.training['labels'], train_predictions_baseline, color=colors[0])
-    # plot_roc("Test Baseline", thaw.testing['labels'], test_predictions_baseline, color=colors[0], linestyle='--')
-    # plt.legend(loc='lower right')
-    # plt.show()
+    plot_roc("Train Baseline", thaw.training['labels'], train_predictions_baseline, color=colors[0])
+    plot_roc("Test Baseline", thaw.testing['labels'], test_predictions_baseline, color=colors[0], linestyle='--')
+    plt.legend(loc='lower right')
+    plt.show()
 
     sample = shap.sample(thaw.testing['array'], nsamples = 50)
-    explainer = shap.Explainer(thaw.model.predict, sample)
-    shap_values = explainer(shap.sample(thaw.testing['array'], nsamples = 500))
+    explainer = shap.Explainer(thaw.model.predict, sample, output_names = ['Gradual', 'Abrupt'])
+    shap_values = explainer(shap.sample(thaw.testing['array'], nsamples = 100))
 
     shap.plots.bar(shap_values, max_display = 20)

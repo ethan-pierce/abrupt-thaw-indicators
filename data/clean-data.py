@@ -10,7 +10,10 @@ import matplotlib.pyplot as plt
 from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
-feats = pd.read_csv(os.path.join(DATA, 'feature-table.csv'))
+feats = pd.read_csv(os.path.join(DATA, 'feature-table-verified.csv'))
+synth = pd.read_csv(os.path.join(DATA, 'feature-table-synthetic.csv'))
+
+feats = feats.merge(synth, how = 'outer')
 clean = feats.copy()
 
 clean['Class'] = clean['Type']
@@ -74,17 +77,13 @@ for col in clean.columns:
         continue
 
 for variable in ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Silt', 'Clay']:
-    clean[variable] = np.mean(
-        [
-            clean[variable + ' (0-5 cm)'],
-            clean[variable + ' (5-15 cm)'],
-            clean[variable + ' (15-30 cm)'],
-            clean[variable + ' (30-60 cm)'],
-            clean[variable + ' (60-100 cm)'],
-            clean[variable + ' (100-200 cm)']
-        ],
-        axis = 0
+    clean[variable + ' (0-30 cm)'] = (1 / 30) * (
+        clean[variable + ' (0-5 cm)'] * 5 + clean[variable + ' (5-15 cm)'] * 10 + clean[variable + ' (15-30 cm)'] * 15
     )
+    clean[variable + ' (30-200 cm)'] = (1 / 170) * (
+        clean[variable + ' (30-60 cm)'] * 30 + clean[variable + ' (60-100 cm)'] * 40 + clean[variable + ' (100-200 cm)'] * 100
+    )
+
     for depth in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
         clean.drop(variable + ' (' + depth + ')', axis = 1, inplace = True)
     
@@ -92,9 +91,11 @@ clean = clean.dropna(axis = 0, how = 'any')
 
 clean.drop('Land Cover (NaN)', axis = 1, inplace = True)
 clean.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
-for month in ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']:
-    clean.drop(month + ' mean temperature', axis = 1, inplace = True)
-    clean.drop(month + ' precipitation', axis = 1, inplace = True)
+clean.drop('Trend in temperature', axis = 1, inplace = True)
+clean.drop('Trend in precipitation', axis = 1, inplace = True)
 
 print(clean.columns)
-clean.to_csv(os.path.join(DATA, 'clean-feature-table.csv'))
+print(clean.shape)
+print('Gradual:', np.count_nonzero(clean['Class'] == 0))
+print('Abrupt:', np.count_nonzero(clean['Class'] == 1))
+clean.to_csv(os.path.join(DATA, 'clean-feature-table-expanded.csv'))

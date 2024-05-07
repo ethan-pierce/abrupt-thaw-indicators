@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle
 
 plt.rcParams.update({'figure.figsize': (12, 10)})
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -60,9 +61,11 @@ class AbruptThawPredictor:
             keras.metrics.Recall(name = 'recall'),
             keras.metrics.AUC(name = 'auc'),
             keras.metrics.AUC(name = 'prc', curve = 'PR'),
+            keras.metrics.F1Score(name = 'f1')
         ]
 
-        self.initial_bias = np.log([self.count_classes()[0] / self.count_classes()[1]]) if initial_bias is None else initial_bias
+        # self.initial_bias = np.log([self.count_classes()[0] / self.count_classes()[1]]) if initial_bias is None else initial_bias
+        self.initial_bias = initial_bias
         self.callbacks = self.create_callbacks()
 
         self.model = self.build_model()
@@ -110,13 +113,13 @@ class AbruptThawPredictor:
                 keras.layers.Input(shape = (self.training['array'].shape[1],)),
                 keras.layers.Dense(16, activation = 'relu'),
                 keras.layers.Dense(16, activation = 'relu'),
-                keras.layers.Dropout(0.25),
+                keras.layers.Dropout(0.5),
                 keras.layers.Dense(1, activation = 'sigmoid', bias_initializer = initial_bias)
             ]
         )
 
         model.compile(
-            optimizer = keras.optimizers.Adam(learning_rate = 1e-4),
+            optimizer = keras.optimizers.Adam(learning_rate = 3e-4),
             loss = keras.losses.BinaryCrossentropy(),
             metrics = self.metrics
         )
@@ -126,7 +129,7 @@ class AbruptThawPredictor:
     def create_callbacks(self):
         """Create a list of callbacks for the model."""
         return keras.callbacks.EarlyStopping(
-            monitor = 'val_recall',
+            monitor = 'val_f1',
             verbose = 1,
             patience = 10,
             mode = 'max',
@@ -186,7 +189,7 @@ def plot_roc(name, labels, predictions, **kwargs):
 
 
 if __name__ == '__main__':
-    thaw = AbruptThawPredictor(os.path.join(DATA, "clean-feature-table-verified.csv"))
+    thaw = AbruptThawPredictor(os.path.join(DATA, "clean-feature-table-expanded.csv"))
 
     BATCH_SIZE = 256
     baseline_history = thaw.train_model(epochs = 100, batch_size = BATCH_SIZE)
@@ -221,8 +224,33 @@ if __name__ == '__main__':
     plt.legend(loc='lower right')
     plt.show()
 
-    sample = shap.sample(thaw.testing['array'], nsamples = 50)
-    explainer = shap.Explainer(thaw.model.predict, sample, output_names = ['Gradual', 'Abrupt'])
-    shap_values = explainer(shap.sample(thaw.testing['array'], nsamples = 100))
+    sample = shap.sample(thaw.testing['array'], nsamples = 100)
+    explainer = shap.Explainer(thaw.model.predict, sample, link = shap.links.logit)
+    shap_sample = shap.sample(thaw.testing['array'], nsamples = 200)
+    shap_values = explainer(shap_sample)
 
-    shap.plots.bar(shap_values, max_display = 20)
+    for i, c in enumerate(thaw.testing['df'].columns):
+        shap_values.feature_names[i] = c
+
+    fig, ax = plt.subplots(figsize = (12, 30))
+    shap.plots.beeswarm(
+        shap_values, 
+        max_display = 20, 
+        log_scale = True,
+        plot_size = None,
+        show = False
+    )
+    plt.savefig(os.path.join(OUTPUT, 'shap-beeswarm.png'), bbox_inches = 'tight')
+
+    fig, ax = plt.subplots(figsize = (12, 30))
+    shap.plots.violin(
+        shap_values, 
+        plot_type = 'layered_violin',
+        max_display = 20, 
+        plot_size = None,
+        show = False
+    )
+    plt.savefig(os.path.join(OUTPUT, 'shap-violin.png'), bbox_inches = 'tight')
+
+    with open(os.path.join(OUTPUT, 'shap-values.pickle'), 'wb') as f:
+        pickle.dump(shap_values, f)

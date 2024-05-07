@@ -94,6 +94,10 @@ clean.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 clean.drop('Trend in temperature', axis = 1, inplace = True)
 clean.drop('Trend in precipitation', axis = 1, inplace = True)
 
+# Testing how clusters of points influence the model
+clean.drop('Longitude', axis = 1, inplace = True)
+clean.drop('Latitude', axis = 1, inplace = True)
+
 print(clean.columns)
 print(clean.shape)
 print('Gradual:', np.count_nonzero(clean['Class'] == 0))

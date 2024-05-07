@@ -129,7 +129,7 @@ class AbruptThawPredictor:
     def create_callbacks(self):
         """Create a list of callbacks for the model."""
         return keras.callbacks.EarlyStopping(
-            monitor = 'val_f1',
+            monitor = 'val_prc',
             verbose = 1,
             patience = 10,
             mode = 'max',
@@ -240,7 +240,10 @@ if __name__ == '__main__':
         plot_size = None,
         show = False
     )
-    plt.savefig(os.path.join(OUTPUT, 'shap-beeswarm.png'), bbox_inches = 'tight')
+    plt.savefig(os.path.join(OUTPUT, 'shap-beeswarm.png'), bbox_inches = 'tight', dpi = 300)
+
+    shap.plots.waterfall(shap_values[0], show = False)
+    plt.savefig(os.path.join(OUTPUT, 'shap-waterfall.png'), bbox_inches = 'tight', dpi = 300)
 
     fig, ax = plt.subplots(figsize = (12, 30))
     shap.plots.violin(
@@ -250,7 +253,7 @@ if __name__ == '__main__':
         plot_size = None,
         show = False
     )
-    plt.savefig(os.path.join(OUTPUT, 'shap-violin.png'), bbox_inches = 'tight')
+    plt.savefig(os.path.join(OUTPUT, 'shap-violin.png'), bbox_inches = 'tight', dpi = 300)
 
     with open(os.path.join(OUTPUT, 'shap-values.pickle'), 'wb') as f:
         pickle.dump(shap_values, f)

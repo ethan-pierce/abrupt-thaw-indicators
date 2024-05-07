@@ -93,6 +93,12 @@ clean.drop('Land Cover (NaN)', axis = 1, inplace = True)
 clean.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 clean.drop('Trend in temperature', axis = 1, inplace = True)
 clean.drop('Trend in precipitation', axis = 1, inplace = True)
+clean.drop('Mean Diurnal Range', axis = 1, inplace = True)
+clean.drop('Isothermality', axis = 1, inplace = True)
+clean.drop('Mean Temperature of Wettest Quarter', axis = 1, inplace = True)
+clean.drop('Mean Temperature of Driest Quarter', axis = 1, inplace = True)
+clean.drop('Precipitation of Wettest Quarter', axis = 1, inplace = True)
+clean.drop('Precipitation of Driest Quarter', axis = 1, inplace = True)
 
 # Testing how clusters of points influence the model
 clean.drop('Longitude', axis = 1, inplace = True)

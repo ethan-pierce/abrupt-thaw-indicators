@@ -9,8 +9,8 @@ import xgboost as xgb
 import shap
 
 data = Path(__file__).parent.parent / 'data'
-feats = pd.read_csv(data / 'features.csv')
-rng = np.random.default_rng(42)
+feats = pd.read_csv(data / 'features_clean.csv')
+rng = np.random.default_rng(100)
 
 matrix = feats.drop('Class', axis = 1)
 target = feats['Class']

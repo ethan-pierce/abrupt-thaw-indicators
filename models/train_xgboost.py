@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_auc_score, brier_score_loss, f1_score, roc_curve, precision_recall_curve, PrecisionRecallDisplay, confusion_matrix, ConfusionMatrixDisplay
 
 data = Path(__file__).parent.parent / 'data'
-feats = pd.read_csv(data / 'features.csv')
+feats = pd.read_csv(data / 'features_clean.csv')
 rng = np.random.default_rng(42)
 
 matrix = feats.drop('Class', axis = 1)
@@ -80,7 +80,7 @@ xgb = xgb.XGBClassifier(
     objective = 'binary:logistic',
     eval_metric = 'aucpr',
     scale_pos_weight = 30,
-    base_score = 0.97
+    base_score = 0.94
 )
 
 grid = GridSearchCV(

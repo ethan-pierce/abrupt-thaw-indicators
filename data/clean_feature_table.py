@@ -122,11 +122,10 @@ feats = feats.drop('Precipitation of Warmest Quarter', axis = 1)
 feats = feats.drop('Precipitation of Coldest Quarter', axis = 1)
 
 # Test feature importance with the most obvious candidates removed
-# feats = feats.drop('Projected summer temperature change', axis = 1)
-# feats = feats.drop('Projected winter temperature change', axis = 1)
-# feats = feats.drop('Slope', axis = 1)
-# feats = feats.drop('Aspect', axis = 1)
-# feats = feats.drop('Land Cover (Open Water)', axis = 1)
+feats = feats.drop('Projected summer temperature change', axis = 1)
+feats = feats.drop('Projected winter temperature change', axis = 1)
+feats = feats.drop('Annual Mean Temperature', axis = 1)
+feats = feats.drop('Land Cover (Developed, Low Intensity)', axis = 1)
 
 print(feats['Class'].value_counts())
 print(feats.shape)

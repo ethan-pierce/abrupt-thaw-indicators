@@ -143,7 +143,7 @@ This creates SHAP plots to understand which features are most important for pred
 ## To-Do List
 
 ### Higher Priority
-- [ ] Interpolate SHAP results back to statewide feature maps
+- [ ] Interpolate model results back to statewide feature maps
 - [ ] Compile cross-validation results across all model architectures
 - [ ] Switch to configuration files for hyperparameters instead of hardcoding
 - [ ] Formalize and document feature exclusion protocol 

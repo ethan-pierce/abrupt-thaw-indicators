@@ -287,7 +287,6 @@ print("\n" + "="*80)
 print("END OF METRICS REPORT")
 print("="*80 + "\n")
 
-
 # Get feature importance from best model
 feature_importance = best_model.feature_importances_
 feature_names = X_train.columns
@@ -296,6 +295,7 @@ PR = PrecisionRecallDisplay.from_estimator(
     best_model, X_test, y_test, name = 'XGBoost',
     plot_chance_level = False,
 )
+plt.savefig('output/precision_recall.png', dpi = 300)
 plt.show()
 
 # Plot confusion matrix
@@ -307,6 +307,7 @@ disp = ConfusionMatrixDisplay(confusion_matrix = cm_percent, display_labels=['Ab
 fig, ax = plt.subplots(figsize = (8, 6))
 disp.plot(ax = ax, cmap = 'Blues', values_format = '.1f')
 plt.title('Confusion Matrix - XGBoost Model (Percentages)')
+plt.savefig('output/confusion_matrix.png', dpi = 300)
 plt.show()
 
 # Create DataFrame for plotting
@@ -327,6 +328,7 @@ plt.xlabel('Feature Importance')
 plt.title('Top 20 Feature Importances (XGBoost)')
 plt.gca().invert_yaxis()  # Show most important at top
 plt.tight_layout()
+plt.savefig('output/feature_importance.png', dpi = 300)
 plt.show()
 
 best_model.save_model('models/model.json')

@@ -125,21 +125,6 @@ python models/shap_values.py
 
 This creates SHAP plots to understand which features are most important for predictions.
 
-## Model Details
-
-### Current Best Model
-
-- **Algorithm**: XGBoost Classifier
-- **F1 Score**: 0.8818
-- **Hyperparameters**:
-  - `n_estimators`: 125
-  - `max_depth`: 9
-  - `learning_rate`: 0.1
-  - `subsample`: 0.8
-  - `min_child_weight`: 5
-  - `scale_pos_weight`: 30
-  - `base_score`: 0.94
-
 ## To-Do List
 
 ### Higher Priority

@@ -85,3 +85,14 @@ plt.tight_layout()
 plt.savefig('output/shap_dependence_plot_nitrogen.png', dpi = 300)
 plt.show()
 
+shap.dependence_plot(
+    'Silt (0-30 cm)', 
+    explainer.shap_values(X_test), 
+    X_test, 
+    interaction_index = 'Silt (30-200 cm)',
+    show = False
+)
+plt.tight_layout()
+plt.savefig('output/shap_dependence_plot_sil.png', dpi = 300)
+plt.show()
+

@@ -20,7 +20,9 @@ dependencies = [
     "scikit-learn (>=1.2,<1.7)",
     "imbalanced-learn (>=0.13.0,<0.14.0)",
     "geemap (>=0.36.6,<0.37.0)",
-    "geopandas (>=1.1.2,<2.0.0)"
+    "geopandas (>=1.1.2,<2.0.0)",
+    "xarray (>=2024.1.0,<2025.0.0)",
+    "netcdf4 (>=1.6.0,<2.0.0)"
 ]
 
 [tool.poetry]

@@ -93,8 +93,8 @@ print(f"Invalid pixels (all features missing): {n_invalid:,} ({n_invalid/n_pixel
 print("\nGenerating predictions...")
 print("  This may take a while for large datasets...")
 
-# Predict probabilities (class 1 = abrupt thaw)
-probabilities = model.predict_proba(feature_array)[:, 1]
+# Predict probabilities (class 1 = abrupt thaw, class 0 = gradual thaw)
+probabilities = model.predict_proba(feature_array)[:, 1]  # Use index 1 for abrupt thaw (positive class)
 
 # Predict binary classes
 predictions = model.predict(feature_array)
@@ -225,7 +225,7 @@ masked_pred = np.where(invalid_mask, np.nan, predictions_2d)
 im2 = ax2.imshow(
     np.flipud(masked_pred),
     extent=[lon_min, lon_max, lat_min, lat_max],
-    cmap='RdYlGn',  # Red-Yellow-Green: red = abrupt, green = gradual
+    cmap='RdYlGn',  # Red-Yellow-Green: red = gradual (0), green = abrupt (1)
     aspect='auto',
     origin='lower',
     interpolation='nearest',
@@ -234,7 +234,7 @@ im2 = ax2.imshow(
 )
 
 cbar2 = plt.colorbar(im2, ax=ax2, label='Thaw Type', fraction=0.046, pad=0.04, ticks=[0, 1])
-cbar2.set_ticklabels(['Gradual', 'Abrupt'])
+cbar2.set_ticklabels(['Gradual', 'Abrupt'])  # 0=Gradual, 1=Abrupt
 cbar2.set_label('Thaw Type', rotation=270, labelpad=20)
 
 ax2.set_xlabel('Longitude (°E)', fontsize=12)

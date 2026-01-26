@@ -8,7 +8,7 @@ import xgboost as xgb
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import (
     roc_auc_score, brier_score_loss, f1_score, roc_curve, precision_recall_curve, 
-    PrecisionRecallDisplay, confusion_matrix, ConfusionMatrixDisplay, accuracy_score,
+    PrecisionRecallDisplay, RocCurveDisplay, confusion_matrix, ConfusionMatrixDisplay, accuracy_score,
     precision_score, recall_score, classification_report, average_precision_score,
     log_loss, matthews_corrcoef, cohen_kappa_score, hamming_loss, jaccard_score
 )
@@ -35,25 +35,25 @@ dtrain = xgb.DMatrix(X_train, label = y_train, missing = np.nan)
 dtest = xgb.DMatrix(X_test, label = y_test, missing = np.nan)
 
 param_grid = {
-    'n_estimators': [80],
-    'max_depth': [10],
-    'learning_rate': [0.06],
-    'subsample': [0.7],
-    'min_child_weight': [2]
+    'n_estimators': [125],
+    'max_depth': [9],
+    'learning_rate': [0.1],
+    'subsample': [0.8],
+    'min_child_weight': [5]
 }
 
 xgb = xgb.XGBClassifier(
     random_state = rng.integers(0, 100),
     objective = 'binary:logistic',
     eval_metric = 'aucpr',
-    scale_pos_weight = 30,
+    scale_pos_weight = 0.064,
     base_score = 0.94
 )
 
 grid = GridSearchCV(
     estimator = xgb,
     param_grid = param_grid,
-    cv = 5,
+    cv = 100,
     scoring = 'f1',
     verbose = 3,
     n_jobs = 8,
@@ -78,6 +78,14 @@ y_train_pred = best_model.predict(X_train)
 y_test_pred = best_model.predict(X_test)
 y_train_proba = best_model.predict_proba(X_train)[:, 1]
 y_test_proba = best_model.predict_proba(X_test)[:, 1]
+
+# Diagnostic: Check prediction distribution
+print("\n--- Prediction Distribution Check ---")
+print(f"Test set predictions - Class 0: {(y_test_pred == 0).sum()}, Class 1: {(y_test_pred == 1).sum()}")
+print(f"Test set true labels - Class 0: {(y_test == 0).sum()}, Class 1: {(y_test == 1).sum()}")
+print(f"Test set probability range: [{y_test_proba.min():.4f}, {y_test_proba.max():.4f}]")
+print(f"Test set probability mean: {y_test_proba.mean():.4f}")
+print(f"Test set probability median: {np.median(y_test_proba):.4f}")
 
 # ============================================================================
 # PERFORMANCE METRICS
@@ -291,19 +299,82 @@ print("="*80 + "\n")
 feature_importance = best_model.feature_importances_
 feature_names = X_train.columns
 
+# Verify class encoding before plotting
+print("\n--- Class Encoding Verification ---")
+print(f"Class 0 count in y_test: {(y_test == 0).sum()} (should be Gradual)")
+print(f"Class 1 count in y_test: {(y_test == 1).sum()} (should be Abrupt)")
+print(f"Using predict_proba[:, 1] for probabilities (class 1 = Abrupt)")
+
+# Compute precision-recall manually to verify
+precision, recall, thresholds = precision_recall_curve(y_test, y_test_proba)
+print(f"Manual PR-AUC: {average_precision_score(y_test, y_test_proba):.4f}")
+print(f"Precision at recall=0.5: {precision[recall >= 0.5][0] if len(precision[recall >= 0.5]) > 0 else 'N/A'}")
+
+# Plot Precision-Recall curve
 PR = PrecisionRecallDisplay.from_estimator(
     best_model, X_test, y_test, name = 'XGBoost',
-    plot_chance_level = False,
+    plot_chance_level = True,  # Show baseline for comparison
 )
+plt.title('Precision-Recall Curve')
 plt.savefig('output/precision_recall.png', dpi = 300)
 plt.show()
+
+# Plot ROC curve (less sensitive to class imbalance)
+roc_display = RocCurveDisplay.from_estimator(
+    best_model, X_test, y_test, name = 'XGBoost'
+)
+plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.5)')
+plt.title('ROC Curve (Receiver Operating Characteristic)')
+plt.legend()
+plt.savefig('output/roc_curve.png', dpi = 300)
+plt.show()
+
+# Plot Calibration curve (shows probability calibration)
+# Reuse the calibration curve already computed above
+plt.figure(figsize=(10, 8))
+plt.plot(mean_predicted_value, fraction_of_positives, 's-', label='XGBoost', linewidth=2, markersize=8)
+plt.plot([0, 1], [0, 1], 'k--', label='Perfectly Calibrated', linewidth=2)
+plt.xlabel('Mean Predicted Probability', fontsize=12)
+plt.ylabel('Fraction of Positives', fontsize=12)
+plt.title('Calibration Curve (Probability Calibration)', fontsize=14, fontweight='bold')
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig('output/calibration_curve.png', dpi = 300)
+plt.show()
+
+# Plot F1-score vs threshold (helps choose optimal threshold)
+thresholds = np.arange(0.1, 1.0, 0.01)
+f1_scores = []
+for threshold in thresholds:
+    y_pred_thresh = (y_test_proba >= threshold).astype(int)
+    f1 = f1_score(y_test, y_pred_thresh, zero_division=0)
+    f1_scores.append(f1)
+
+plt.figure(figsize=(10, 6))
+plt.plot(thresholds, f1_scores, linewidth=2)
+plt.xlabel('Decision Threshold', fontsize=12)
+plt.ylabel('F1-Score', fontsize=12)
+plt.title('F1-Score vs Decision Threshold', fontsize=14, fontweight='bold')
+plt.grid(True, alpha=0.3)
+plt.axvline(x=0.5, color='r', linestyle='--', label='Default Threshold (0.5)')
+best_threshold_idx = np.argmax(f1_scores)
+best_threshold = thresholds[best_threshold_idx]
+best_f1 = f1_scores[best_threshold_idx]
+plt.axvline(x=best_threshold, color='g', linestyle='--', label=f'Best Threshold ({best_threshold:.2f}, F1={best_f1:.3f})')
+plt.legend()
+plt.tight_layout()
+plt.savefig('output/f1_vs_threshold.png', dpi = 300)
+plt.show()
+
+print(f"\nOptimal threshold for F1-score: {best_threshold:.3f} (F1 = {best_f1:.3f})")
 
 # Plot confusion matrix
 y_pred = best_model.predict(X_test)
 cm = confusion_matrix(y_test, y_pred)
 # Convert to percentages
 cm_percent = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis] * 100
-disp = ConfusionMatrixDisplay(confusion_matrix = cm_percent, display_labels=['Abrupt Thaw', 'Gradual Thaw'])
+disp = ConfusionMatrixDisplay(confusion_matrix = cm_percent, display_labels=['Gradual Thaw', 'Abrupt Thaw'])  # [class 0, class 1]
 fig, ax = plt.subplots(figsize = (8, 6))
 disp.plot(ax = ax, cmap = 'Blues', values_format = '.1f')
 plt.title('Confusion Matrix - XGBoost Model (Percentages)')

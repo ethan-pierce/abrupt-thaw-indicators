@@ -1,0 +1,1177 @@
+feature_i,feature_j,interaction_strength,index_i,index_j
+Nitrogen (0-30 cm),Silt (0-30 cm),0.124314174,39,45
+Slope,Trend in SWE,0.10611534,1,12
+Temperature Seasonality,Trend in SWE,0.08200165,5,12
+Slope,Mean curvature (500 m),0.078311026,1,3
+Flammability Index,Trend in SWE,0.07005165,9,12
+Mean curvature (500 m),Trend in SWE,0.057137,3,12
+Slope,Silt (0-30 cm),0.04841635,1,45
+Mean Annual SWE,Land Cover (Open Water),0.04695488,11,17
+Slope,Nitrogen (0-30 cm),0.04629409,1,39
+Trend in SWE,Clay (0-30 cm),0.044105235,12,47
+Trend in SWE,Land Cover (Open Water),0.042902336,12,17
+Mean Annual SWE,Trend in SWE,0.04198459,11,12
+Slope,Temperature Seasonality,0.04124559,1,5
+Temperature Seasonality,Mean Annual SWE,0.040737044,5,11
+Trend in SWE,Soil Organic Carbon (0-30 cm),0.036133587,12,37
+Slope,Mean Annual SWE,0.035631385,1,11
+Land Cover (Open Water),Nitrogen (0-30 cm),0.035468195,17,39
+Trend in SWE,Nitrogen (0-30 cm),0.033600662,12,39
+Annual Precipitation,Nitrogen (0-30 cm),0.031194283,7,39
+Annual Precipitation,Mean Annual SWE,0.030423073,7,11
+Slope,Sand (0-30 cm),0.029631412,1,43
+Slope,Land Cover (Open Water),0.029350478,1,17
+Slope,Silt (30-200 cm),0.028200896,1,46
+Mean curvature (500 m),Land Cover (Open Water),0.027961554,3,17
+Soil Organic Carbon (0-30 cm),Soil Organic Carbon (30-200 cm),0.026762705,37,38
+Mean curvature (500 m),Mean Annual SWE,0.026459493,3,11
+Slope,Vegetation Mode (Graminoid tundra),0.02635044,1,32
+Trend in SWE,Vegetation Mode (Graminoid tundra),0.026078843,12,32
+Mean Annual SWE,Nitrogen (0-30 cm),0.025951777,11,39
+Slope,Annual Precipitation,0.024149401,1,7
+Temperature Annual Range,Trend in SWE,0.023796383,6,12
+Mean curvature (500 m),Nitrogen (0-30 cm),0.023745101,3,39
+Aspect,Soil Organic Carbon (0-30 cm),0.023671728,2,37
+Mean curvature (500 m),Mean curvature (2 km),0.023265678,3,4
+Temperature Seasonality,Land Cover (Open Water),0.02318247,5,17
+Slope,Flammability Index,0.023160504,1,9
+Mean curvature (500 m),Annual Precipitation,0.02296137,3,7
+Land Cover (Open Water),Land Cover (Emergent Herbaceous Wetlands),0.022583375,17,21
+Annual Precipitation,Trend in SWE,0.021371648,7,12
+Soil Organic Carbon (0-30 cm),Nitrogen (30-200 cm),0.021303168,37,40
+Mean Annual SWE,Land Cover (Emergent Herbaceous Wetlands),0.021219833,11,21
+Soil Organic Carbon (30-200 cm),Nitrogen (30-200 cm),0.020927152,38,40
+Soil Organic Carbon (0-30 cm),Nitrogen (0-30 cm),0.020867143,37,39
+Slope,Bulk Density (0-30 cm),0.020192523,1,41
+Mean curvature (500 m),Silt (0-30 cm),0.02000137,3,45
+Soil Organic Carbon (0-30 cm),Silt (0-30 cm),0.019826842,37,45
+Land Cover (Open Water),Clay (30-200 cm),0.019800376,17,48
+Mean curvature (2 km),Trend in SWE,0.019087385,4,12
+Mean Annual SWE,Projected precipitation change,0.019051813,11,13
+Slope,Clay (0-30 cm),0.018973574,1,47
+Trend in SWE,Silt (0-30 cm),0.018818628,12,45
+Silt (30-200 cm),Clay (30-200 cm),0.018548094,46,48
+Annual Precipitation,Flammability Index,0.018134413,7,9
+Mean curvature (2 km),Clay (30-200 cm),0.018040199,4,48
+Mean curvature (2 km),Mean Annual SWE,0.01767901,4,11
+Slope,Nitrogen (30-200 cm),0.017366236,1,40
+Aspect,Trend in SWE,0.017132819,2,12
+Elevation,Mean curvature (500 m),0.016694468,0,3
+Aspect,Clay (0-30 cm),0.016522072,2,47
+Slope,Soil Organic Carbon (0-30 cm),0.016235705,1,37
+Soil Organic Carbon (30-200 cm),Nitrogen (0-30 cm),0.016211638,38,39
+Elevation,Silt (0-30 cm),0.016073737,0,45
+Projected precipitation change,Soil Organic Carbon (0-30 cm),0.015325398,13,37
+Elevation,Trend in SWE,0.015210601,0,12
+Land Cover (Open Water),Silt (0-30 cm),0.015154771,17,45
+Trend in SWE,Bulk Density (0-30 cm),0.015081002,12,41
+Aspect,Mean curvature (2 km),0.015049421,2,4
+Slope,Mean curvature (2 km),0.015017739,1,4
+Elevation,Slope,0.0148592135,0,1
+Temperature Seasonality,Flammability Index,0.014680103,5,9
+Annual Precipitation,Land Cover (Open Water),0.014310167,7,17
+Mean curvature (500 m),Flammability Index,0.014237048,3,9
+Temperature Seasonality,Soil Organic Carbon (30-200 cm),0.014101441,5,38
+Trend in SWE,Soil Organic Carbon (30-200 cm),0.013876616,12,38
+Mean curvature (500 m),Projected precipitation change,0.013623268,3,13
+Slope,Sand (30-200 cm),0.013431214,1,44
+Slope,Land Cover (Emergent Herbaceous Wetlands),0.01335542,1,21
+Nitrogen (30-200 cm),Silt (0-30 cm),0.013235904,40,45
+Flammability Index,Nitrogen (0-30 cm),0.012927331,9,39
+Mean curvature (500 m),Bulk Density (0-30 cm),0.012631546,3,41
+Aspect,Temperature Seasonality,0.01232944,2,5
+Soil Organic Carbon (0-30 cm),Bulk Density (0-30 cm),0.012257055,37,41
+Aspect,Bulk Density (0-30 cm),0.011976001,2,41
+Land Cover (Open Water),Clay (0-30 cm),0.011955081,17,47
+Projected precipitation change,Nitrogen (0-30 cm),0.011811829,13,39
+Silt (0-30 cm),Clay (30-200 cm),0.011806108,45,48
+Slope,Temperature Annual Range,0.011625364,1,6
+Annual Precipitation,Projected precipitation change,0.0115828365,7,13
+Sand (30-200 cm),Silt (0-30 cm),0.011496401,44,45
+Flammability Index,Land Cover (Open Water),0.011492082,9,17
+Mean Annual SWE,Silt (0-30 cm),0.011403201,11,45
+Mean Annual SWE,Soil Organic Carbon (0-30 cm),0.011275606,11,37
+Mean curvature (500 m),Clay (0-30 cm),0.011090942,3,47
+Flammability Index,Mean Annual SWE,0.011000599,9,11
+Elevation,Nitrogen (0-30 cm),0.010983548,0,39
+Nitrogen (0-30 cm),Sand (0-30 cm),0.010888825,39,43
+Temperature Annual Range,Flammability Index,0.010865194,6,9
+Nitrogen (0-30 cm),Nitrogen (30-200 cm),0.010861585,39,40
+Aspect,Clay (30-200 cm),0.0108190905,2,48
+Slope,Aspect,0.010782814,1,2
+Elevation,Temperature Seasonality,0.010725741,0,5
+Mean curvature (2 km),Nitrogen (0-30 cm),0.010561248,4,39
+Trend in SWE,Silt (30-200 cm),0.010552315,12,46
+Soil Organic Carbon (0-30 cm),Clay (30-200 cm),0.010550788,37,48
+Mean curvature (2 km),Clay (0-30 cm),0.010514856,4,47
+Nitrogen (0-30 cm),Silt (30-200 cm),0.010435795,39,46
+Annual Precipitation,Clay (30-200 cm),0.010395714,7,48
+Mean curvature (500 m),Temperature Seasonality,0.010392931,3,5
+Slope,Projected precipitation change,0.010375161,1,13
+Temperature Seasonality,Silt (0-30 cm),0.010359072,5,45
+Temperature Seasonality,Soil Organic Carbon (0-30 cm),0.010240437,5,37
+Temperature Annual Range,Land Cover (Open Water),0.010205452,6,17
+Mean Annual SWE,Clay (0-30 cm),0.010000898,11,47
+Aspect,Nitrogen (0-30 cm),0.009908541,2,39
+Mean Annual SWE,Nitrogen (30-200 cm),0.009766118,11,40
+Aspect,Mean curvature (500 m),0.00970527,2,3
+Temperature Annual Range,Nitrogen (0-30 cm),0.009655351,6,39
+Soil Organic Carbon (30-200 cm),Bulk Density (0-30 cm),0.009520898,38,41
+Mean curvature (500 m),Soil Organic Carbon (0-30 cm),0.009491603,3,37
+Slope,Soil Organic Carbon (30-200 cm),0.009453975,1,38
+Vegetation Mode (Graminoid tundra),Bulk Density (0-30 cm),0.009389305,32,41
+Mean curvature (2 km),Soil Organic Carbon (30-200 cm),0.009362069,4,38
+Elevation,Mean Annual SWE,0.009342463,0,11
+Temperature Seasonality,Nitrogen (0-30 cm),0.00932954,5,39
+Mean curvature (500 m),Nitrogen (30-200 cm),0.009276656,3,40
+Aspect,Annual Precipitation,0.009189733,2,7
+Nitrogen (0-30 cm),Clay (0-30 cm),0.009183898,39,47
+Temperature Seasonality,Silt (30-200 cm),0.009165979,5,46
+Projected precipitation change,Silt (0-30 cm),0.0090896385,13,45
+Mean Annual SWE,Bulk Density (0-30 cm),0.009076159,11,41
+Aspect,Nitrogen (30-200 cm),0.009038688,2,40
+Nitrogen (30-200 cm),Bulk Density (0-30 cm),0.008993295,40,41
+Mean Annual SWE,Vegetation Mode (Graminoid tundra),0.008875025,11,32
+Soil Organic Carbon (0-30 cm),Clay (0-30 cm),0.008862418,37,47
+Slope,Clay (30-200 cm),0.008805261,1,48
+Mean curvature (500 m),Temperature Annual Range,0.008799736,3,6
+Mean curvature (2 km),Projected precipitation change,0.008789358,4,13
+Mean curvature (2 km),Silt (0-30 cm),0.008728633,4,45
+Nitrogen (0-30 cm),Bulk Density (30-200 cm),0.00872457,39,42
+Annual Precipitation,Bulk Density (30-200 cm),0.00857327,7,42
+Trend in SWE,Bulk Density (30-200 cm),0.0083625605,12,42
+Silt (30-200 cm),Clay (0-30 cm),0.008217101,46,47
+Annual Precipitation,Precipitation Seasonality,0.008213497,7,8
+Mean Annual SWE,Soil Organic Carbon (30-200 cm),0.008013323,11,38
+Mean curvature (2 km),Nitrogen (30-200 cm),0.007859352,4,40
+Trend in SWE,Sand (30-200 cm),0.007821919,12,44
+Mean Annual SWE,Sand (30-200 cm),0.007730334,11,44
+Temperature Seasonality,Bulk Density (0-30 cm),0.007629574,5,41
+Temperature Annual Range,Silt (0-30 cm),0.0076175327,6,45
+Mean curvature (500 m),Clay (30-200 cm),0.0074811657,3,48
+Projected precipitation change,Land Cover (Open Water),0.007448124,13,17
+Mean curvature (500 m),Soil Organic Carbon (30-200 cm),0.0073458585,3,38
+Flammability Index,Silt (0-30 cm),0.007254883,9,45
+Precipitation Seasonality,Soil Organic Carbon (30-200 cm),0.0072166454,8,38
+Trend in SWE,Clay (30-200 cm),0.0072091427,12,48
+Aspect,Vegetation Mode (Graminoid tundra),0.0071100323,2,32
+Soil Organic Carbon (0-30 cm),Silt (30-200 cm),0.0069888425,37,46
+Aspect,Projected precipitation change,0.006980677,2,13
+Precipitation Seasonality,Clay (30-200 cm),0.006978932,8,48
+Slope,Bulk Density (30-200 cm),0.00696026,1,42
+Temperature Seasonality,Sand (30-200 cm),0.0069360505,5,44
+Mean curvature (2 km),Soil Organic Carbon (0-30 cm),0.006912298,4,37
+Temperature Seasonality,Precipitation Seasonality,0.00690049,5,8
+Aspect,Sand (30-200 cm),0.0068952455,2,44
+Slope,Precipitation Seasonality,0.0068275165,1,8
+Annual Precipitation,Soil Organic Carbon (0-30 cm),0.0068149697,7,37
+Trend in SWE,Projected precipitation change,0.0067942194,12,13
+Mean curvature (2 km),Temperature Annual Range,0.006712699,4,6
+Projected precipitation change,Soil Organic Carbon (30-200 cm),0.0066647166,13,38
+Bulk Density (0-30 cm),Bulk Density (30-200 cm),0.006636595,41,42
+Aspect,Silt (0-30 cm),0.0066270097,2,45
+Sand (30-200 cm),Silt (30-200 cm),0.0065577147,44,46
+Temperature Annual Range,Silt (30-200 cm),0.0063889753,6,46
+Mean curvature (2 km),Bulk Density (0-30 cm),0.006363305,4,41
+Nitrogen (30-200 cm),Clay (30-200 cm),0.006346238,40,48
+Mean curvature (2 km),Temperature Seasonality,0.006285713,4,5
+Sand (0-30 cm),Sand (30-200 cm),0.0062419665,43,44
+Bulk Density (30-200 cm),Silt (0-30 cm),0.006220041,42,45
+Aspect,Silt (30-200 cm),0.0062012617,2,46
+Flammability Index,Sand (0-30 cm),0.0061940285,9,43
+Land Cover (Emergent Herbaceous Wetlands),Nitrogen (0-30 cm),0.006107036,21,39
+Aspect,Mean Annual SWE,0.006091357,2,11
+Aspect,Bulk Density (30-200 cm),0.0060648033,2,42
+Nitrogen (30-200 cm),Sand (0-30 cm),0.0060563223,40,43
+Annual Precipitation,Soil Organic Carbon (30-200 cm),0.006052486,7,38
+Projected precipitation change,Clay (0-30 cm),0.006020441,13,47
+Bulk Density (0-30 cm),Silt (0-30 cm),0.0059815906,41,45
+Nitrogen (30-200 cm),Clay (0-30 cm),0.005872698,40,47
+Nitrogen (0-30 cm),Clay (30-200 cm),0.0058697383,39,48
+Annual Precipitation,Silt (0-30 cm),0.005856969,7,45
+Temperature Seasonality,Clay (0-30 cm),0.005770508,5,47
+Soil Organic Carbon (30-200 cm),Silt (0-30 cm),0.0057182703,38,45
+Projected precipitation change,Bulk Density (0-30 cm),0.005700532,13,41
+Land Cover (Open Water),Land Cover (Woody Wetlands),0.005675703,17,19
+Land Cover (Open Water),Vegetation Mode (Graminoid tundra),0.005620646,17,32
+Nitrogen (30-200 cm),Silt (30-200 cm),0.005585445,40,46
+Vegetation Mode (Graminoid tundra),Nitrogen (30-200 cm),0.0055845114,32,40
+Temperature Annual Range,Annual Precipitation,0.0055596363,6,7
+Aspect,Precipitation Seasonality,0.0055317334,2,8
+Elevation,Aspect,0.005510894,0,2
+Aspect,Sand (0-30 cm),0.0054919524,2,43
+Temperature Seasonality,Nitrogen (30-200 cm),0.005440682,5,40
+Bulk Density (0-30 cm),Clay (0-30 cm),0.005385898,41,47
+Temperature Annual Range,Mean Annual SWE,0.0053831474,6,11
+Soil Organic Carbon (30-200 cm),Sand (30-200 cm),0.005195168,38,44
+Annual Precipitation,Bulk Density (0-30 cm),0.005189213,7,41
+Soil Organic Carbon (0-30 cm),Sand (0-30 cm),0.005136796,37,43
+Land Cover (Emergent Herbaceous Wetlands),Silt (0-30 cm),0.005110988,21,45
+Elevation,Clay (30-200 cm),0.005081613,0,48
+Trend in SWE,Sand (0-30 cm),0.005078161,12,43
+Projected precipitation change,Clay (30-200 cm),0.0050592995,13,48
+Mean curvature (2 km),Sand (30-200 cm),0.004979969,4,44
+Mean curvature (500 m),Precipitation Seasonality,0.0049756067,3,8
+Elevation,Soil Organic Carbon (30-200 cm),0.0049671307,0,38
+Mean curvature (500 m),Silt (30-200 cm),0.0049530277,3,46
+Temperature Annual Range,Precipitation Seasonality,0.004951905,6,8
+Mean curvature (2 km),Annual Precipitation,0.004913858,4,7
+Clay (0-30 cm),Clay (30-200 cm),0.004897318,47,48
+Vegetation Mode (Graminoid tundra),Sand (30-200 cm),0.0048879855,32,44
+Silt (0-30 cm),Silt (30-200 cm),0.0048770015,45,46
+Bulk Density (0-30 cm),Sand (30-200 cm),0.004815184,41,44
+Flammability Index,Soil Organic Carbon (0-30 cm),0.0048063355,9,37
+Trend in SWE,Nitrogen (30-200 cm),0.004767372,12,40
+Sand (30-200 cm),Clay (30-200 cm),0.0046933903,44,48
+Temperature Seasonality,Clay (30-200 cm),0.004684347,5,48
+Precipitation Seasonality,Nitrogen (0-30 cm),0.0046194736,8,39
+Mean curvature (500 m),Sand (0-30 cm),0.0045580207,3,43
+Mean curvature (2 km),Flammability Index,0.004547287,4,9
+Mean curvature (500 m),Sand (30-200 cm),0.0045312312,3,44
+Precipitation Seasonality,Nitrogen (30-200 cm),0.0045195743,8,40
+Mean Annual SWE,Land Cover (Woody Wetlands),0.004462235,11,19
+Precipitation Seasonality,Projected precipitation change,0.004427448,8,13
+Precipitation Seasonality,Land Cover (Open Water),0.0044252416,8,17
+Temperature Seasonality,Projected precipitation change,0.004389521,5,13
+Bulk Density (30-200 cm),Silt (30-200 cm),0.004336349,42,46
+Precipitation Seasonality,Trend in SWE,0.0043194825,8,12
+Nitrogen (30-200 cm),Sand (30-200 cm),0.00430216,40,44
+Temperature Annual Range,Clay (30-200 cm),0.0042455844,6,48
+Soil Organic Carbon (30-200 cm),Clay (0-30 cm),0.00421803,38,47
+Temperature Seasonality,Land Cover (Emergent Herbaceous Wetlands),0.0042175893,5,21
+Soil Organic Carbon (0-30 cm),Sand (30-200 cm),0.004213455,37,44
+Temperature Seasonality,Sand (0-30 cm),0.004199301,5,43
+Flammability Index,Bulk Density (0-30 cm),0.0041605704,9,41
+Mean curvature (2 km),Silt (30-200 cm),0.0041567795,4,46
+Temperature Annual Range,Bulk Density (30-200 cm),0.004138995,6,42
+Mean curvature (500 m),Bulk Density (30-200 cm),0.004130954,3,42
+Bulk Density (0-30 cm),Clay (30-200 cm),0.0041026836,41,48
+Slope,Land Cover (Dwarf Scrub),0.004047367,1,15
+Projected precipitation change,Sand (30-200 cm),0.0040119356,13,44
+Mean curvature (2 km),Precipitation Seasonality,0.0039934055,4,8
+Trend in SWE,Land Cover (Dwarf Scrub),0.0039741257,12,15
+Aspect,Land Cover (Emergent Herbaceous Wetlands),0.0039725625,2,21
+Elevation,Sand (0-30 cm),0.0039478196,0,43
+Temperature Seasonality,Vegetation Mode (Graminoid tundra),0.003940015,5,32
+Mean Annual SWE,Clay (30-200 cm),0.003920669,11,48
+Nitrogen (30-200 cm),Bulk Density (30-200 cm),0.0038277518,40,42
+Temperature Annual Range,Vegetation Mode (Graminoid tundra),0.0037792295,6,32
+Land Cover (Open Water),Soil Organic Carbon (0-30 cm),0.0037396129,17,37
+Aspect,Soil Organic Carbon (30-200 cm),0.0036801978,2,38
+Elevation,Soil Organic Carbon (0-30 cm),0.0036553305,0,37
+Nitrogen (0-30 cm),Bulk Density (0-30 cm),0.003640102,39,41
+Aspect,Flammability Index,0.003639923,2,9
+Aspect,Temperature Annual Range,0.0035969985,2,6
+Projected precipitation change,Silt (30-200 cm),0.0035945147,13,46
+Flammability Index,Silt (30-200 cm),0.0035869675,9,46
+Mean Annual SWE,Bulk Density (30-200 cm),0.0035866725,11,42
+Mean curvature (2 km),Sand (0-30 cm),0.0035766927,4,43
+Sand (0-30 cm),Silt (0-30 cm),0.0035622646,43,45
+Soil Organic Carbon (0-30 cm),Bulk Density (30-200 cm),0.0035212226,37,42
+Flammability Index,Clay (30-200 cm),0.003511572,9,48
+Precipitation Seasonality,Flammability Index,0.0035096963,8,9
+Elevation,Land Cover (Open Water),0.003498843,0,17
+Mean curvature (2 km),Land Cover (Emergent Herbaceous Wetlands),0.0034986427,4,21
+Land Cover (Open Water),Nitrogen (30-200 cm),0.0034674753,17,40
+Mean Annual SWE,Sand (0-30 cm),0.0034555073,11,43
+Mean Annual SWE,Silt (30-200 cm),0.0034550678,11,46
+Annual Precipitation,Sand (0-30 cm),0.0034023554,7,43
+Projected precipitation change,Sand (0-30 cm),0.0033996417,13,43
+Flammability Index,Nitrogen (30-200 cm),0.003384192,9,40
+Annual Precipitation,Clay (0-30 cm),0.0033179705,7,47
+Soil Organic Carbon (30-200 cm),Silt (30-200 cm),0.0033169442,38,46
+Elevation,Annual Precipitation,0.0032979525,0,7
+Soil Organic Carbon (30-200 cm),Clay (30-200 cm),0.003296264,38,48
+Bulk Density (30-200 cm),Clay (30-200 cm),0.0032293322,42,48
+Flammability Index,Bulk Density (30-200 cm),0.003224937,9,42
+Aspect,Land Cover (Open Water),0.0032228199,2,17
+Annual Precipitation,Nitrogen (30-200 cm),0.0032146277,7,40
+Bulk Density (0-30 cm),Sand (0-30 cm),0.003209654,41,43
+Annual Precipitation,Sand (30-200 cm),0.0032056612,7,44
+Flammability Index,Soil Organic Carbon (30-200 cm),0.0031463879,9,38
+Sand (30-200 cm),Clay (0-30 cm),0.00312199,44,47
+Temperature Annual Range,Soil Organic Carbon (0-30 cm),0.0030665412,6,37
+Flammability Index,Vegetation Mode (Shrub tundra),0.003050151,9,30
+Temperature Annual Range,Clay (0-30 cm),0.003016867,6,47
+Elevation,Flammability Index,0.0030034767,0,9
+Vegetation Mode (Graminoid tundra),Soil Organic Carbon (30-200 cm),0.0029798166,32,38
+Nitrogen (0-30 cm),Sand (30-200 cm),0.0029429991,39,44
+Bulk Density (30-200 cm),Clay (0-30 cm),0.0029047264,42,47
+Annual Precipitation,Silt (30-200 cm),0.00290165,7,46
+Vegetation Mode (Graminoid tundra),Clay (0-30 cm),0.0028646966,32,47
+Mean curvature (2 km),Land Cover (Open Water),0.002851552,4,17
+Vegetation Mode (Graminoid tundra),Clay (30-200 cm),0.0028368037,32,48
+Precipitation Seasonality,Soil Organic Carbon (0-30 cm),0.0028239056,8,37
+Vegetation Mode (Graminoid tundra),Soil Organic Carbon (0-30 cm),0.0028234266,32,37
+Elevation,Temperature Annual Range,0.0028075525,0,6
+Precipitation Seasonality,Mean Annual SWE,0.0027750141,8,11
+Land Cover (Emergent Herbaceous Wetlands),Soil Organic Carbon (30-200 cm),0.0027749788,21,38
+Temperature Seasonality,Temperature Annual Range,0.002763753,5,6
+Precipitation Seasonality,Bulk Density (0-30 cm),0.0027132428,8,41
+Precipitation Seasonality,Silt (0-30 cm),0.0027105806,8,45
+Precipitation Seasonality,Sand (0-30 cm),0.0027006045,8,43
+Temperature Annual Range,Soil Organic Carbon (30-200 cm),0.0026853497,6,38
+Sand (0-30 cm),Clay (30-200 cm),0.0026691875,43,48
+Temperature Annual Range,Nitrogen (30-200 cm),0.0026570943,6,40
+Mean curvature (500 m),Land Cover (Dwarf Scrub),0.0026279704,3,15
+Slope,Land Cover (Sedge/Herbaceous),0.0026080003,1,14
+Mean curvature (2 km),Vegetation Mode (Graminoid tundra),0.0025822239,4,32
+Land Cover (Open Water),Soil Organic Carbon (30-200 cm),0.002570282,17,38
+Slope,Maximum Fire Temperature,0.0025626824,1,10
+Temperature Annual Range,Sand (0-30 cm),0.0025459942,6,43
+Elevation,Projected precipitation change,0.0025262374,0,13
+Elevation,Silt (30-200 cm),0.0025069783,0,46
+Sand (0-30 cm),Clay (0-30 cm),0.0025033187,43,47
+Precipitation Seasonality,Silt (30-200 cm),0.0024869242,8,46
+Flammability Index,Clay (0-30 cm),0.00247354,9,47
+Annual Precipitation,Vegetation Mode (Graminoid tundra),0.0024592876,7,32
+Land Cover (Woody Wetlands),Land Cover (Emergent Herbaceous Wetlands),0.0024433623,19,21
+Elevation,Nitrogen (30-200 cm),0.002439241,0,40
+Soil Organic Carbon (30-200 cm),Sand (0-30 cm),0.0024188946,38,43
+Mean curvature (2 km),Bulk Density (30-200 cm),0.0024066367,4,42
+Precipitation Seasonality,Clay (0-30 cm),0.0024024982,8,47
+Sand (0-30 cm),Silt (30-200 cm),0.002401911,43,46
+Trend in SWE,Land Cover (Shrub/Scrub),0.0023998371,12,16
+Mean Annual SWE,Land Cover (Dwarf Scrub),0.002345624,11,15
+Elevation,Clay (0-30 cm),0.0023263744,0,47
+Flammability Index,Sand (30-200 cm),0.002323309,9,44
+Elevation,Bulk Density (0-30 cm),0.002272472,0,41
+Slope,Vegetation Mode (Shrub tundra),0.00227056,1,30
+Mean Annual SWE,Vegetation Mode (Shrub tundra),0.0022564435,11,30
+Elevation,Sand (30-200 cm),0.0022257983,0,44
+Land Cover (Dwarf Scrub),Bulk Density (0-30 cm),0.0021891168,15,41
+Land Cover (Emergent Herbaceous Wetlands),Clay (0-30 cm),0.0021851358,21,47
+Annual Precipitation,Land Cover (Woody Wetlands),0.0021443765,7,19
+Precipitation Seasonality,Vegetation Mode (Graminoid tundra),0.0021371925,8,32
+Projected precipitation change,Bulk Density (30-200 cm),0.0021260316,13,42
+Vegetation Mode (Graminoid tundra),Silt (0-30 cm),0.0021092014,32,45
+Temperature Annual Range,Bulk Density (0-30 cm),0.002108344,6,41
+Land Cover (Emergent Herbaceous Wetlands),Bulk Density (0-30 cm),0.0020462042,21,41
+Projected precipitation change,Nitrogen (30-200 cm),0.0020099485,13,40
+Silt (0-30 cm),Clay (0-30 cm),0.002007045,45,47
+Flammability Index,Projected precipitation change,0.0020053198,9,13
+Flammability Index,Land Cover (Sedge/Herbaceous),0.0019943777,9,14
+Temperature Seasonality,Annual Precipitation,0.0019880643,5,7
+Precipitation Seasonality,Bulk Density (30-200 cm),0.0019534652,8,42
+Slope,Land Cover (Shrub/Scrub),0.0019490195,1,16
+Temperature Annual Range,Land Cover (Emergent Herbaceous Wetlands),0.0019290628,6,21
+Temperature Annual Range,Sand (30-200 cm),0.001923537,6,44
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Graminoid tundra),0.001911148,21,32
+Land Cover (Woody Wetlands),Nitrogen (0-30 cm),0.0018765446,19,39
+Elevation,Bulk Density (30-200 cm),0.0018752081,0,42
+Mean curvature (500 m),Vegetation Mode (Graminoid tundra),0.0018548842,3,32
+Projected precipitation change,Vegetation Mode (Graminoid tundra),0.0018542807,13,32
+Trend in SWE,Land Cover (Emergent Herbaceous Wetlands),0.0018395822,12,21
+Bulk Density (30-200 cm),Sand (30-200 cm),0.0018288667,42,44
+Bulk Density (30-200 cm),Sand (0-30 cm),0.001806433,42,43
+Vegetation Mode (Graminoid tundra),Bulk Density (30-200 cm),0.0017812118,32,42
+Land Cover (Open Water),Sand (0-30 cm),0.0017688605,17,43
+Elevation,Vegetation Mode (Graminoid tundra),0.0017563951,0,32
+Land Cover (Dwarf Scrub),Nitrogen (30-200 cm),0.0017392096,15,40
+Land Cover (Open Water),Bulk Density (0-30 cm),0.0017386669,17,41
+Mean curvature (500 m),Land Cover (Emergent Herbaceous Wetlands),0.0017238879,3,21
+Mean Annual SWE,Land Cover (Sedge/Herbaceous),0.0017107488,11,14
+Soil Organic Carbon (30-200 cm),Bulk Density (30-200 cm),0.0016844687,38,42
+Annual Precipitation,Land Cover (Dwarf Scrub),0.0016543146,7,15
+Land Cover (Open Water),Sand (30-200 cm),0.0015853237,17,44
+Bulk Density (0-30 cm),Silt (30-200 cm),0.0015550939,41,46
+Land Cover (Dwarf Scrub),Clay (0-30 cm),0.0015149469,15,47
+Maximum Fire Temperature,Trend in SWE,0.0015085127,10,12
+Elevation,Precipitation Seasonality,0.0014693475,0,8
+Vegetation Mode (Graminoid tundra),Nitrogen (0-30 cm),0.0014157277,32,39
+Projected precipitation change,Land Cover (Emergent Herbaceous Wetlands),0.0014101871,13,21
+Annual Precipitation,Land Cover (Emergent Herbaceous Wetlands),0.0013783918,7,21
+Land Cover (Emergent Herbaceous Wetlands),Clay (30-200 cm),0.0013663647,21,48
+Flammability Index,Land Cover (Dwarf Scrub),0.0013180391,9,15
+Temperature Annual Range,Projected precipitation change,0.0012979647,6,13
+Elevation,Mean curvature (2 km),0.0012850816,0,4
+Maximum Fire Temperature,Vegetation Mode (Graminoid tundra),0.001246405,10,32
+Precipitation Seasonality,Land Cover (Emergent Herbaceous Wetlands),0.0012370413,8,21
+Temperature Seasonality,Bulk Density (30-200 cm),0.0012150649,5,42
+Land Cover (Emergent Herbaceous Wetlands),Silt (30-200 cm),0.0012143431,21,46
+Precipitation Seasonality,Sand (30-200 cm),0.0011419284,8,44
+Precipitation Seasonality,Land Cover (Woody Wetlands),0.0011404337,8,19
+Mean curvature (2 km),Land Cover (Shrub/Scrub),0.0011386307,4,16
+Land Cover (Woody Wetlands),Silt (0-30 cm),0.001126079,19,45
+Land Cover (Open Water),Bulk Density (30-200 cm),0.0011208846,17,42
+Flammability Index,Land Cover (Shrub/Scrub),0.0010780386,9,16
+Land Cover (Open Water),Silt (30-200 cm),0.0010457675,17,46
+Trend in SWE,Land Cover (Woody Wetlands),0.001022833,12,19
+Annual Precipitation,Land Cover (Sedge/Herbaceous),0.0009904051,7,14
+Temperature Annual Range,Land Cover (Shrub/Scrub),0.0009821388,6,16
+Trend in SWE,Vegetation Mode (Deciduous forest),0.0009725729,12,34
+Vegetation Mode (Shrub tundra),Vegetation Mode (Graminoid tundra),0.00093676813,30,32
+Land Cover (Emergent Herbaceous Wetlands),Sand (30-200 cm),0.0009072631,21,44
+Slope,Land Cover (Woody Wetlands),0.0008738975,1,19
+Annual Precipitation,Land Cover (Shrub/Scrub),0.0008699009,7,16
+Trend in SWE,Land Cover (Sedge/Herbaceous),0.0008272191,12,14
+Temperature Annual Range,Land Cover (Dwarf Scrub),0.0007873213,6,15
+Land Cover (Emergent Herbaceous Wetlands),Sand (0-30 cm),0.00075752207,21,43
+Land Cover (Emergent Herbaceous Wetlands),Nitrogen (30-200 cm),0.00072270667,21,40
+Land Cover (Shrub/Scrub),Nitrogen (30-200 cm),0.00069903256,16,40
+Maximum Fire Temperature,Land Cover (Emergent Herbaceous Wetlands),0.0006969143,10,21
+Temperature Seasonality,Land Cover (Woody Wetlands),0.0006964489,5,19
+Maximum Fire Temperature,Nitrogen (0-30 cm),0.00068729144,10,39
+Land Cover (Shrub/Scrub),Clay (30-200 cm),0.00065560284,16,48
+Maximum Fire Temperature,Silt (30-200 cm),0.0006337418,10,46
+Mean curvature (2 km),Maximum Fire Temperature,0.00063104264,4,10
+Temperature Seasonality,Land Cover (Sedge/Herbaceous),0.000630672,5,14
+Mean curvature (500 m),Maximum Fire Temperature,0.0006008131,3,10
+Land Cover (Shrub/Scrub),Clay (0-30 cm),0.0005915614,16,47
+Maximum Fire Temperature,Silt (0-30 cm),0.0005900131,10,45
+Land Cover (Emergent Herbaceous Wetlands),Bulk Density (30-200 cm),0.00058888993,21,42
+Mean curvature (500 m),Land Cover (Evergreen Forest),0.00053977815,3,18
+Land Cover (Emergent Herbaceous Wetlands),Soil Organic Carbon (0-30 cm),0.0005076735,21,37
+Land Cover (Woody Wetlands),Vegetation Mode (Graminoid tundra),0.0005063,19,32
+Temperature Annual Range,Land Cover (Woody Wetlands),0.0004981928,6,19
+Maximum Fire Temperature,Sand (30-200 cm),0.00049337087,10,44
+Vegetation Mode (Graminoid tundra),Vegetation Mode (Deciduous forest),0.00048471004,32,34
+Land Cover (Shrub/Scrub),Soil Organic Carbon (30-200 cm),0.00044581664,16,38
+Land Cover (Open Water),Vegetation Mode (Deciduous forest),0.0004441935,17,34
+Temperature Annual Range,Land Cover (Evergreen Forest),0.00043093128,6,18
+Maximum Fire Temperature,Land Cover (Open Water),0.00042971436,10,17
+Temperature Seasonality,Vegetation Mode (Deciduous forest),0.00042610106,5,34
+Land Cover (Shrub/Scrub),Bulk Density (0-30 cm),0.0004183762,16,41
+Maximum Fire Temperature,Sand (0-30 cm),0.0004044788,10,43
+Land Cover (Woody Wetlands),Sand (30-200 cm),0.00037855146,19,44
+Maximum Fire Temperature,Clay (30-200 cm),0.00037555865,10,48
+Elevation,Land Cover (Emergent Herbaceous Wetlands),0.00033846992,0,21
+Maximum Fire Temperature,Mean Annual SWE,0.00032548685,10,11
+Flammability Index,Vegetation Mode (Graminoid tundra),0.0002978699,9,32
+Flammability Index,Land Cover (Emergent Herbaceous Wetlands),0.00029288584,9,21
+Precipitation Seasonality,Land Cover (Shrub/Scrub),0.00028285003,8,16
+Land Cover (Evergreen Forest),Nitrogen (0-30 cm),0.00027423646,18,39
+Temperature Annual Range,Maximum Fire Temperature,0.000267655,6,10
+Land Cover (Dwarf Scrub),Land Cover (Open Water),0.00023643789,15,17
+Land Cover (Shrub/Scrub),Silt (0-30 cm),0.00022925218,16,45
+Land Cover (Sedge/Herbaceous),Bulk Density (30-200 cm),0.00022877527,14,42
+Flammability Index,Maximum Fire Temperature,0.00022741545,9,10
+Land Cover (Evergreen Forest),Bulk Density (30-200 cm),0.00022003087,18,42
+Maximum Fire Temperature,Bulk Density (0-30 cm),0.00021988834,10,41
+Land Cover (Woody Wetlands),Soil Organic Carbon (0-30 cm),0.00021360422,19,37
+Temperature Seasonality,Maximum Fire Temperature,0.00021145734,5,10
+Elevation,Vegetation Mode (Shrub tundra),0.00019872456,0,30
+Maximum Fire Temperature,Nitrogen (30-200 cm),0.00017759007,10,40
+Maximum Fire Temperature,Soil Organic Carbon (0-30 cm),0.00015513027,10,37
+Mean Annual SWE,Land Cover (Shrub/Scrub),0.00015479872,11,16
+Land Cover (Shrub/Scrub),Land Cover (Emergent Herbaceous Wetlands),0.00014943288,16,21
+Vegetation Mode (Shrub tundra),Sand (30-200 cm),0.0001489901,30,44
+Precipitation Seasonality,Maximum Fire Temperature,0.0001423345,8,10
+Maximum Fire Temperature,Soil Organic Carbon (30-200 cm),0.00013046876,10,38
+Maximum Fire Temperature,Projected precipitation change,0.00012447208,10,13
+Maximum Fire Temperature,Bulk Density (30-200 cm),9.1449845e-05,10,42
+Maximum Fire Temperature,Land Cover (Shrub/Scrub),8.705378e-05,10,16
+Elevation,Maximum Fire Temperature,6.180939e-05,0,10
+Temperature Annual Range,Land Cover (Sedge/Herbaceous),3.4848767e-05,6,14
+Elevation,Land Cover (Sedge/Herbaceous),0.0,0,14
+Elevation,Land Cover (Dwarf Scrub),0.0,0,15
+Elevation,Land Cover (Shrub/Scrub),0.0,0,16
+Elevation,Land Cover (Evergreen Forest),0.0,0,18
+Elevation,Land Cover (Woody Wetlands),0.0,0,19
+Elevation,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,0,20
+Elevation,Land Cover (Mixed Forest),0.0,0,22
+Elevation,Land Cover (Deciduous Forest),0.0,0,23
+Elevation,Land Cover (Cultivated Crops),0.0,0,24
+Elevation,"Land Cover (Developed, Open Space)",0.0,0,25
+Elevation,Land Cover (Grassland/Herbaceous),0.0,0,26
+Elevation,Land Cover (Perennial Ice/Snow),0.0,0,27
+Elevation,"Land Cover (Developed, Medium Intensity)",0.0,0,28
+Elevation,Land Cover (Pasture/Hay),0.0,0,29
+Elevation,Vegetation Mode (White spruce),0.0,0,31
+Elevation,Vegetation Mode (Black spruce),0.0,0,33
+Elevation,Vegetation Mode (Deciduous forest),0.0,0,34
+Elevation,Vegetation Mode (Wetland tundra),0.0,0,35
+Elevation,Vegetation Mode (Temperate rainforest),0.0,0,36
+Slope,Land Cover (Evergreen Forest),0.0,1,18
+Slope,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,1,20
+Slope,Land Cover (Mixed Forest),0.0,1,22
+Slope,Land Cover (Deciduous Forest),0.0,1,23
+Slope,Land Cover (Cultivated Crops),0.0,1,24
+Slope,"Land Cover (Developed, Open Space)",0.0,1,25
+Slope,Land Cover (Grassland/Herbaceous),0.0,1,26
+Slope,Land Cover (Perennial Ice/Snow),0.0,1,27
+Slope,"Land Cover (Developed, Medium Intensity)",0.0,1,28
+Slope,Land Cover (Pasture/Hay),0.0,1,29
+Slope,Vegetation Mode (White spruce),0.0,1,31
+Slope,Vegetation Mode (Black spruce),0.0,1,33
+Slope,Vegetation Mode (Deciduous forest),0.0,1,34
+Slope,Vegetation Mode (Wetland tundra),0.0,1,35
+Slope,Vegetation Mode (Temperate rainforest),0.0,1,36
+Aspect,Maximum Fire Temperature,0.0,2,10
+Aspect,Land Cover (Sedge/Herbaceous),0.0,2,14
+Aspect,Land Cover (Dwarf Scrub),0.0,2,15
+Aspect,Land Cover (Shrub/Scrub),0.0,2,16
+Aspect,Land Cover (Evergreen Forest),0.0,2,18
+Aspect,Land Cover (Woody Wetlands),0.0,2,19
+Aspect,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,2,20
+Aspect,Land Cover (Mixed Forest),0.0,2,22
+Aspect,Land Cover (Deciduous Forest),0.0,2,23
+Aspect,Land Cover (Cultivated Crops),0.0,2,24
+Aspect,"Land Cover (Developed, Open Space)",0.0,2,25
+Aspect,Land Cover (Grassland/Herbaceous),0.0,2,26
+Aspect,Land Cover (Perennial Ice/Snow),0.0,2,27
+Aspect,"Land Cover (Developed, Medium Intensity)",0.0,2,28
+Aspect,Land Cover (Pasture/Hay),0.0,2,29
+Aspect,Vegetation Mode (Shrub tundra),0.0,2,30
+Aspect,Vegetation Mode (White spruce),0.0,2,31
+Aspect,Vegetation Mode (Black spruce),0.0,2,33
+Aspect,Vegetation Mode (Deciduous forest),0.0,2,34
+Aspect,Vegetation Mode (Wetland tundra),0.0,2,35
+Aspect,Vegetation Mode (Temperate rainforest),0.0,2,36
+Mean curvature (500 m),Land Cover (Sedge/Herbaceous),0.0,3,14
+Mean curvature (500 m),Land Cover (Shrub/Scrub),0.0,3,16
+Mean curvature (500 m),Land Cover (Woody Wetlands),0.0,3,19
+Mean curvature (500 m),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,3,20
+Mean curvature (500 m),Land Cover (Mixed Forest),0.0,3,22
+Mean curvature (500 m),Land Cover (Deciduous Forest),0.0,3,23
+Mean curvature (500 m),Land Cover (Cultivated Crops),0.0,3,24
+Mean curvature (500 m),"Land Cover (Developed, Open Space)",0.0,3,25
+Mean curvature (500 m),Land Cover (Grassland/Herbaceous),0.0,3,26
+Mean curvature (500 m),Land Cover (Perennial Ice/Snow),0.0,3,27
+Mean curvature (500 m),"Land Cover (Developed, Medium Intensity)",0.0,3,28
+Mean curvature (500 m),Land Cover (Pasture/Hay),0.0,3,29
+Mean curvature (500 m),Vegetation Mode (Shrub tundra),0.0,3,30
+Mean curvature (500 m),Vegetation Mode (White spruce),0.0,3,31
+Mean curvature (500 m),Vegetation Mode (Black spruce),0.0,3,33
+Mean curvature (500 m),Vegetation Mode (Deciduous forest),0.0,3,34
+Mean curvature (500 m),Vegetation Mode (Wetland tundra),0.0,3,35
+Mean curvature (500 m),Vegetation Mode (Temperate rainforest),0.0,3,36
+Mean curvature (2 km),Land Cover (Sedge/Herbaceous),0.0,4,14
+Mean curvature (2 km),Land Cover (Dwarf Scrub),0.0,4,15
+Mean curvature (2 km),Land Cover (Evergreen Forest),0.0,4,18
+Mean curvature (2 km),Land Cover (Woody Wetlands),0.0,4,19
+Mean curvature (2 km),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,4,20
+Mean curvature (2 km),Land Cover (Mixed Forest),0.0,4,22
+Mean curvature (2 km),Land Cover (Deciduous Forest),0.0,4,23
+Mean curvature (2 km),Land Cover (Cultivated Crops),0.0,4,24
+Mean curvature (2 km),"Land Cover (Developed, Open Space)",0.0,4,25
+Mean curvature (2 km),Land Cover (Grassland/Herbaceous),0.0,4,26
+Mean curvature (2 km),Land Cover (Perennial Ice/Snow),0.0,4,27
+Mean curvature (2 km),"Land Cover (Developed, Medium Intensity)",0.0,4,28
+Mean curvature (2 km),Land Cover (Pasture/Hay),0.0,4,29
+Mean curvature (2 km),Vegetation Mode (Shrub tundra),0.0,4,30
+Mean curvature (2 km),Vegetation Mode (White spruce),0.0,4,31
+Mean curvature (2 km),Vegetation Mode (Black spruce),0.0,4,33
+Mean curvature (2 km),Vegetation Mode (Deciduous forest),0.0,4,34
+Mean curvature (2 km),Vegetation Mode (Wetland tundra),0.0,4,35
+Mean curvature (2 km),Vegetation Mode (Temperate rainforest),0.0,4,36
+Temperature Seasonality,Land Cover (Dwarf Scrub),0.0,5,15
+Temperature Seasonality,Land Cover (Shrub/Scrub),0.0,5,16
+Temperature Seasonality,Land Cover (Evergreen Forest),0.0,5,18
+Temperature Seasonality,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,5,20
+Temperature Seasonality,Land Cover (Mixed Forest),0.0,5,22
+Temperature Seasonality,Land Cover (Deciduous Forest),0.0,5,23
+Temperature Seasonality,Land Cover (Cultivated Crops),0.0,5,24
+Temperature Seasonality,"Land Cover (Developed, Open Space)",0.0,5,25
+Temperature Seasonality,Land Cover (Grassland/Herbaceous),0.0,5,26
+Temperature Seasonality,Land Cover (Perennial Ice/Snow),0.0,5,27
+Temperature Seasonality,"Land Cover (Developed, Medium Intensity)",0.0,5,28
+Temperature Seasonality,Land Cover (Pasture/Hay),0.0,5,29
+Temperature Seasonality,Vegetation Mode (Shrub tundra),0.0,5,30
+Temperature Seasonality,Vegetation Mode (White spruce),0.0,5,31
+Temperature Seasonality,Vegetation Mode (Black spruce),0.0,5,33
+Temperature Seasonality,Vegetation Mode (Wetland tundra),0.0,5,35
+Temperature Seasonality,Vegetation Mode (Temperate rainforest),0.0,5,36
+Temperature Annual Range,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,6,20
+Temperature Annual Range,Land Cover (Mixed Forest),0.0,6,22
+Temperature Annual Range,Land Cover (Deciduous Forest),0.0,6,23
+Temperature Annual Range,Land Cover (Cultivated Crops),0.0,6,24
+Temperature Annual Range,"Land Cover (Developed, Open Space)",0.0,6,25
+Temperature Annual Range,Land Cover (Grassland/Herbaceous),0.0,6,26
+Temperature Annual Range,Land Cover (Perennial Ice/Snow),0.0,6,27
+Temperature Annual Range,"Land Cover (Developed, Medium Intensity)",0.0,6,28
+Temperature Annual Range,Land Cover (Pasture/Hay),0.0,6,29
+Temperature Annual Range,Vegetation Mode (Shrub tundra),0.0,6,30
+Temperature Annual Range,Vegetation Mode (White spruce),0.0,6,31
+Temperature Annual Range,Vegetation Mode (Black spruce),0.0,6,33
+Temperature Annual Range,Vegetation Mode (Deciduous forest),0.0,6,34
+Temperature Annual Range,Vegetation Mode (Wetland tundra),0.0,6,35
+Temperature Annual Range,Vegetation Mode (Temperate rainforest),0.0,6,36
+Annual Precipitation,Maximum Fire Temperature,0.0,7,10
+Annual Precipitation,Land Cover (Evergreen Forest),0.0,7,18
+Annual Precipitation,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,7,20
+Annual Precipitation,Land Cover (Mixed Forest),0.0,7,22
+Annual Precipitation,Land Cover (Deciduous Forest),0.0,7,23
+Annual Precipitation,Land Cover (Cultivated Crops),0.0,7,24
+Annual Precipitation,"Land Cover (Developed, Open Space)",0.0,7,25
+Annual Precipitation,Land Cover (Grassland/Herbaceous),0.0,7,26
+Annual Precipitation,Land Cover (Perennial Ice/Snow),0.0,7,27
+Annual Precipitation,"Land Cover (Developed, Medium Intensity)",0.0,7,28
+Annual Precipitation,Land Cover (Pasture/Hay),0.0,7,29
+Annual Precipitation,Vegetation Mode (Shrub tundra),0.0,7,30
+Annual Precipitation,Vegetation Mode (White spruce),0.0,7,31
+Annual Precipitation,Vegetation Mode (Black spruce),0.0,7,33
+Annual Precipitation,Vegetation Mode (Deciduous forest),0.0,7,34
+Annual Precipitation,Vegetation Mode (Wetland tundra),0.0,7,35
+Annual Precipitation,Vegetation Mode (Temperate rainforest),0.0,7,36
+Precipitation Seasonality,Land Cover (Sedge/Herbaceous),0.0,8,14
+Precipitation Seasonality,Land Cover (Dwarf Scrub),0.0,8,15
+Precipitation Seasonality,Land Cover (Evergreen Forest),0.0,8,18
+Precipitation Seasonality,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,8,20
+Precipitation Seasonality,Land Cover (Mixed Forest),0.0,8,22
+Precipitation Seasonality,Land Cover (Deciduous Forest),0.0,8,23
+Precipitation Seasonality,Land Cover (Cultivated Crops),0.0,8,24
+Precipitation Seasonality,"Land Cover (Developed, Open Space)",0.0,8,25
+Precipitation Seasonality,Land Cover (Grassland/Herbaceous),0.0,8,26
+Precipitation Seasonality,Land Cover (Perennial Ice/Snow),0.0,8,27
+Precipitation Seasonality,"Land Cover (Developed, Medium Intensity)",0.0,8,28
+Precipitation Seasonality,Land Cover (Pasture/Hay),0.0,8,29
+Precipitation Seasonality,Vegetation Mode (Shrub tundra),0.0,8,30
+Precipitation Seasonality,Vegetation Mode (White spruce),0.0,8,31
+Precipitation Seasonality,Vegetation Mode (Black spruce),0.0,8,33
+Precipitation Seasonality,Vegetation Mode (Deciduous forest),0.0,8,34
+Precipitation Seasonality,Vegetation Mode (Wetland tundra),0.0,8,35
+Precipitation Seasonality,Vegetation Mode (Temperate rainforest),0.0,8,36
+Flammability Index,Land Cover (Evergreen Forest),0.0,9,18
+Flammability Index,Land Cover (Woody Wetlands),0.0,9,19
+Flammability Index,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,9,20
+Flammability Index,Land Cover (Mixed Forest),0.0,9,22
+Flammability Index,Land Cover (Deciduous Forest),0.0,9,23
+Flammability Index,Land Cover (Cultivated Crops),0.0,9,24
+Flammability Index,"Land Cover (Developed, Open Space)",0.0,9,25
+Flammability Index,Land Cover (Grassland/Herbaceous),0.0,9,26
+Flammability Index,Land Cover (Perennial Ice/Snow),0.0,9,27
+Flammability Index,"Land Cover (Developed, Medium Intensity)",0.0,9,28
+Flammability Index,Land Cover (Pasture/Hay),0.0,9,29
+Flammability Index,Vegetation Mode (White spruce),0.0,9,31
+Flammability Index,Vegetation Mode (Black spruce),0.0,9,33
+Flammability Index,Vegetation Mode (Deciduous forest),0.0,9,34
+Flammability Index,Vegetation Mode (Wetland tundra),0.0,9,35
+Flammability Index,Vegetation Mode (Temperate rainforest),0.0,9,36
+Maximum Fire Temperature,Land Cover (Sedge/Herbaceous),0.0,10,14
+Maximum Fire Temperature,Land Cover (Dwarf Scrub),0.0,10,15
+Maximum Fire Temperature,Land Cover (Evergreen Forest),0.0,10,18
+Maximum Fire Temperature,Land Cover (Woody Wetlands),0.0,10,19
+Maximum Fire Temperature,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,10,20
+Maximum Fire Temperature,Land Cover (Mixed Forest),0.0,10,22
+Maximum Fire Temperature,Land Cover (Deciduous Forest),0.0,10,23
+Maximum Fire Temperature,Land Cover (Cultivated Crops),0.0,10,24
+Maximum Fire Temperature,"Land Cover (Developed, Open Space)",0.0,10,25
+Maximum Fire Temperature,Land Cover (Grassland/Herbaceous),0.0,10,26
+Maximum Fire Temperature,Land Cover (Perennial Ice/Snow),0.0,10,27
+Maximum Fire Temperature,"Land Cover (Developed, Medium Intensity)",0.0,10,28
+Maximum Fire Temperature,Land Cover (Pasture/Hay),0.0,10,29
+Maximum Fire Temperature,Vegetation Mode (Shrub tundra),0.0,10,30
+Maximum Fire Temperature,Vegetation Mode (White spruce),0.0,10,31
+Maximum Fire Temperature,Vegetation Mode (Black spruce),0.0,10,33
+Maximum Fire Temperature,Vegetation Mode (Deciduous forest),0.0,10,34
+Maximum Fire Temperature,Vegetation Mode (Wetland tundra),0.0,10,35
+Maximum Fire Temperature,Vegetation Mode (Temperate rainforest),0.0,10,36
+Maximum Fire Temperature,Clay (0-30 cm),0.0,10,47
+Mean Annual SWE,Land Cover (Evergreen Forest),0.0,11,18
+Mean Annual SWE,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,11,20
+Mean Annual SWE,Land Cover (Mixed Forest),0.0,11,22
+Mean Annual SWE,Land Cover (Deciduous Forest),0.0,11,23
+Mean Annual SWE,Land Cover (Cultivated Crops),0.0,11,24
+Mean Annual SWE,"Land Cover (Developed, Open Space)",0.0,11,25
+Mean Annual SWE,Land Cover (Grassland/Herbaceous),0.0,11,26
+Mean Annual SWE,Land Cover (Perennial Ice/Snow),0.0,11,27
+Mean Annual SWE,"Land Cover (Developed, Medium Intensity)",0.0,11,28
+Mean Annual SWE,Land Cover (Pasture/Hay),0.0,11,29
+Mean Annual SWE,Vegetation Mode (White spruce),0.0,11,31
+Mean Annual SWE,Vegetation Mode (Black spruce),0.0,11,33
+Mean Annual SWE,Vegetation Mode (Deciduous forest),0.0,11,34
+Mean Annual SWE,Vegetation Mode (Wetland tundra),0.0,11,35
+Mean Annual SWE,Vegetation Mode (Temperate rainforest),0.0,11,36
+Trend in SWE,Land Cover (Evergreen Forest),0.0,12,18
+Trend in SWE,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,12,20
+Trend in SWE,Land Cover (Mixed Forest),0.0,12,22
+Trend in SWE,Land Cover (Deciduous Forest),0.0,12,23
+Trend in SWE,Land Cover (Cultivated Crops),0.0,12,24
+Trend in SWE,"Land Cover (Developed, Open Space)",0.0,12,25
+Trend in SWE,Land Cover (Grassland/Herbaceous),0.0,12,26
+Trend in SWE,Land Cover (Perennial Ice/Snow),0.0,12,27
+Trend in SWE,"Land Cover (Developed, Medium Intensity)",0.0,12,28
+Trend in SWE,Land Cover (Pasture/Hay),0.0,12,29
+Trend in SWE,Vegetation Mode (Shrub tundra),0.0,12,30
+Trend in SWE,Vegetation Mode (White spruce),0.0,12,31
+Trend in SWE,Vegetation Mode (Black spruce),0.0,12,33
+Trend in SWE,Vegetation Mode (Wetland tundra),0.0,12,35
+Trend in SWE,Vegetation Mode (Temperate rainforest),0.0,12,36
+Projected precipitation change,Land Cover (Sedge/Herbaceous),0.0,13,14
+Projected precipitation change,Land Cover (Dwarf Scrub),0.0,13,15
+Projected precipitation change,Land Cover (Shrub/Scrub),0.0,13,16
+Projected precipitation change,Land Cover (Evergreen Forest),0.0,13,18
+Projected precipitation change,Land Cover (Woody Wetlands),0.0,13,19
+Projected precipitation change,Land Cover (Barren Land (Rock/Sand/Clay)),0.0,13,20
+Projected precipitation change,Land Cover (Mixed Forest),0.0,13,22
+Projected precipitation change,Land Cover (Deciduous Forest),0.0,13,23
+Projected precipitation change,Land Cover (Cultivated Crops),0.0,13,24
+Projected precipitation change,"Land Cover (Developed, Open Space)",0.0,13,25
+Projected precipitation change,Land Cover (Grassland/Herbaceous),0.0,13,26
+Projected precipitation change,Land Cover (Perennial Ice/Snow),0.0,13,27
+Projected precipitation change,"Land Cover (Developed, Medium Intensity)",0.0,13,28
+Projected precipitation change,Land Cover (Pasture/Hay),0.0,13,29
+Projected precipitation change,Vegetation Mode (Shrub tundra),0.0,13,30
+Projected precipitation change,Vegetation Mode (White spruce),0.0,13,31
+Projected precipitation change,Vegetation Mode (Black spruce),0.0,13,33
+Projected precipitation change,Vegetation Mode (Deciduous forest),0.0,13,34
+Projected precipitation change,Vegetation Mode (Wetland tundra),0.0,13,35
+Projected precipitation change,Vegetation Mode (Temperate rainforest),0.0,13,36
+Land Cover (Sedge/Herbaceous),Land Cover (Dwarf Scrub),0.0,14,15
+Land Cover (Sedge/Herbaceous),Land Cover (Shrub/Scrub),0.0,14,16
+Land Cover (Sedge/Herbaceous),Land Cover (Open Water),0.0,14,17
+Land Cover (Sedge/Herbaceous),Land Cover (Evergreen Forest),0.0,14,18
+Land Cover (Sedge/Herbaceous),Land Cover (Woody Wetlands),0.0,14,19
+Land Cover (Sedge/Herbaceous),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,14,20
+Land Cover (Sedge/Herbaceous),Land Cover (Emergent Herbaceous Wetlands),0.0,14,21
+Land Cover (Sedge/Herbaceous),Land Cover (Mixed Forest),0.0,14,22
+Land Cover (Sedge/Herbaceous),Land Cover (Deciduous Forest),0.0,14,23
+Land Cover (Sedge/Herbaceous),Land Cover (Cultivated Crops),0.0,14,24
+Land Cover (Sedge/Herbaceous),"Land Cover (Developed, Open Space)",0.0,14,25
+Land Cover (Sedge/Herbaceous),Land Cover (Grassland/Herbaceous),0.0,14,26
+Land Cover (Sedge/Herbaceous),Land Cover (Perennial Ice/Snow),0.0,14,27
+Land Cover (Sedge/Herbaceous),"Land Cover (Developed, Medium Intensity)",0.0,14,28
+Land Cover (Sedge/Herbaceous),Land Cover (Pasture/Hay),0.0,14,29
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Shrub tundra),0.0,14,30
+Land Cover (Sedge/Herbaceous),Vegetation Mode (White spruce),0.0,14,31
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Graminoid tundra),0.0,14,32
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Black spruce),0.0,14,33
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Deciduous forest),0.0,14,34
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Wetland tundra),0.0,14,35
+Land Cover (Sedge/Herbaceous),Vegetation Mode (Temperate rainforest),0.0,14,36
+Land Cover (Sedge/Herbaceous),Soil Organic Carbon (0-30 cm),0.0,14,37
+Land Cover (Sedge/Herbaceous),Soil Organic Carbon (30-200 cm),0.0,14,38
+Land Cover (Sedge/Herbaceous),Nitrogen (0-30 cm),0.0,14,39
+Land Cover (Sedge/Herbaceous),Nitrogen (30-200 cm),0.0,14,40
+Land Cover (Sedge/Herbaceous),Bulk Density (0-30 cm),0.0,14,41
+Land Cover (Sedge/Herbaceous),Sand (0-30 cm),0.0,14,43
+Land Cover (Sedge/Herbaceous),Sand (30-200 cm),0.0,14,44
+Land Cover (Sedge/Herbaceous),Silt (0-30 cm),0.0,14,45
+Land Cover (Sedge/Herbaceous),Silt (30-200 cm),0.0,14,46
+Land Cover (Sedge/Herbaceous),Clay (0-30 cm),0.0,14,47
+Land Cover (Sedge/Herbaceous),Clay (30-200 cm),0.0,14,48
+Land Cover (Dwarf Scrub),Land Cover (Shrub/Scrub),0.0,15,16
+Land Cover (Dwarf Scrub),Land Cover (Evergreen Forest),0.0,15,18
+Land Cover (Dwarf Scrub),Land Cover (Woody Wetlands),0.0,15,19
+Land Cover (Dwarf Scrub),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,15,20
+Land Cover (Dwarf Scrub),Land Cover (Emergent Herbaceous Wetlands),0.0,15,21
+Land Cover (Dwarf Scrub),Land Cover (Mixed Forest),0.0,15,22
+Land Cover (Dwarf Scrub),Land Cover (Deciduous Forest),0.0,15,23
+Land Cover (Dwarf Scrub),Land Cover (Cultivated Crops),0.0,15,24
+Land Cover (Dwarf Scrub),"Land Cover (Developed, Open Space)",0.0,15,25
+Land Cover (Dwarf Scrub),Land Cover (Grassland/Herbaceous),0.0,15,26
+Land Cover (Dwarf Scrub),Land Cover (Perennial Ice/Snow),0.0,15,27
+Land Cover (Dwarf Scrub),"Land Cover (Developed, Medium Intensity)",0.0,15,28
+Land Cover (Dwarf Scrub),Land Cover (Pasture/Hay),0.0,15,29
+Land Cover (Dwarf Scrub),Vegetation Mode (Shrub tundra),0.0,15,30
+Land Cover (Dwarf Scrub),Vegetation Mode (White spruce),0.0,15,31
+Land Cover (Dwarf Scrub),Vegetation Mode (Graminoid tundra),0.0,15,32
+Land Cover (Dwarf Scrub),Vegetation Mode (Black spruce),0.0,15,33
+Land Cover (Dwarf Scrub),Vegetation Mode (Deciduous forest),0.0,15,34
+Land Cover (Dwarf Scrub),Vegetation Mode (Wetland tundra),0.0,15,35
+Land Cover (Dwarf Scrub),Vegetation Mode (Temperate rainforest),0.0,15,36
+Land Cover (Dwarf Scrub),Soil Organic Carbon (0-30 cm),0.0,15,37
+Land Cover (Dwarf Scrub),Soil Organic Carbon (30-200 cm),0.0,15,38
+Land Cover (Dwarf Scrub),Nitrogen (0-30 cm),0.0,15,39
+Land Cover (Dwarf Scrub),Bulk Density (30-200 cm),0.0,15,42
+Land Cover (Dwarf Scrub),Sand (0-30 cm),0.0,15,43
+Land Cover (Dwarf Scrub),Sand (30-200 cm),0.0,15,44
+Land Cover (Dwarf Scrub),Silt (0-30 cm),0.0,15,45
+Land Cover (Dwarf Scrub),Silt (30-200 cm),0.0,15,46
+Land Cover (Dwarf Scrub),Clay (30-200 cm),0.0,15,48
+Land Cover (Shrub/Scrub),Land Cover (Open Water),0.0,16,17
+Land Cover (Shrub/Scrub),Land Cover (Evergreen Forest),0.0,16,18
+Land Cover (Shrub/Scrub),Land Cover (Woody Wetlands),0.0,16,19
+Land Cover (Shrub/Scrub),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,16,20
+Land Cover (Shrub/Scrub),Land Cover (Mixed Forest),0.0,16,22
+Land Cover (Shrub/Scrub),Land Cover (Deciduous Forest),0.0,16,23
+Land Cover (Shrub/Scrub),Land Cover (Cultivated Crops),0.0,16,24
+Land Cover (Shrub/Scrub),"Land Cover (Developed, Open Space)",0.0,16,25
+Land Cover (Shrub/Scrub),Land Cover (Grassland/Herbaceous),0.0,16,26
+Land Cover (Shrub/Scrub),Land Cover (Perennial Ice/Snow),0.0,16,27
+Land Cover (Shrub/Scrub),"Land Cover (Developed, Medium Intensity)",0.0,16,28
+Land Cover (Shrub/Scrub),Land Cover (Pasture/Hay),0.0,16,29
+Land Cover (Shrub/Scrub),Vegetation Mode (Shrub tundra),0.0,16,30
+Land Cover (Shrub/Scrub),Vegetation Mode (White spruce),0.0,16,31
+Land Cover (Shrub/Scrub),Vegetation Mode (Graminoid tundra),0.0,16,32
+Land Cover (Shrub/Scrub),Vegetation Mode (Black spruce),0.0,16,33
+Land Cover (Shrub/Scrub),Vegetation Mode (Deciduous forest),0.0,16,34
+Land Cover (Shrub/Scrub),Vegetation Mode (Wetland tundra),0.0,16,35
+Land Cover (Shrub/Scrub),Vegetation Mode (Temperate rainforest),0.0,16,36
+Land Cover (Shrub/Scrub),Soil Organic Carbon (0-30 cm),0.0,16,37
+Land Cover (Shrub/Scrub),Nitrogen (0-30 cm),0.0,16,39
+Land Cover (Shrub/Scrub),Bulk Density (30-200 cm),0.0,16,42
+Land Cover (Shrub/Scrub),Sand (0-30 cm),0.0,16,43
+Land Cover (Shrub/Scrub),Sand (30-200 cm),0.0,16,44
+Land Cover (Shrub/Scrub),Silt (30-200 cm),0.0,16,46
+Land Cover (Open Water),Land Cover (Evergreen Forest),0.0,17,18
+Land Cover (Open Water),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,17,20
+Land Cover (Open Water),Land Cover (Mixed Forest),0.0,17,22
+Land Cover (Open Water),Land Cover (Deciduous Forest),0.0,17,23
+Land Cover (Open Water),Land Cover (Cultivated Crops),0.0,17,24
+Land Cover (Open Water),"Land Cover (Developed, Open Space)",0.0,17,25
+Land Cover (Open Water),Land Cover (Grassland/Herbaceous),0.0,17,26
+Land Cover (Open Water),Land Cover (Perennial Ice/Snow),0.0,17,27
+Land Cover (Open Water),"Land Cover (Developed, Medium Intensity)",0.0,17,28
+Land Cover (Open Water),Land Cover (Pasture/Hay),0.0,17,29
+Land Cover (Open Water),Vegetation Mode (Shrub tundra),0.0,17,30
+Land Cover (Open Water),Vegetation Mode (White spruce),0.0,17,31
+Land Cover (Open Water),Vegetation Mode (Black spruce),0.0,17,33
+Land Cover (Open Water),Vegetation Mode (Wetland tundra),0.0,17,35
+Land Cover (Open Water),Vegetation Mode (Temperate rainforest),0.0,17,36
+Land Cover (Evergreen Forest),Land Cover (Woody Wetlands),0.0,18,19
+Land Cover (Evergreen Forest),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,18,20
+Land Cover (Evergreen Forest),Land Cover (Emergent Herbaceous Wetlands),0.0,18,21
+Land Cover (Evergreen Forest),Land Cover (Mixed Forest),0.0,18,22
+Land Cover (Evergreen Forest),Land Cover (Deciduous Forest),0.0,18,23
+Land Cover (Evergreen Forest),Land Cover (Cultivated Crops),0.0,18,24
+Land Cover (Evergreen Forest),"Land Cover (Developed, Open Space)",0.0,18,25
+Land Cover (Evergreen Forest),Land Cover (Grassland/Herbaceous),0.0,18,26
+Land Cover (Evergreen Forest),Land Cover (Perennial Ice/Snow),0.0,18,27
+Land Cover (Evergreen Forest),"Land Cover (Developed, Medium Intensity)",0.0,18,28
+Land Cover (Evergreen Forest),Land Cover (Pasture/Hay),0.0,18,29
+Land Cover (Evergreen Forest),Vegetation Mode (Shrub tundra),0.0,18,30
+Land Cover (Evergreen Forest),Vegetation Mode (White spruce),0.0,18,31
+Land Cover (Evergreen Forest),Vegetation Mode (Graminoid tundra),0.0,18,32
+Land Cover (Evergreen Forest),Vegetation Mode (Black spruce),0.0,18,33
+Land Cover (Evergreen Forest),Vegetation Mode (Deciduous forest),0.0,18,34
+Land Cover (Evergreen Forest),Vegetation Mode (Wetland tundra),0.0,18,35
+Land Cover (Evergreen Forest),Vegetation Mode (Temperate rainforest),0.0,18,36
+Land Cover (Evergreen Forest),Soil Organic Carbon (0-30 cm),0.0,18,37
+Land Cover (Evergreen Forest),Soil Organic Carbon (30-200 cm),0.0,18,38
+Land Cover (Evergreen Forest),Nitrogen (30-200 cm),0.0,18,40
+Land Cover (Evergreen Forest),Bulk Density (0-30 cm),0.0,18,41
+Land Cover (Evergreen Forest),Sand (0-30 cm),0.0,18,43
+Land Cover (Evergreen Forest),Sand (30-200 cm),0.0,18,44
+Land Cover (Evergreen Forest),Silt (0-30 cm),0.0,18,45
+Land Cover (Evergreen Forest),Silt (30-200 cm),0.0,18,46
+Land Cover (Evergreen Forest),Clay (0-30 cm),0.0,18,47
+Land Cover (Evergreen Forest),Clay (30-200 cm),0.0,18,48
+Land Cover (Woody Wetlands),Land Cover (Barren Land (Rock/Sand/Clay)),0.0,19,20
+Land Cover (Woody Wetlands),Land Cover (Mixed Forest),0.0,19,22
+Land Cover (Woody Wetlands),Land Cover (Deciduous Forest),0.0,19,23
+Land Cover (Woody Wetlands),Land Cover (Cultivated Crops),0.0,19,24
+Land Cover (Woody Wetlands),"Land Cover (Developed, Open Space)",0.0,19,25
+Land Cover (Woody Wetlands),Land Cover (Grassland/Herbaceous),0.0,19,26
+Land Cover (Woody Wetlands),Land Cover (Perennial Ice/Snow),0.0,19,27
+Land Cover (Woody Wetlands),"Land Cover (Developed, Medium Intensity)",0.0,19,28
+Land Cover (Woody Wetlands),Land Cover (Pasture/Hay),0.0,19,29
+Land Cover (Woody Wetlands),Vegetation Mode (Shrub tundra),0.0,19,30
+Land Cover (Woody Wetlands),Vegetation Mode (White spruce),0.0,19,31
+Land Cover (Woody Wetlands),Vegetation Mode (Black spruce),0.0,19,33
+Land Cover (Woody Wetlands),Vegetation Mode (Deciduous forest),0.0,19,34
+Land Cover (Woody Wetlands),Vegetation Mode (Wetland tundra),0.0,19,35
+Land Cover (Woody Wetlands),Vegetation Mode (Temperate rainforest),0.0,19,36
+Land Cover (Woody Wetlands),Soil Organic Carbon (30-200 cm),0.0,19,38
+Land Cover (Woody Wetlands),Nitrogen (30-200 cm),0.0,19,40
+Land Cover (Woody Wetlands),Bulk Density (0-30 cm),0.0,19,41
+Land Cover (Woody Wetlands),Bulk Density (30-200 cm),0.0,19,42
+Land Cover (Woody Wetlands),Sand (0-30 cm),0.0,19,43
+Land Cover (Woody Wetlands),Silt (30-200 cm),0.0,19,46
+Land Cover (Woody Wetlands),Clay (0-30 cm),0.0,19,47
+Land Cover (Woody Wetlands),Clay (30-200 cm),0.0,19,48
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Emergent Herbaceous Wetlands),0.0,20,21
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Mixed Forest),0.0,20,22
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Deciduous Forest),0.0,20,23
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Cultivated Crops),0.0,20,24
+Land Cover (Barren Land (Rock/Sand/Clay)),"Land Cover (Developed, Open Space)",0.0,20,25
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Grassland/Herbaceous),0.0,20,26
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Perennial Ice/Snow),0.0,20,27
+Land Cover (Barren Land (Rock/Sand/Clay)),"Land Cover (Developed, Medium Intensity)",0.0,20,28
+Land Cover (Barren Land (Rock/Sand/Clay)),Land Cover (Pasture/Hay),0.0,20,29
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Shrub tundra),0.0,20,30
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (White spruce),0.0,20,31
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Graminoid tundra),0.0,20,32
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Black spruce),0.0,20,33
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Deciduous forest),0.0,20,34
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Wetland tundra),0.0,20,35
+Land Cover (Barren Land (Rock/Sand/Clay)),Vegetation Mode (Temperate rainforest),0.0,20,36
+Land Cover (Barren Land (Rock/Sand/Clay)),Soil Organic Carbon (0-30 cm),0.0,20,37
+Land Cover (Barren Land (Rock/Sand/Clay)),Soil Organic Carbon (30-200 cm),0.0,20,38
+Land Cover (Barren Land (Rock/Sand/Clay)),Nitrogen (0-30 cm),0.0,20,39
+Land Cover (Barren Land (Rock/Sand/Clay)),Nitrogen (30-200 cm),0.0,20,40
+Land Cover (Barren Land (Rock/Sand/Clay)),Bulk Density (0-30 cm),0.0,20,41
+Land Cover (Barren Land (Rock/Sand/Clay)),Bulk Density (30-200 cm),0.0,20,42
+Land Cover (Barren Land (Rock/Sand/Clay)),Sand (0-30 cm),0.0,20,43
+Land Cover (Barren Land (Rock/Sand/Clay)),Sand (30-200 cm),0.0,20,44
+Land Cover (Barren Land (Rock/Sand/Clay)),Silt (0-30 cm),0.0,20,45
+Land Cover (Barren Land (Rock/Sand/Clay)),Silt (30-200 cm),0.0,20,46
+Land Cover (Barren Land (Rock/Sand/Clay)),Clay (0-30 cm),0.0,20,47
+Land Cover (Barren Land (Rock/Sand/Clay)),Clay (30-200 cm),0.0,20,48
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Mixed Forest),0.0,21,22
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Deciduous Forest),0.0,21,23
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Cultivated Crops),0.0,21,24
+Land Cover (Emergent Herbaceous Wetlands),"Land Cover (Developed, Open Space)",0.0,21,25
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Grassland/Herbaceous),0.0,21,26
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Perennial Ice/Snow),0.0,21,27
+Land Cover (Emergent Herbaceous Wetlands),"Land Cover (Developed, Medium Intensity)",0.0,21,28
+Land Cover (Emergent Herbaceous Wetlands),Land Cover (Pasture/Hay),0.0,21,29
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Shrub tundra),0.0,21,30
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (White spruce),0.0,21,31
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Black spruce),0.0,21,33
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Deciduous forest),0.0,21,34
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Wetland tundra),0.0,21,35
+Land Cover (Emergent Herbaceous Wetlands),Vegetation Mode (Temperate rainforest),0.0,21,36
+Land Cover (Mixed Forest),Land Cover (Deciduous Forest),0.0,22,23
+Land Cover (Mixed Forest),Land Cover (Cultivated Crops),0.0,22,24
+Land Cover (Mixed Forest),"Land Cover (Developed, Open Space)",0.0,22,25
+Land Cover (Mixed Forest),Land Cover (Grassland/Herbaceous),0.0,22,26
+Land Cover (Mixed Forest),Land Cover (Perennial Ice/Snow),0.0,22,27
+Land Cover (Mixed Forest),"Land Cover (Developed, Medium Intensity)",0.0,22,28
+Land Cover (Mixed Forest),Land Cover (Pasture/Hay),0.0,22,29
+Land Cover (Mixed Forest),Vegetation Mode (Shrub tundra),0.0,22,30
+Land Cover (Mixed Forest),Vegetation Mode (White spruce),0.0,22,31
+Land Cover (Mixed Forest),Vegetation Mode (Graminoid tundra),0.0,22,32
+Land Cover (Mixed Forest),Vegetation Mode (Black spruce),0.0,22,33
+Land Cover (Mixed Forest),Vegetation Mode (Deciduous forest),0.0,22,34
+Land Cover (Mixed Forest),Vegetation Mode (Wetland tundra),0.0,22,35
+Land Cover (Mixed Forest),Vegetation Mode (Temperate rainforest),0.0,22,36
+Land Cover (Mixed Forest),Soil Organic Carbon (0-30 cm),0.0,22,37
+Land Cover (Mixed Forest),Soil Organic Carbon (30-200 cm),0.0,22,38
+Land Cover (Mixed Forest),Nitrogen (0-30 cm),0.0,22,39
+Land Cover (Mixed Forest),Nitrogen (30-200 cm),0.0,22,40
+Land Cover (Mixed Forest),Bulk Density (0-30 cm),0.0,22,41
+Land Cover (Mixed Forest),Bulk Density (30-200 cm),0.0,22,42
+Land Cover (Mixed Forest),Sand (0-30 cm),0.0,22,43
+Land Cover (Mixed Forest),Sand (30-200 cm),0.0,22,44
+Land Cover (Mixed Forest),Silt (0-30 cm),0.0,22,45
+Land Cover (Mixed Forest),Silt (30-200 cm),0.0,22,46
+Land Cover (Mixed Forest),Clay (0-30 cm),0.0,22,47
+Land Cover (Mixed Forest),Clay (30-200 cm),0.0,22,48
+Land Cover (Deciduous Forest),Land Cover (Cultivated Crops),0.0,23,24
+Land Cover (Deciduous Forest),"Land Cover (Developed, Open Space)",0.0,23,25
+Land Cover (Deciduous Forest),Land Cover (Grassland/Herbaceous),0.0,23,26
+Land Cover (Deciduous Forest),Land Cover (Perennial Ice/Snow),0.0,23,27
+Land Cover (Deciduous Forest),"Land Cover (Developed, Medium Intensity)",0.0,23,28
+Land Cover (Deciduous Forest),Land Cover (Pasture/Hay),0.0,23,29
+Land Cover (Deciduous Forest),Vegetation Mode (Shrub tundra),0.0,23,30
+Land Cover (Deciduous Forest),Vegetation Mode (White spruce),0.0,23,31
+Land Cover (Deciduous Forest),Vegetation Mode (Graminoid tundra),0.0,23,32
+Land Cover (Deciduous Forest),Vegetation Mode (Black spruce),0.0,23,33
+Land Cover (Deciduous Forest),Vegetation Mode (Deciduous forest),0.0,23,34
+Land Cover (Deciduous Forest),Vegetation Mode (Wetland tundra),0.0,23,35
+Land Cover (Deciduous Forest),Vegetation Mode (Temperate rainforest),0.0,23,36
+Land Cover (Deciduous Forest),Soil Organic Carbon (0-30 cm),0.0,23,37
+Land Cover (Deciduous Forest),Soil Organic Carbon (30-200 cm),0.0,23,38
+Land Cover (Deciduous Forest),Nitrogen (0-30 cm),0.0,23,39
+Land Cover (Deciduous Forest),Nitrogen (30-200 cm),0.0,23,40
+Land Cover (Deciduous Forest),Bulk Density (0-30 cm),0.0,23,41
+Land Cover (Deciduous Forest),Bulk Density (30-200 cm),0.0,23,42
+Land Cover (Deciduous Forest),Sand (0-30 cm),0.0,23,43
+Land Cover (Deciduous Forest),Sand (30-200 cm),0.0,23,44
+Land Cover (Deciduous Forest),Silt (0-30 cm),0.0,23,45
+Land Cover (Deciduous Forest),Silt (30-200 cm),0.0,23,46
+Land Cover (Deciduous Forest),Clay (0-30 cm),0.0,23,47
+Land Cover (Deciduous Forest),Clay (30-200 cm),0.0,23,48
+Land Cover (Cultivated Crops),"Land Cover (Developed, Open Space)",0.0,24,25
+Land Cover (Cultivated Crops),Land Cover (Grassland/Herbaceous),0.0,24,26
+Land Cover (Cultivated Crops),Land Cover (Perennial Ice/Snow),0.0,24,27
+Land Cover (Cultivated Crops),"Land Cover (Developed, Medium Intensity)",0.0,24,28
+Land Cover (Cultivated Crops),Land Cover (Pasture/Hay),0.0,24,29
+Land Cover (Cultivated Crops),Vegetation Mode (Shrub tundra),0.0,24,30
+Land Cover (Cultivated Crops),Vegetation Mode (White spruce),0.0,24,31
+Land Cover (Cultivated Crops),Vegetation Mode (Graminoid tundra),0.0,24,32
+Land Cover (Cultivated Crops),Vegetation Mode (Black spruce),0.0,24,33
+Land Cover (Cultivated Crops),Vegetation Mode (Deciduous forest),0.0,24,34
+Land Cover (Cultivated Crops),Vegetation Mode (Wetland tundra),0.0,24,35
+Land Cover (Cultivated Crops),Vegetation Mode (Temperate rainforest),0.0,24,36
+Land Cover (Cultivated Crops),Soil Organic Carbon (0-30 cm),0.0,24,37
+Land Cover (Cultivated Crops),Soil Organic Carbon (30-200 cm),0.0,24,38
+Land Cover (Cultivated Crops),Nitrogen (0-30 cm),0.0,24,39
+Land Cover (Cultivated Crops),Nitrogen (30-200 cm),0.0,24,40
+Land Cover (Cultivated Crops),Bulk Density (0-30 cm),0.0,24,41
+Land Cover (Cultivated Crops),Bulk Density (30-200 cm),0.0,24,42
+Land Cover (Cultivated Crops),Sand (0-30 cm),0.0,24,43
+Land Cover (Cultivated Crops),Sand (30-200 cm),0.0,24,44
+Land Cover (Cultivated Crops),Silt (0-30 cm),0.0,24,45
+Land Cover (Cultivated Crops),Silt (30-200 cm),0.0,24,46
+Land Cover (Cultivated Crops),Clay (0-30 cm),0.0,24,47
+Land Cover (Cultivated Crops),Clay (30-200 cm),0.0,24,48
+"Land Cover (Developed, Open Space)",Land Cover (Grassland/Herbaceous),0.0,25,26
+"Land Cover (Developed, Open Space)",Land Cover (Perennial Ice/Snow),0.0,25,27
+"Land Cover (Developed, Open Space)","Land Cover (Developed, Medium Intensity)",0.0,25,28
+"Land Cover (Developed, Open Space)",Land Cover (Pasture/Hay),0.0,25,29
+"Land Cover (Developed, Open Space)",Vegetation Mode (Shrub tundra),0.0,25,30
+"Land Cover (Developed, Open Space)",Vegetation Mode (White spruce),0.0,25,31
+"Land Cover (Developed, Open Space)",Vegetation Mode (Graminoid tundra),0.0,25,32
+"Land Cover (Developed, Open Space)",Vegetation Mode (Black spruce),0.0,25,33
+"Land Cover (Developed, Open Space)",Vegetation Mode (Deciduous forest),0.0,25,34
+"Land Cover (Developed, Open Space)",Vegetation Mode (Wetland tundra),0.0,25,35
+"Land Cover (Developed, Open Space)",Vegetation Mode (Temperate rainforest),0.0,25,36
+"Land Cover (Developed, Open Space)",Soil Organic Carbon (0-30 cm),0.0,25,37
+"Land Cover (Developed, Open Space)",Soil Organic Carbon (30-200 cm),0.0,25,38
+"Land Cover (Developed, Open Space)",Nitrogen (0-30 cm),0.0,25,39
+"Land Cover (Developed, Open Space)",Nitrogen (30-200 cm),0.0,25,40
+"Land Cover (Developed, Open Space)",Bulk Density (0-30 cm),0.0,25,41
+"Land Cover (Developed, Open Space)",Bulk Density (30-200 cm),0.0,25,42
+"Land Cover (Developed, Open Space)",Sand (0-30 cm),0.0,25,43
+"Land Cover (Developed, Open Space)",Sand (30-200 cm),0.0,25,44
+"Land Cover (Developed, Open Space)",Silt (0-30 cm),0.0,25,45
+"Land Cover (Developed, Open Space)",Silt (30-200 cm),0.0,25,46
+"Land Cover (Developed, Open Space)",Clay (0-30 cm),0.0,25,47
+"Land Cover (Developed, Open Space)",Clay (30-200 cm),0.0,25,48
+Land Cover (Grassland/Herbaceous),Land Cover (Perennial Ice/Snow),0.0,26,27
+Land Cover (Grassland/Herbaceous),"Land Cover (Developed, Medium Intensity)",0.0,26,28
+Land Cover (Grassland/Herbaceous),Land Cover (Pasture/Hay),0.0,26,29
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Shrub tundra),0.0,26,30
+Land Cover (Grassland/Herbaceous),Vegetation Mode (White spruce),0.0,26,31
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Graminoid tundra),0.0,26,32
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Black spruce),0.0,26,33
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Deciduous forest),0.0,26,34
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Wetland tundra),0.0,26,35
+Land Cover (Grassland/Herbaceous),Vegetation Mode (Temperate rainforest),0.0,26,36
+Land Cover (Grassland/Herbaceous),Soil Organic Carbon (0-30 cm),0.0,26,37
+Land Cover (Grassland/Herbaceous),Soil Organic Carbon (30-200 cm),0.0,26,38
+Land Cover (Grassland/Herbaceous),Nitrogen (0-30 cm),0.0,26,39
+Land Cover (Grassland/Herbaceous),Nitrogen (30-200 cm),0.0,26,40
+Land Cover (Grassland/Herbaceous),Bulk Density (0-30 cm),0.0,26,41
+Land Cover (Grassland/Herbaceous),Bulk Density (30-200 cm),0.0,26,42
+Land Cover (Grassland/Herbaceous),Sand (0-30 cm),0.0,26,43
+Land Cover (Grassland/Herbaceous),Sand (30-200 cm),0.0,26,44
+Land Cover (Grassland/Herbaceous),Silt (0-30 cm),0.0,26,45
+Land Cover (Grassland/Herbaceous),Silt (30-200 cm),0.0,26,46
+Land Cover (Grassland/Herbaceous),Clay (0-30 cm),0.0,26,47
+Land Cover (Grassland/Herbaceous),Clay (30-200 cm),0.0,26,48
+Land Cover (Perennial Ice/Snow),"Land Cover (Developed, Medium Intensity)",0.0,27,28
+Land Cover (Perennial Ice/Snow),Land Cover (Pasture/Hay),0.0,27,29
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Shrub tundra),0.0,27,30
+Land Cover (Perennial Ice/Snow),Vegetation Mode (White spruce),0.0,27,31
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Graminoid tundra),0.0,27,32
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Black spruce),0.0,27,33
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Deciduous forest),0.0,27,34
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Wetland tundra),0.0,27,35
+Land Cover (Perennial Ice/Snow),Vegetation Mode (Temperate rainforest),0.0,27,36
+Land Cover (Perennial Ice/Snow),Soil Organic Carbon (0-30 cm),0.0,27,37
+Land Cover (Perennial Ice/Snow),Soil Organic Carbon (30-200 cm),0.0,27,38
+Land Cover (Perennial Ice/Snow),Nitrogen (0-30 cm),0.0,27,39
+Land Cover (Perennial Ice/Snow),Nitrogen (30-200 cm),0.0,27,40
+Land Cover (Perennial Ice/Snow),Bulk Density (0-30 cm),0.0,27,41
+Land Cover (Perennial Ice/Snow),Bulk Density (30-200 cm),0.0,27,42
+Land Cover (Perennial Ice/Snow),Sand (0-30 cm),0.0,27,43
+Land Cover (Perennial Ice/Snow),Sand (30-200 cm),0.0,27,44
+Land Cover (Perennial Ice/Snow),Silt (0-30 cm),0.0,27,45
+Land Cover (Perennial Ice/Snow),Silt (30-200 cm),0.0,27,46
+Land Cover (Perennial Ice/Snow),Clay (0-30 cm),0.0,27,47
+Land Cover (Perennial Ice/Snow),Clay (30-200 cm),0.0,27,48
+"Land Cover (Developed, Medium Intensity)",Land Cover (Pasture/Hay),0.0,28,29
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Shrub tundra),0.0,28,30
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (White spruce),0.0,28,31
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Graminoid tundra),0.0,28,32
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Black spruce),0.0,28,33
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Deciduous forest),0.0,28,34
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Wetland tundra),0.0,28,35
+"Land Cover (Developed, Medium Intensity)",Vegetation Mode (Temperate rainforest),0.0,28,36
+"Land Cover (Developed, Medium Intensity)",Soil Organic Carbon (0-30 cm),0.0,28,37
+"Land Cover (Developed, Medium Intensity)",Soil Organic Carbon (30-200 cm),0.0,28,38
+"Land Cover (Developed, Medium Intensity)",Nitrogen (0-30 cm),0.0,28,39
+"Land Cover (Developed, Medium Intensity)",Nitrogen (30-200 cm),0.0,28,40
+"Land Cover (Developed, Medium Intensity)",Bulk Density (0-30 cm),0.0,28,41
+"Land Cover (Developed, Medium Intensity)",Bulk Density (30-200 cm),0.0,28,42
+"Land Cover (Developed, Medium Intensity)",Sand (0-30 cm),0.0,28,43
+"Land Cover (Developed, Medium Intensity)",Sand (30-200 cm),0.0,28,44
+"Land Cover (Developed, Medium Intensity)",Silt (0-30 cm),0.0,28,45
+"Land Cover (Developed, Medium Intensity)",Silt (30-200 cm),0.0,28,46
+"Land Cover (Developed, Medium Intensity)",Clay (0-30 cm),0.0,28,47
+"Land Cover (Developed, Medium Intensity)",Clay (30-200 cm),0.0,28,48
+Land Cover (Pasture/Hay),Vegetation Mode (Shrub tundra),0.0,29,30
+Land Cover (Pasture/Hay),Vegetation Mode (White spruce),0.0,29,31
+Land Cover (Pasture/Hay),Vegetation Mode (Graminoid tundra),0.0,29,32
+Land Cover (Pasture/Hay),Vegetation Mode (Black spruce),0.0,29,33
+Land Cover (Pasture/Hay),Vegetation Mode (Deciduous forest),0.0,29,34
+Land Cover (Pasture/Hay),Vegetation Mode (Wetland tundra),0.0,29,35
+Land Cover (Pasture/Hay),Vegetation Mode (Temperate rainforest),0.0,29,36
+Land Cover (Pasture/Hay),Soil Organic Carbon (0-30 cm),0.0,29,37
+Land Cover (Pasture/Hay),Soil Organic Carbon (30-200 cm),0.0,29,38
+Land Cover (Pasture/Hay),Nitrogen (0-30 cm),0.0,29,39
+Land Cover (Pasture/Hay),Nitrogen (30-200 cm),0.0,29,40
+Land Cover (Pasture/Hay),Bulk Density (0-30 cm),0.0,29,41
+Land Cover (Pasture/Hay),Bulk Density (30-200 cm),0.0,29,42
+Land Cover (Pasture/Hay),Sand (0-30 cm),0.0,29,43
+Land Cover (Pasture/Hay),Sand (30-200 cm),0.0,29,44
+Land Cover (Pasture/Hay),Silt (0-30 cm),0.0,29,45
+Land Cover (Pasture/Hay),Silt (30-200 cm),0.0,29,46
+Land Cover (Pasture/Hay),Clay (0-30 cm),0.0,29,47
+Land Cover (Pasture/Hay),Clay (30-200 cm),0.0,29,48
+Vegetation Mode (Shrub tundra),Vegetation Mode (White spruce),0.0,30,31
+Vegetation Mode (Shrub tundra),Vegetation Mode (Black spruce),0.0,30,33
+Vegetation Mode (Shrub tundra),Vegetation Mode (Deciduous forest),0.0,30,34
+Vegetation Mode (Shrub tundra),Vegetation Mode (Wetland tundra),0.0,30,35
+Vegetation Mode (Shrub tundra),Vegetation Mode (Temperate rainforest),0.0,30,36
+Vegetation Mode (Shrub tundra),Soil Organic Carbon (0-30 cm),0.0,30,37
+Vegetation Mode (Shrub tundra),Soil Organic Carbon (30-200 cm),0.0,30,38
+Vegetation Mode (Shrub tundra),Nitrogen (0-30 cm),0.0,30,39
+Vegetation Mode (Shrub tundra),Nitrogen (30-200 cm),0.0,30,40
+Vegetation Mode (Shrub tundra),Bulk Density (0-30 cm),0.0,30,41
+Vegetation Mode (Shrub tundra),Bulk Density (30-200 cm),0.0,30,42
+Vegetation Mode (Shrub tundra),Sand (0-30 cm),0.0,30,43
+Vegetation Mode (Shrub tundra),Silt (0-30 cm),0.0,30,45
+Vegetation Mode (Shrub tundra),Silt (30-200 cm),0.0,30,46
+Vegetation Mode (Shrub tundra),Clay (0-30 cm),0.0,30,47
+Vegetation Mode (Shrub tundra),Clay (30-200 cm),0.0,30,48
+Vegetation Mode (White spruce),Vegetation Mode (Graminoid tundra),0.0,31,32
+Vegetation Mode (White spruce),Vegetation Mode (Black spruce),0.0,31,33
+Vegetation Mode (White spruce),Vegetation Mode (Deciduous forest),0.0,31,34
+Vegetation Mode (White spruce),Vegetation Mode (Wetland tundra),0.0,31,35
+Vegetation Mode (White spruce),Vegetation Mode (Temperate rainforest),0.0,31,36
+Vegetation Mode (White spruce),Soil Organic Carbon (0-30 cm),0.0,31,37
+Vegetation Mode (White spruce),Soil Organic Carbon (30-200 cm),0.0,31,38
+Vegetation Mode (White spruce),Nitrogen (0-30 cm),0.0,31,39
+Vegetation Mode (White spruce),Nitrogen (30-200 cm),0.0,31,40
+Vegetation Mode (White spruce),Bulk Density (0-30 cm),0.0,31,41
+Vegetation Mode (White spruce),Bulk Density (30-200 cm),0.0,31,42
+Vegetation Mode (White spruce),Sand (0-30 cm),0.0,31,43
+Vegetation Mode (White spruce),Sand (30-200 cm),0.0,31,44
+Vegetation Mode (White spruce),Silt (0-30 cm),0.0,31,45
+Vegetation Mode (White spruce),Silt (30-200 cm),0.0,31,46
+Vegetation Mode (White spruce),Clay (0-30 cm),0.0,31,47
+Vegetation Mode (White spruce),Clay (30-200 cm),0.0,31,48
+Vegetation Mode (Graminoid tundra),Vegetation Mode (Black spruce),0.0,32,33
+Vegetation Mode (Graminoid tundra),Vegetation Mode (Wetland tundra),0.0,32,35
+Vegetation Mode (Graminoid tundra),Vegetation Mode (Temperate rainforest),0.0,32,36
+Vegetation Mode (Graminoid tundra),Sand (0-30 cm),0.0,32,43
+Vegetation Mode (Graminoid tundra),Silt (30-200 cm),0.0,32,46
+Vegetation Mode (Black spruce),Vegetation Mode (Deciduous forest),0.0,33,34
+Vegetation Mode (Black spruce),Vegetation Mode (Wetland tundra),0.0,33,35
+Vegetation Mode (Black spruce),Vegetation Mode (Temperate rainforest),0.0,33,36
+Vegetation Mode (Black spruce),Soil Organic Carbon (0-30 cm),0.0,33,37
+Vegetation Mode (Black spruce),Soil Organic Carbon (30-200 cm),0.0,33,38
+Vegetation Mode (Black spruce),Nitrogen (0-30 cm),0.0,33,39
+Vegetation Mode (Black spruce),Nitrogen (30-200 cm),0.0,33,40
+Vegetation Mode (Black spruce),Bulk Density (0-30 cm),0.0,33,41
+Vegetation Mode (Black spruce),Bulk Density (30-200 cm),0.0,33,42
+Vegetation Mode (Black spruce),Sand (0-30 cm),0.0,33,43
+Vegetation Mode (Black spruce),Sand (30-200 cm),0.0,33,44
+Vegetation Mode (Black spruce),Silt (0-30 cm),0.0,33,45
+Vegetation Mode (Black spruce),Silt (30-200 cm),0.0,33,46
+Vegetation Mode (Black spruce),Clay (0-30 cm),0.0,33,47
+Vegetation Mode (Black spruce),Clay (30-200 cm),0.0,33,48
+Vegetation Mode (Deciduous forest),Vegetation Mode (Wetland tundra),0.0,34,35
+Vegetation Mode (Deciduous forest),Vegetation Mode (Temperate rainforest),0.0,34,36
+Vegetation Mode (Deciduous forest),Soil Organic Carbon (0-30 cm),0.0,34,37
+Vegetation Mode (Deciduous forest),Soil Organic Carbon (30-200 cm),0.0,34,38
+Vegetation Mode (Deciduous forest),Nitrogen (0-30 cm),0.0,34,39
+Vegetation Mode (Deciduous forest),Nitrogen (30-200 cm),0.0,34,40
+Vegetation Mode (Deciduous forest),Bulk Density (0-30 cm),0.0,34,41
+Vegetation Mode (Deciduous forest),Bulk Density (30-200 cm),0.0,34,42
+Vegetation Mode (Deciduous forest),Sand (0-30 cm),0.0,34,43
+Vegetation Mode (Deciduous forest),Sand (30-200 cm),0.0,34,44
+Vegetation Mode (Deciduous forest),Silt (0-30 cm),0.0,34,45
+Vegetation Mode (Deciduous forest),Silt (30-200 cm),0.0,34,46
+Vegetation Mode (Deciduous forest),Clay (0-30 cm),0.0,34,47
+Vegetation Mode (Deciduous forest),Clay (30-200 cm),0.0,34,48
+Vegetation Mode (Wetland tundra),Vegetation Mode (Temperate rainforest),0.0,35,36
+Vegetation Mode (Wetland tundra),Soil Organic Carbon (0-30 cm),0.0,35,37
+Vegetation Mode (Wetland tundra),Soil Organic Carbon (30-200 cm),0.0,35,38
+Vegetation Mode (Wetland tundra),Nitrogen (0-30 cm),0.0,35,39
+Vegetation Mode (Wetland tundra),Nitrogen (30-200 cm),0.0,35,40
+Vegetation Mode (Wetland tundra),Bulk Density (0-30 cm),0.0,35,41
+Vegetation Mode (Wetland tundra),Bulk Density (30-200 cm),0.0,35,42
+Vegetation Mode (Wetland tundra),Sand (0-30 cm),0.0,35,43
+Vegetation Mode (Wetland tundra),Sand (30-200 cm),0.0,35,44
+Vegetation Mode (Wetland tundra),Silt (0-30 cm),0.0,35,45
+Vegetation Mode (Wetland tundra),Silt (30-200 cm),0.0,35,46
+Vegetation Mode (Wetland tundra),Clay (0-30 cm),0.0,35,47
+Vegetation Mode (Wetland tundra),Clay (30-200 cm),0.0,35,48
+Vegetation Mode (Temperate rainforest),Soil Organic Carbon (0-30 cm),0.0,36,37
+Vegetation Mode (Temperate rainforest),Soil Organic Carbon (30-200 cm),0.0,36,38
+Vegetation Mode (Temperate rainforest),Nitrogen (0-30 cm),0.0,36,39
+Vegetation Mode (Temperate rainforest),Nitrogen (30-200 cm),0.0,36,40
+Vegetation Mode (Temperate rainforest),Bulk Density (0-30 cm),0.0,36,41
+Vegetation Mode (Temperate rainforest),Bulk Density (30-200 cm),0.0,36,42
+Vegetation Mode (Temperate rainforest),Sand (0-30 cm),0.0,36,43
+Vegetation Mode (Temperate rainforest),Sand (30-200 cm),0.0,36,44
+Vegetation Mode (Temperate rainforest),Silt (0-30 cm),0.0,36,45
+Vegetation Mode (Temperate rainforest),Silt (30-200 cm),0.0,36,46
+Vegetation Mode (Temperate rainforest),Clay (0-30 cm),0.0,36,47
+Vegetation Mode (Temperate rainforest),Clay (30-200 cm),0.0,36,48

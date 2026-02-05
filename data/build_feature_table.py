@@ -15,7 +15,7 @@ data = Path(__file__).parent
 thawdb = pd.read_csv(data / 'Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv', sep = ',', encoding = 'latin1')
 
 print(thawdb['ThawType'].value_counts()) # 7.28% gradual, 92.72% abrupt
-thawdb['Class'] = np.where(thawdb['ThawType'] == 'Abrupt', 1, 0) # ABRUPT = 1, GRADUAL = 0
+thawdb['Class'] = np.where(thawdb['ThawType'] == 'Abrupt', 0, 1) # ABRUPT = 0 (majority class), GRADUAL = 1 (minority class)
 
 def sample_raster(
     image: ee.Image, 

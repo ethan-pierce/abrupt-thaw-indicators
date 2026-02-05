@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 feats = pd.read_csv(Path(__file__).parent / 'features_dirty.csv')
-feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 1, 0)  # Abrupt = 1 (positive class), Gradual = 0
+feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Gradual = 1 (minority class)
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
 feats = feats.drop('DOI', axis = 1)

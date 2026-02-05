@@ -1,4 +1,4 @@
-"""Build a datacube of predictors over interior and Arctic Alaska."""
+"""Build a datacube of predictors over training lands."""
 
 import ee
 ee.Authenticate()
@@ -10,19 +10,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import geemap
+import geopandas as gpd
 import xarray as xr
 
 data = Path(__file__).parent
 
-with open(data / 'roi.geojson', 'r') as f:
-    roi_json = json.load(f)
-ee_roi = geemap.geojson_to_ee(roi_json)
+with open(data / 'training-lands.geojson', 'r') as f:
+    training_lands_json = json.load(f)
+ee_training_lands_fc = geemap.geojson_to_ee(training_lands_json)
 
-SCALE = 4000
+# Get geometry from FeatureCollection
+if isinstance(ee_training_lands_fc, ee.FeatureCollection):
+    # Get geometry from first feature
+    first_feature = ee.Feature(ee_training_lands_fc.first())
+    ee_training_lands = first_feature.geometry()
+else:
+    ee_training_lands = ee_training_lands_fc
+
+SCALE = 500  # Use 1000m scale for testing
 
 def load_data(image: ee.Image, projection, scale: float) -> ee.Image:
     """Load and rasterize a dataset."""
-    return image.reproject(projection, scale=scale).clip(ee_roi)
+    return image.reproject(projection, scale=scale).clip(ee_training_lands)
 
 def verify_grid_alignment(
     image1: ee.Image, 
@@ -92,7 +101,7 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     
     if 'Elevation' in feature_names:
         feature_arrays['Elevation'] = extract_data_array(elevation, region, 'elevation', default_value)
-
+    
     if 'Slope' in feature_names:
         slope = load_data(ee.Terrain.slope(elevation_image), projection, scale)
         slope_data = extract_data_array(slope, region, 'slope', default_value)
@@ -119,7 +128,6 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     # Load bioclimatic variables
     bioclim = ee.Image('WORLDCLIM/V1/BIO')
     bioclim_vars = {
-        'Annual Mean Temperature': 'bio01',
         'Temperature Seasonality': 'bio04',
         'Temperature Annual Range': 'bio07',
         'Annual Precipitation': 'bio12',
@@ -156,16 +164,6 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         precip_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-precipitation-trend'), projection, scale)
         precip_change_data = extract_data_array(precip_change, region, 'b1', default_value)
         feature_arrays['Projected precipitation change'] = np.flipud(precip_change_data)
-
-    if 'Projected summer temperature change' in feature_names:
-        summer_temp_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/summer-temperature-trend'), projection, scale)
-        summer_temp_data = extract_data_array(summer_temp_change, region, 'b1', default_value)
-        feature_arrays['Projected summer temperature change'] = np.flipud(summer_temp_data)
-
-    if 'Projected winter temperature change' in feature_names:
-        winter_temp_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/winter-temperature-trend'), projection, scale)
-        winter_temp_data = extract_data_array(winter_temp_change, region, 'b1', default_value)
-        feature_arrays['Projected winter temperature change'] = np.flipud(winter_temp_data)
     
     # Load categorical features (Land Cover and Vegetation Mode) - one-hot encoded
     land_cover_labels = {
@@ -275,72 +273,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     feature_stack = np.stack([feature_arrays[name] for name in feature_names], axis=-1)
     return feature_stack
 
-def plot_field(field, feature_names=None, feature_stack=None, ds=None, default_value=-9999, figsize=(10, 8)):
-    """Plot a field for debugging. Can use feature name, index, or numpy array directly.
-    
-    Args:
-        field: Feature name (str), feature index (int), or 2D numpy array
-        feature_names: List of feature names (required if field is name or index)
-        feature_stack: 3D numpy array (height, width, features) (required if field is name or index)
-        ds: xarray Dataset (alternative to feature_stack)
-        default_value: Value to mask out in visualization
-        figsize: Figure size tuple
-    """
-    # Extract 2D array based on input type
-    if isinstance(field, np.ndarray):
-        data = field
-        title = "Field"
-    elif isinstance(field, str):
-        if ds is not None:
-            data = ds['feature_stack'].sel(feature=field).values
-            title = field
-        elif feature_stack is not None and feature_names is not None:
-            idx = feature_names.index(field)
-            data = feature_stack[:, :, idx]
-            title = field
-        else:
-            raise ValueError("Need feature_stack+feature_names or ds to use feature name")
-    elif isinstance(field, int):
-        if ds is not None:
-            data = ds['feature_stack'].isel(feature=field).values
-            title = ds['feature_names'].values[field]
-        elif feature_stack is not None and feature_names is not None:
-            data = feature_stack[:, :, field]
-            title = feature_names[field]
-        else:
-            raise ValueError("Need feature_stack+feature_names or ds to use feature index")
-    else:
-        raise ValueError("field must be numpy array, feature name (str), or feature index (int)")
-    
-    # Mask default values for better visualization
-    masked_data = np.ma.masked_where(data == default_value, data)
-    
-    # Print stats
-    valid_data = data[data != default_value]
-    print(f"\n{title}")
-    print(f"  Shape: {data.shape}")
-    print(f"  Valid pixels: {valid_data.size:,} ({100*valid_data.size/data.size:.1f}%)")
-    if valid_data.size > 0:
-        print(f"  Min: {valid_data.min():.4f}")
-        print(f"  Max: {valid_data.max():.4f}")
-        print(f"  Mean: {valid_data.mean():.4f}")
-        print(f"  Std: {valid_data.std():.4f}")
-    
-    # Plot
-    fig, ax = plt.subplots(figsize=figsize)
-    im = ax.imshow(masked_data, cmap='viridis', interpolation='nearest')
-    ax.set_title(title, fontsize=14, fontweight='bold')
-    ax.set_xlabel('X (pixels)')
-    ax.set_ylabel('Y (pixels)')
-    plt.colorbar(im, ax=ax, label='Value')
-    plt.tight_layout()
-    plt.show()
-    
-    return fig, ax
+# Get the bounding box of the training lands for extraction
+training_lands_bounds = ee_training_lands.bounds()
 
 # Load all features in model order and create feature stack
-print("\nLoading all features for prediction...")
-feature_stack = load_all_features(feature_names, SCALE, ee_roi, default_value=-9999)
+print("\nLoading all features for prediction over training lands...")
+feature_stack = load_all_features(feature_names, SCALE, training_lands_bounds, default_value=-9999)
 
 print(f"\nFeature stack shape: {feature_stack.shape}")
 print(f"Expected shape: (height, width, {len(feature_names)})")
@@ -358,9 +296,10 @@ ds = xr.Dataset(
     attrs={
         'scale': SCALE,
         'default_value': -9999,
-        'description': 'Feature stack for abrupt thaw prediction model',
+        'description': 'Feature stack for abrupt thaw prediction model over training lands',
         'num_features': len(feature_names),
-        'shape': f"{feature_stack.shape[0]} x {feature_stack.shape[1]} x {feature_stack.shape[2]}"
+        'shape': f"{feature_stack.shape[0]} x {feature_stack.shape[1]} x {feature_stack.shape[2]}",
+        'region': 'training-lands'
     }
 )
 
@@ -368,9 +307,11 @@ ds = xr.Dataset(
 ds['feature_names'] = ('feature', feature_names)
 
 # Save to NetCDF
-feature_stack_path = data / 'prediction_data.nc'
+feature_stack_path = data / 'prediction_data_traininglands.nc'
 ds.to_netcdf(feature_stack_path)
 print(f"\nFeature stack and metadata saved to: {feature_stack_path}")
 print(f"  Shape: {feature_stack.shape}")
 print(f"  Features: {len(feature_names)}")
 print(f"  Scale: {SCALE}m")
+print(f"  Region: Training lands")
+

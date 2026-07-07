@@ -15,7 +15,11 @@ from sklearn.metrics import (
 from sklearn.calibration import calibration_curve
 from sklearn.model_selection import cross_val_score, cross_validate, StratifiedKFold
 
-data = Path(__file__).parent.parent / 'data'
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+
+data = DATA
 feats = pd.read_csv(data / 'features_clean.csv')
 rng = np.random.default_rng(42)
 
@@ -447,7 +451,7 @@ PR = PrecisionRecallDisplay.from_estimator(
     plot_chance_level = True,  # Show baseline for comparison
 )
 plt.title('Precision-Recall Curve')
-plt.savefig('output/precision_recall.png', dpi = 300)
+plt.savefig(OUTPUT / 'precision_recall.png', dpi = 300)
 plt.show()
 
 # Plot ROC curve (less sensitive to class imbalance)
@@ -457,7 +461,7 @@ roc_display = RocCurveDisplay.from_estimator(
 plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier (AUC = 0.5)')
 plt.title('ROC Curve (Receiver Operating Characteristic)')
 plt.legend()
-plt.savefig('output/roc_curve.png', dpi = 300)
+plt.savefig(OUTPUT / 'roc_curve.png', dpi = 300)
 plt.show()
 
 # ============================================================================
@@ -544,7 +548,7 @@ ax2.set_xlim([0, 1])
 ax2.set_ylim([0, 1])
 
 plt.tight_layout()
-plt.savefig('output/calibration_curve_enhanced.png', dpi=300)
+plt.savefig(OUTPUT / 'calibration_curve_enhanced.png', dpi=300)
 plt.show()
 
 # Also save the simple calibration curve for backward compatibility
@@ -559,7 +563,7 @@ plt.title(f'Calibration Curve (Probability Calibration)\nMCE = {mean_calibration
 plt.legend(fontsize=11)
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('output/calibration_curve.png', dpi=300)
+plt.savefig(OUTPUT / 'calibration_curve.png', dpi=300)
 plt.show()
 
 # Print detailed calibration statistics
@@ -685,7 +689,7 @@ ax4.legend(fontsize=9)
 ax4.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('output/threshold_analysis.png', dpi=300)
+plt.savefig(OUTPUT / 'threshold_analysis.png', dpi=300)
 plt.show()
 
 # Also save the simple F1 vs threshold plot for backward compatibility
@@ -699,7 +703,7 @@ plt.axvline(x=0.5, color='r', linestyle='--', label='Default Threshold (0.5)')
 plt.axvline(x=best_f1_threshold, color='g', linestyle='--', label=f'Best Threshold ({best_f1_threshold:.2f}, F1={best_f1_score:.3f})')
 plt.legend()
 plt.tight_layout()
-plt.savefig('output/f1_vs_threshold.png', dpi=300)
+plt.savefig(OUTPUT / 'f1_vs_threshold.png', dpi=300)
 plt.show()
 
 # Plot confusion matrix
@@ -711,7 +715,7 @@ disp = ConfusionMatrixDisplay(confusion_matrix = cm_percent, display_labels=['Ab
 fig, ax = plt.subplots(figsize = (8, 6))
 disp.plot(ax = ax, cmap = 'Blues', values_format = '.1f')
 plt.title('Confusion Matrix - XGBoost Model (Percentages)')
-plt.savefig('output/confusion_matrix.png', dpi = 300)
+plt.savefig(OUTPUT / 'confusion_matrix.png', dpi = 300)
 plt.show()
 
 # Create DataFrame for plotting
@@ -732,9 +736,9 @@ plt.xlabel('Feature Importance')
 plt.title('Top 20 Feature Importances (XGBoost)')
 plt.gca().invert_yaxis()  # Show most important at top
 plt.tight_layout()
-plt.savefig('output/feature_importance.png', dpi = 300)
+plt.savefig(OUTPUT / 'feature_importance.png', dpi = 300)
 plt.show()
 
 # Save the XGBoost model
-best_model.save_model('models/model.json')
+best_model.save_model(str(MODELS / 'model.json'))
 print(f"Saved XGBoost model to: models/model.json")

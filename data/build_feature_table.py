@@ -10,7 +10,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-data = Path(__file__).parent
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA
+
+data = DATA
 
 thawdb = pd.read_csv(data / 'Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv', sep = ',', encoding = 'latin1')
 

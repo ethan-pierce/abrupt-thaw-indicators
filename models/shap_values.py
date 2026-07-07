@@ -8,7 +8,11 @@ from sklearn.model_selection import train_test_split
 import xgboost as xgb
 import shap
 
-data = Path(__file__).parent.parent / 'data'
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+
+data = DATA
 feats = pd.read_csv(data / 'features_clean.csv')
 rng = np.random.default_rng(100)
 
@@ -25,7 +29,7 @@ dtrain = xgb.DMatrix(X_train, label = y_train, missing = np.nan)
 dtest = xgb.DMatrix(X_test, label = y_test, missing = np.nan)
 
 model = xgb.XGBClassifier()
-model.load_model('models/model.json')
+model.load_model(str(MODELS / 'model.json'))
 
 # Calculate SHAP values
 # For binary classification, we want SHAP values for class 0 (Abrupt - majority class)
@@ -187,55 +191,55 @@ shap_values_for_plot = shap_values_abrupt_class.values if hasattr(shap_values_ab
 var = "Slope"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_slope.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_slope.png', dpi=300)
 plt.show()
 
 # Dependence plot for Mean Curvature (2 km)
 var = "Mean curvature (500 m)"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_curvature.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_curvature.png', dpi=300)
 plt.show()
 
 # Dependence plot for Nitrogen (0-30 cm)
 var = "Nitrogen (0-30 cm)"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index="Nitrogen (30-200 cm)", show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_nitrogen.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_nitrogen.png', dpi=300)
 plt.show()
 
 # Dependence plot for Silt (0-30 cm)
 var = "Silt (0-30 cm)"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index="Silt (30-200 cm)", show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_sil.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_sil.png', dpi=300)
 plt.show()
 
 # Dependence plot for Trend in SWE
 var = "Trend in SWE"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_trend_swe.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_trend_swe.png', dpi=300)
 plt.show()
 
 # Dependence plot for Mean Annual SWE
 var = "Mean Annual SWE"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_mean_annual_swe.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_mean_annual_swe.png', dpi=300)
 plt.show()
 
 # Dependence plot for Annual Precipitation
 var = "Annual Precipitation"
 shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_dependence_plot_annual_precip.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_dependence_plot_annual_precip.png', dpi=300)
 plt.show()
 
 # Summary plot using SHAP values for Abrupt class (class 0)
 shap.summary_plot(shap_values_abrupt_class, max_display = 10, show = False)
 plt.tight_layout()
-plt.savefig('output/shap_summary_plot.png', dpi = 300)
+plt.savefig(OUTPUT / 'shap_summary_plot.png', dpi = 300)
 plt.show()
 
 # Create beeswarm plot for abrupt thaw points only
@@ -245,5 +249,5 @@ shap_values_abrupt_samples = shap_values_abrupt_class[abrupt_indices]
 # Beeswarm plot for actual abrupt thaw points (using Abrupt class SHAP values)
 shap.plots.beeswarm(shap_values_abrupt_samples, max_display=10, show=False)
 plt.tight_layout()
-plt.savefig('output/shap_beeswarm_abrupt.png', dpi=300)
+plt.savefig(OUTPUT / 'shap_beeswarm_abrupt.png', dpi=300)
 plt.show()

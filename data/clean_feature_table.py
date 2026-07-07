@@ -1,10 +1,14 @@
 """feats the feature table."""
 
+import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
 
-feats = pd.read_csv(Path(__file__).parent / 'features_dirty.csv')
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA
+
+feats = pd.read_csv(DATA / 'features_dirty.csv')
 feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Gradual = 1 (minority class)
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
@@ -130,4 +134,4 @@ feats = feats.drop('Land Cover (Developed, Low Intensity)', axis = 1)
 print(feats['Class'].value_counts())
 print(feats.shape)
 
-feats.to_csv(Path(__file__).parent / 'features_clean.csv', index = False)
+feats.to_csv(DATA / 'features_clean.csv', index = False)

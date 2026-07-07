@@ -11,8 +11,12 @@ import xgboost as xgb
 DECISION_THRESHOLD = 0.6
 
 # Paths
-data_dir = Path(__file__).parent.parent / 'data'
-models_dir = Path(__file__).parent
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+
+data_dir = DATA
+models_dir = MODELS
 model_path = models_dir / 'model.json'
 prediction_data_path = data_dir / 'prediction_data.nc'
 
@@ -236,7 +240,7 @@ ax.set_title('Abrupt Thaw Probability', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.0, linestyle='--')
 
 # Save map
-output_dir = Path(__file__).parent.parent / 'output'
+output_dir = OUTPUT
 output_dir.mkdir(exist_ok=True)
 map_output_path = output_dir / 'prediction_probability_map.png'
 plt.savefig(map_output_path, dpi=600, bbox_inches='tight')

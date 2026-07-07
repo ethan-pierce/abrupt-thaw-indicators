@@ -19,8 +19,12 @@ from sklearn.metrics import (
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
 # --- DATA LOADING ---
-data = Path(__file__).parent.parent / 'data'
-output_dir = Path(__file__).parent.parent / 'output'
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+
+data = DATA
+output_dir = OUTPUT
 feats = pd.read_csv(data / 'features_clean.csv')
 
 matrix = feats.drop('Class', axis=1)
@@ -409,7 +413,7 @@ plt.show()
 # SAVE MODEL
 # ============================================================================
 print("\n--- Saving Calibrated Model ---")
-models_dir = Path(__file__).parent
+models_dir = MODELS
 model_path = models_dir / 'model_calibrated.pkl'
 joblib.dump(calibrated_model, model_path)
 print(f"Saved calibrated model to: {model_path}")

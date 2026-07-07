@@ -12,7 +12,11 @@ import xgboost as xgb
 import geemap
 import xarray as xr
 
-data = Path(__file__).parent
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS
+
+data = DATA
 
 with open(data / 'roi.geojson', 'r') as f:
     roi_json = json.load(f)
@@ -66,7 +70,7 @@ def extract_data_array(
     return np.array(sampled.get(band_name).getInfo(), dtype=float)
 
 # Load model and extract feature names
-model_path = Path(__file__).parent.parent / 'models' / 'model.json'
+model_path = MODELS / 'model.json'
 model = xgb.XGBClassifier()
 model.load_model(str(model_path))
 

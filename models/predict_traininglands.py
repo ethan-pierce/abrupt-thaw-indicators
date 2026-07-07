@@ -8,8 +8,12 @@ import xarray as xr
 import xgboost as xgb
 
 # Paths
-data_dir = Path(__file__).parent.parent / 'data'
-models_dir = Path(__file__).parent
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+
+data_dir = DATA
+models_dir = MODELS
 model_path = models_dir / 'model.json'
 prediction_data_path = data_dir / 'prediction_data_traininglands.nc'
 
@@ -111,8 +115,8 @@ print("\nPrediction Statistics:")
 print(f"  Probability range: [{probabilities.min():.4f}, {probabilities.max():.4f}]")
 print(f"  Probability mean: {probabilities.mean():.4f}")
 print(f"  Probability median: {np.median(probabilities):.4f}")
-    print(f"  Abrupt thaw predictions: {(predictions == 0).sum():,} ({(predictions == 0).sum()/n_pixels*100:.1f}%)")
-    print(f"  Gradual thaw predictions: {(predictions == 1).sum():,} ({(predictions == 1).sum()/n_pixels*100:.1f}%)")
+print(f"  Abrupt thaw predictions: {(predictions == 0).sum():,} ({(predictions == 0).sum()/n_pixels*100:.1f}%)")
+print(f"  Gradual thaw predictions: {(predictions == 1).sum():,} ({(predictions == 1).sum()/n_pixels*100:.1f}%)")
 
 # Create output dataset
 print("\nCreating output dataset...")
@@ -211,7 +215,7 @@ ax.set_title('Abrupt Thaw Probability Map (Training Lands)', fontsize=14, fontwe
 ax.grid(True, alpha=0.3, linestyle='--')
 
 # Save map
-output_dir = Path(__file__).parent.parent / 'output'
+output_dir = OUTPUT
 output_dir.mkdir(exist_ok=True)
 map_output_path = output_dir / 'prediction_probability_map_traininglands.png'
 plt.savefig(map_output_path, dpi=300, bbox_inches='tight')

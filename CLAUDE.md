@@ -1,0 +1,36 @@
+# abrupt-thaw-indicators
+
+## Project identity
+
+A machine-learning research project in permafrost geoscience. It uses geospatial
+features — drawn from remote sensing, community data products, and climate
+reanalysis — to distinguish **abrupt** from **gradual** permafrost thaw across
+Alaska. The core method is a gradient-boosted (XGBoost) classifier interpreted
+with SHAP values, applied both to labeled field points and to a gridded
+statewide feature stack.
+
+## North-star
+
+Identify the geospatial indicators that distinguish abrupt from gradual
+permafrost thaw, and use them to predict thaw type across Alaska.
+
+## Glossary
+
+Concepts only — one-line meanings. Symbols, units, and values live downstream.
+
+- **Abrupt thaw** — rapid, often self-reinforcing permafrost thaw (class `0`, the majority ~93% of labeled points).
+- **Gradual thaw** — slow, diffuse permafrost thaw (class `1`, the minority ~7%). Note: the training scripts treat class `1` as the metric "positive" (`predict_proba[:, 1]`), so "positive class" refers to Gradual, not Abrupt.
+- **Thaw Database** — the labeled point dataset providing each site's thaw-type label.
+- **Feature table** — per-point geospatial features extracted and cleaned into model-ready training data.
+- **SHAP values** — Shapley-value attributions used to rank and interpret each feature's contribution.
+- **Prediction datacube** — the gridded statewide feature stack the model scores to produce thaw maps.
+- **Abrupt-thaw susceptibility** — the model's continuous predicted probability of abrupt (vs. gradual) thaw at a location; contrasts with categorical thermokarst-landscape classes.
+- **Thermokarst landscape** — categorical susceptibility class (after Olefeldt et al. 2016) spanning lake/wetland/hillslope thaw forms; the incumbent map product this project's continuous surface responds to.
+
+## Repo rules
+
+- **Class encoding is fixed: `0 = Abrupt` (majority ~93%), `1 = Gradual` (minority ~7%).**
+  This has been miscoded before (legacy artifacts use the reverse) — verify the
+  encoding whenever touching labels, `predict_proba` indexing, class names, or
+  confusion-matrix ordering. Ground truth is `clean_feature_table.py`:
+  `Class = np.where(ThawType == 'Abrupt', 0, 1)`.

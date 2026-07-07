@@ -9,6 +9,7 @@ This repository contains tools and models for:
 - Compiling and extracting geospatial features from Google Earth Engine
 - Training and evaluating multiple different ML classification models
 - Analyzing model interpretability using Shapley (SHAP) values
+- Generating statewide abrupt-thaw probability and classification maps from a gridded feature datacube
 
 ## Installation
 
@@ -54,36 +55,44 @@ Some scripts require Google Earth Engine authentication. To set this up:
 
 ```
 abrupt-thaw-indicators/
-├── data/                          # Data processing and feature extraction
-│   ├── Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv  # Alpha version of the ThawDatabase
-│   ├── Database_final_v1.csv      # Current version of the ThawDatabase
-│   ├── features.csv               # Raw feature table
-│   ├── features_clean.csv         # Cleaned feature table (used for training)
-│   ├── build_feature_table.py     # Script used to extract features from Google Earth Engine
-│   └── clean_feature_table.py     # Script used to clean and preprocess feature table
+├── data/                              # Data processing, feature extraction, prediction I/O
+│   ├── Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv  # ThawDatabase source labels (used by build_feature_table.py)
+│   ├── Database_final_v1.csv          # Alternate database (not used by the current pipeline)
+│   ├── build_feature_table.py         # Extract features from Google Earth Engine   ->  features_dirty.csv
+│   ├── clean_feature_table.py         # Clean/encode the feature table               ->  features_clean.csv
+│   ├── features_dirty.csv             # Raw extracted feature table (build output)
+│   ├── features_clean.csv             # Cleaned feature table (input to training/interpretation)
+│   ├── build_prediction_data.py       # Build statewide datacube over roi.geojson (4 km)          -> prediction_data.nc
+│   ├── build_prediction_data_traininglands.py  # Datacube over training-lands.geojson (500 m)     -> prediction_data_traininglands.nc
+│   ├── roi.geojson                    # Main statewide region of interest
+│   ├── training-lands.geojson         # Alternate "training lands" region of interest
+│   └── *.nc                           # Prediction datacubes & outputs (gitignored)
 │
-├── models/                       # Machine learning models and training
-│   ├── train_xgboost.py          # Train XGBoost models and perform cross-validation tests
-│   ├── shap_values.py            # Generate SHAP values for model interpretation
-│   ├── model.json                # Trained XGBoost model (serialized)
-│   └── model_previous_best.json  # Previous best model version
+├── models/                            # Model training, prediction, interpretation
+│   ├── train_xgboost.py               # Train XGBoost (grid-search CV)                -> model.json
+│   ├── train_xgboost_calibrated.py    # Calibrated variant (early stopping + sigmoid) -> model_calibrated.pkl / _base.json
+│   ├── predict.py                     # Score datacube -> statewide probability & classification maps
+│   ├── predict_traininglands.py       # Same, for the training-lands datacube
+│   ├── shap_values.py                 # SHAP interpretation of model.json
+│   ├── model.json                     # Operative trained model (loaded by predict/shap)
+│   ├── model_calibrated.pkl           # Calibrated model — under evaluation (see SCOPE.md)
+│   └── model_calibrated_base.json     # Base model inside the calibrated wrapper
 │
-├── output/                       # Generated outputs and visualizations
-│   ├── archive/                  # Historical outputs
-│   │   ├── confusion-matrix.png
-│   │   ├── feature-importance-*.png
-│   │   ├── precision-recall.png
-│   │   └── shap-values.png
-│   └── MURI-update-July2025.pptx # Project update slides (summer 2025)
+├── output/                            # Generated figures, maps, and result artifacts
+│   ├── archive/                       # Historical figures
+│   └── *.png / *.pptx                 # Evaluation figures, SHAP plots, prediction maps, slides
 │
-├── archive/                      # Legacy code and experimental work
-│   ├── data/                     # Older data processing scripts
-│   ├── keras-neural-network.py   # Alternative feedforward neural network approach
-│   └── n500/                     # SHAP analysis outputs
+├── archive/                           # Legacy code, data, and superseded models
+│   ├── train_xgboost_previous_thawdb.py   # Legacy training on an older database
+│   ├── model_previous_best.json           # Legacy model (older 53-feature set)
+│   ├── model_archive.json                 # Legacy model (old Abrupt=1 encoding era)
+│   ├── keras-neural-network.py            # Alternative neural-network approach
+│   └── data/, n500/, output/              # Older data/scripts and SHAP outputs
 │
-├── settings.py                    # Path configuration
-├── pyproject.toml                 # Poetry dependencies and project metadata
-└── README.md                      # This file
+├── settings.py                        # Path config (ROOT/DATA/MODELS/OUTPUT; imported by pipeline scripts)
+├── CLAUDE.md, MAP.md, SCOPE.md         # Project backbone, location index, manuscript scope
+├── pyproject.toml                     # Poetry dependencies and project metadata
+└── README.md                          # This file
 ```
 
 ## Usage
@@ -125,10 +134,25 @@ python models/shap_values.py
 
 This creates SHAP plots to understand which features are most important for predictions.
 
+### Statewide Prediction
+
+1. **Build the prediction datacube** (requires Google Earth Engine):
+   ```bash
+   python data/build_prediction_data.py
+   ```
+   This rasterizes all model features over the region of interest (`data/roi.geojson`, ~4 km) and writes `data/prediction_data.nc`. A finer-resolution variant over `data/training-lands.geojson` (~500 m) is available via `data/build_prediction_data_traininglands.py`.
+
+2. **Generate maps**:
+   ```bash
+   python models/predict.py
+   ```
+   This scores the datacube with `models/model.json` and writes statewide probability and classification maps to `output/`, plus prediction NetCDFs to `data/`. Use `models/predict_traininglands.py` for the training-lands datacube.
+
+> **Note:** `models/model.json` is the operative model. A calibrated variant (`models/model_calibrated.pkl`) also exists; the choice between them, and the robustness of the statewide map, are open scientific questions tracked in `SCOPE.md` (they change ~37% of map pixels).
+
 ## To-Do List
 
 ### Higher Priority
-- [ ] Interpolate model results back to statewide feature maps
 - [ ] Compile cross-validation results across all model architectures
 - [ ] Switch to configuration files for hyperparameters instead of hardcoding
 - [ ] Formalize and document feature exclusion protocol 

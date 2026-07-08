@@ -47,9 +47,11 @@ this project's target). No incumbent predicts *mode*.
   denser along roads, and the authors themselves warn this "could skew model
   outputs toward aquatic thaw processes while underrepresenting terrestrial
   forms." The 93.2%/6.8% abrupt/non-abrupt split matches this repo's balance.
-- **Data lineage — RESOLVED.** This repo's Thaw Database *is* `webb2026-thawdb`
-  (confirmed by the user). A data-version/model-rerun reconciliation to match the
-  published v2.0.0 exactly is a separate, deferred issue.
+- **Data lineage — RESOLVED, now on v2.0.0.** This repo's Thaw Database *is*
+  `webb2026-thawdb`, at the published **v2.0.0**
+  (`Alaska_Permafrost_Thaw_Database_v2.0.0.csv`, wired into `build_feature_table.py`;
+  19,540 rows, 93.21%/6.79% abrupt/non-abrupt). v2.0.0 is the version the pipeline
+  is being rebuilt against — see README to-do #5/#6.
 
 ## Objectives (north-star decomposed — target question: *"why is this point undergoing abrupt rather than gradual thaw?"*)
 
@@ -70,7 +72,10 @@ se (already done for *occurrence* — see Key background). Two headlines:
    *why* half of the target question, and the part no incumbent (including the
    bivariate `webb2026-thawdb` analysis) has done multivariately and per-point.
    Caveat to carry: SHAP attributions inherit the DB's lake-dominance and may
-   encode "near a lake" as proxy for mechanism. → `/analyze-system`
+   encode "near a lake" as proxy for mechanism. **DEFERRED — this
+   mechanism-vs-spatial-proxy question belongs to the results-interpretation phase
+   (post-retrain-#2), NOT the pipeline rebuild. Do not re-litigate it until there
+   are SHAP results to interpret.** → `/analyze-system`
 4. **Establish predictive credibility.** Calibrated probabilities and honest
    performance under the ~93/7 class imbalance, with demonstrated generalization
    (CV stability, train/test gap). See Open items — the leakage check gates this.
@@ -113,19 +118,11 @@ se (already done for *occurrence* — see Key background). Two headlines:
   stale `CLASS_ENCODING_VERIFICATION.md` that actually described a legacy
   `Abrupt = 1` model. Confusion matrix / SHAP plots from the live scripts are
   labeled correctly. Only legacy artifacts used the reverse (removed/archived).
-- **Canonical model + map robustness — needs a science-skill investigation, not
-  cleanup.** `model.json` (300 trees, `scale_pos_weight≈12.7`, uncalibrated) and
-  the calibrated family (`model_calibrated.pkl`, 737-tree base, no reweighting,
-  sigmoid-calibrated to the ~93%-abrupt prior) are two distinct models on the same
-  49 features/encoding. A head-to-head comparison found they **disagree
-  substantially on the statewide map**: Pearson r ≈ 0.66, **~37% of valid pixels
-  flip class at threshold 0.6**, mean P(Abrupt) 0.47 (uncal) vs 0.80 (calibrated).
-  The divergence is driven by **class-imbalance handling** (reweighting vs
-  calibrating to a prior that reflects the DB's ~93%-abrupt, lake-dominated
-  sampling bias). Choosing a canonical model therefore changes the headline map
-  and interacts with the sampling bias — a scientific call. Operative model
-  remains `model.json` (unchanged) pending this. → `/analyze-system` (imbalance /
-  sampling bias / map robustness), `/verify-code` (implementation).
+- **Canonical model choice — REMOVED (mooted by the rebuild).** The old
+  calibrated-vs-uncalibrated decision compared two now-stale artifacts (`model.json`
+  vs. the orphaned `model_calibrated.pkl`). The rebuild produces a single operative
+  `model.json` via `train_xgboost.py`; the calibrated track is retired and not
+  regenerated. Do not re-raise this comparison.
 - **Near-perfect discrimination — possible leakage/overfit.** Both models score
   AUC-ROC ≈ 0.99 and AUC-PR ≈ 0.9999 (93% prevalence). Warrants a leakage /
   feature-independence check before the numbers go in the manuscript. → `/verify-code`

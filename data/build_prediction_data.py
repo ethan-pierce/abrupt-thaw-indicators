@@ -124,10 +124,24 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     bioclim = ee.Image('WORLDCLIM/V1/BIO')
     bioclim_vars = {
         'Annual Mean Temperature': 'bio01',
+        'Mean Diurnal Range': 'bio02',
+        'Isothermality': 'bio03',
         'Temperature Seasonality': 'bio04',
+        'Max Temperature of Warmest Month': 'bio05',
+        'Min Temperature of Coldest Month': 'bio06',
         'Temperature Annual Range': 'bio07',
+        'Mean Temperature of Wettest Quarter': 'bio08',
+        'Mean Temperature of Driest Quarter': 'bio09',
+        'Mean Temperature of Warmest Quarter': 'bio10',
+        'Mean Temperature of Coldest Quarter': 'bio11',
         'Annual Precipitation': 'bio12',
-        'Precipitation Seasonality': 'bio15'
+        'Precipitation of Wettest Month': 'bio13',
+        'Precipitation of Driest Month': 'bio14',
+        'Precipitation Seasonality': 'bio15',
+        'Precipitation of Wettest Quarter': 'bio16',
+        'Precipitation of Driest Quarter': 'bio17',
+        'Precipitation of Warmest Quarter': 'bio18',
+        'Precipitation of Coldest Quarter': 'bio19'
     }
     for name, band in bioclim_vars.items():
         if name in feature_names:
@@ -155,6 +169,16 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         swe_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-swe-trend').select('scale'), projection, scale)
         swe_trend_data = extract_data_array(swe_trend, region, 'scale', default_value)
         feature_arrays['Trend in SWE'] = np.flipud(swe_trend_data)
+
+    if 'Trend in temperature' in feature_names:
+        temp_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/temp-trend').select('scale'), projection, scale)
+        temp_trend_data = extract_data_array(temp_trend, region, 'scale', default_value)
+        feature_arrays['Trend in temperature'] = np.flipud(temp_trend_data)
+
+    if 'Trend in precipitation' in feature_names:
+        precip_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-precip-trend').select('scale'), projection, scale)
+        precip_trend_data = extract_data_array(precip_trend, region, 'scale', default_value)
+        feature_arrays['Trend in precipitation'] = np.flipud(precip_trend_data)
 
     if 'Projected precipitation change' in feature_names:
         precip_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-precipitation-trend'), projection, scale)
@@ -187,6 +211,8 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         52: 'Shrub/Scrub',
         71: 'Grassland/Herbaceous',
         72: 'Sedge/Herbaceous',
+        73: 'Lichens',
+        74: 'Moss',
         81: 'Pasture/Hay',
         82: 'Cultivated Crops',
         90: 'Woody Wetlands',

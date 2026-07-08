@@ -1,0 +1,135 @@
+/3.0
+(ODB.1
+	FirstRootClassName:	"Legend"
+	Roots:	2
+	Version:	30
+)
+
+(Legend.2
+	SymType:	0x01
+	LegType:	0x08
+	ClassType:	0x03
+	FieldNames:	3
+	Symbols:	4
+	Class:	11
+	Class:	12
+	Class:	13
+	StdDevs:	1.00000000000000
+	NullSym:	9
+	NullValues:	14
+	StatValues:	15
+	Precision:	-3
+)
+
+(AVStr.3
+	S:	"Linetype"
+)
+
+(SymList.4
+	Child:	5
+	Child:	7
+	Child:	9
+)
+
+(BLnSym.5
+	Color:	6
+	Width:	1.50000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+)
+
+(TClr.6
+)
+
+(BLnSym.7
+	Color:	8
+	Width:	1.50000000000000
+	Pattern:	2.00000000000000
+	Pattern:	2.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+)
+
+(TClr.8
+)
+
+(BLnSym.9
+	Color:	10
+	Width:	0.10000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+	Pattern:	0.00000000000000
+)
+
+(TClr.10
+	Name:	"Transparent"
+)
+
+(LClass.11
+	IsText:	1
+	Label:	"sea-ice edge limit"
+	MinStr:	"sea-ice edge limit"
+	MaxStr:	"sea-ice edge limit"
+	Precision:	-3
+)
+
+(LClass.12
+	IsText:	1
+	Label:	"subsea permafrost limit"
+	MinStr:	"subsea permafrost limit"
+	MaxStr:	"subsea permafrost limit"
+	Precision:	-3
+)
+
+(LClass.13
+	IsNoData:	1
+	IsText:	1
+	Label:	"No Data"
+	Precision:	-3
+)
+
+(NameDict.14
+)
+
+(NameDict.15
+)
+

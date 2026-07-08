@@ -93,43 +93,20 @@ for variable in ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Sil
 # Unless using SMOTE
 # feats = feats.dropna(axis = 0, how = 'any')
 
+# Drop only the NaN one-hot columns — structural cleanup, not feature selection.
+# Retrain #1 keeps the full feature set; rigorous paring (VIF / collinearity /
+# coverage) is a separate documented protocol applied afterward (README to-do #15).
 if 'Land Cover (NaN)' in feats.columns:
     feats.drop('Land Cover (NaN)', axis = 1, inplace = True)
-feats.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
-feats.drop('Trend in temperature', axis = 1, inplace = True)
-feats.drop('Trend in precipitation', axis = 1, inplace = True)
-feats.drop('Mean Diurnal Range', axis = 1, inplace = True)
-feats.drop('Isothermality', axis = 1, inplace = True)
-feats.drop('Mean Temperature of Wettest Quarter', axis = 1, inplace = True)
-feats.drop('Mean Temperature of Driest Quarter', axis = 1, inplace = True)
-feats.drop('Precipitation of Wettest Quarter', axis = 1, inplace = True)
-feats.drop('Precipitation of Driest Quarter', axis = 1, inplace = True)
+if 'Vegetation Mode (NaN)' in feats.columns:
+    feats.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 
-# Optional, remove Lon and Lat from the feature table
-# feats = feats.drop('Longitude', axis = 1)
-# feats = feats.drop('Latitude', axis = 1)
-
-# Drop duplicates only works if Lon and Lat are removed
-todrop = feats.drop('Longitude', axis = 1)
-todrop = todrop.drop('Latitude', axis = 1)
-print('Duplicate rows:',todrop.duplicated().sum())
-feats = todrop.drop_duplicates(keep = 'first')
-
-# Test: remove many features to improve interpretability
-feats = feats.drop('Max Temperature of Warmest Month', axis = 1)
-feats = feats.drop('Min Temperature of Coldest Month', axis = 1)
-feats = feats.drop('Mean Temperature of Warmest Quarter', axis = 1)
-feats = feats.drop('Mean Temperature of Coldest Quarter', axis = 1)
-feats = feats.drop('Precipitation of Wettest Month', axis = 1)
-feats = feats.drop('Precipitation of Driest Month', axis = 1)
-feats = feats.drop('Precipitation of Warmest Quarter', axis = 1)
-feats = feats.drop('Precipitation of Coldest Quarter', axis = 1)
-
-# Test feature importance with the most obvious candidates removed
-feats = feats.drop('Projected summer temperature change', axis = 1)
-feats = feats.drop('Projected winter temperature change', axis = 1)
-feats = feats.drop('Annual Mean Temperature', axis = 1)
-feats = feats.drop('Land Cover (Developed, Low Intensity)', axis = 1)
+# Drop Longitude/Latitude from the feature set. This is unconditional (NOT optional):
+# raw coordinates are excluded to avoid spatial leakage, and removing them is also
+# what lets near-identical points collapse under drop_duplicates.
+feats = feats.drop(['Longitude', 'Latitude'], axis = 1)
+print('Duplicate rows:', feats.duplicated().sum())
+feats = feats.drop_duplicates(keep = 'first')
 
 print(feats['Class'].value_counts())
 print(feats.shape)

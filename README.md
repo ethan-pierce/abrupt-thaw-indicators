@@ -56,7 +56,7 @@ Some scripts require Google Earth Engine authentication. To set this up:
 ```
 abrupt-thaw-indicators/
 ├── data/                              # Data processing, feature extraction, prediction I/O
-│   ├── Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv  # ThawDatabase source labels (used by build_feature_table.py)
+│   ├── Alaska_Permafrost_Thaw_Database_v2.0.0.csv        # ThawDatabase source labels (webb2026-thawdb; used by build_feature_table.py)
 │   ├── Database_final_v1.csv          # Alternate database (not used by the current pipeline)
 │   ├── build_feature_table.py         # Extract features from Google Earth Engine   ->  features_dirty.csv
 │   ├── clean_feature_table.py         # Clean/encode the feature table               ->  features_clean.csv
@@ -148,7 +148,7 @@ This creates SHAP plots to understand which features are most important for pred
    ```
    This scores the datacube with `models/model.json` and writes statewide probability and classification maps to `output/`, plus prediction NetCDFs to `data/`. Use `models/predict_traininglands.py` for the training-lands datacube.
 
-> **Note:** `models/model.json` is the operative model. A calibrated variant (`models/model_calibrated.pkl`) also exists; the choice between them, and the robustness of the statewide map, are open scientific questions (see the To-Do List below, item 11). An earlier comparison found they change ~37% of map pixels, but that figure predates the lat/lon leakage fix and is being re-measured.
+> **Note:** `models/model.json` is the operative model. A calibrated variant (`models/model_calibrated.pkl`) also exists; the choice between them, and the robustness of the statewide map, are open scientific questions (see the To-Do List below, item 11). An earlier comparison found they change ~37% of map pixels, but that figure predates the v2.0.0 + full-feature retrain and is being re-measured (it was not lat/lon leakage — see To-Do items 2 and 10).
 
 ## To-Do List
 
@@ -163,34 +163,44 @@ Legend: 🔴 blocking · 🟡 needed for a headline claim · ⚪ nice-to-have.
 
 **Blocking — pipeline won't run / invalidates current results**
 
-1. 🔴 **Fix `settings.py` path types.** `DATA`/`MODELS`/`OUTPUT` (`settings.py:4-6`)
-   are plain strings via `os.path.abspath(...)`, but every consumer uses
-   `pathlib`-style `DATA / 'file.csv'` (e.g. `clean_feature_table.py:137`,
-   `predict.py:244` calls `OUTPUT.mkdir`). `str / str` → `TypeError`; nothing
-   runs as committed. Wrap the three in `pathlib.Path(...)`. Gates all
-   reproducibility. Trivial, no trade-off.
-2. 🔴 **Drop `Longitude`/`Latitude` from the feature table.** Uncomment
-   `clean_feature_table.py:109-110` so lat/lon are dropped from `feats` (not just
-   from the throwaway `todrop` dup-check at 113-114). Confirmed retained today →
-   prime suspect for the AUC-ROC≈0.99 / AUC-PR≈0.9999 spatial leakage, and it
-   poisons Headline C (SHAP "indicators" become raw location). Forces a retrain.
-3. 🔴 **Restore the full feature set for retrain #1.** Remove the ad-hoc
-   exclusion batches in `clean_feature_table.py:118-132` (dropped under "Test:
-   improve interpretability" / "remove obvious candidates" — originally cut for
-   project-update readability, not on principle). Retrain #1 uses *everything*
-   except lat/lon; the pared set is derived rigorously afterward (item 15).
-4. 🔴 **Expand the prediction datacube to match.** `build_prediction_data.py`
-   assembles only a bioclim subset (bio01/04/07/12/15); once the model trains on
-   the full set, the datacube must supply every model feature or `predict.py`'s
-   feature-name check fails. Keep training features and datacube features in
-   lockstep for both retrains.
-5. 🔴 **Update to Thaw Database v2.0.0.** Pipeline reads
-   `Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv` (`build_feature_table.py:19`);
-   authoritative published version is v2.0.0 (`webb2026-thawdb`, `REFERENCES.md`).
-   Obtain the v2.0.0 CSV, add to `data/`, repoint the read. **Risk:** verify
-   column names + `ThawType` categories (and the non-abrupt / negative-sample
-   provenance) match v1.0.0-alpha, else adapt `build_feature_table.py` and
-   `clean_feature_table.py`. Combines with #2 into one retrain.
+1. ✅ **DONE — Fixed `settings.py` path types.** `ROOT`/`DATA`/`MODELS`/`OUTPUT`
+   now use `pathlib.Path` (`settings.py`), so `DATA / 'file.csv'` and `OUTPUT.mkdir()`
+   work. Previously `os.path.abspath(...)` returned `str` → `str / str` `TypeError`;
+   nothing ran as committed. `archive/` scripts using `os.path.join(DATA, ...)` are
+   unaffected (`os.path.join` accepts `Path`). Verified imports resolve.
+2. ✅ **DONE (premise corrected) — `Longitude`/`Latitude` were already dropped.**
+   The earlier "confirmed retained today" was wrong: the dedup step reassigned
+   `feats = todrop.drop_duplicates(...)`, where `todrop` already had lat/lon removed —
+   so neither `features_clean.csv` nor the operative `model.json` ever contained
+   coordinates (verified by inspecting both). The commented "optional" drop at the
+   old lines 109–110 was a red herring. `clean_feature_table.py` now drops lat/lon
+   explicitly and unconditionally (legibility only — identical behavior).
+   **Consequence:** lat/lon is NOT the source of the AUC-ROC≈0.99 / AUC-PR≈0.9999
+   discrimination, and Headline C's SHAP indicators were never raw location — see item 10.
+3. ✅ **DONE — Restored the full feature set for retrain #1.** Removed the ad-hoc
+   exclusion batches in `clean_feature_table.py` (the "Test: improve interpretability"
+   and "remove obvious candidates" drops, plus an earlier bioclim batch) — cut for
+   past project-update readability, not on principle. Only the NaN one-hot columns
+   are still dropped (structural). Dry-run on the current `features_dirty.csv`
+   confirms the clean feature set goes 49 → 69 (+20) with no errors. Retrain #1 uses
+   *everything* except lat/lon; the pared set is derived rigorously afterward (item 15).
+4. ✅ **DONE — Expanded the prediction datacube to match.** `build_prediction_data.py`
+   is feature-name-driven (builds a layer only `if name in feature_names`, stacks in
+   model order; `predict.py:55` checks exact match). Closed three gaps that would have
+   `KeyError`'d on the full model: (a) `bioclim_vars` extended from 5 → all 19 bands;
+   (b) added loader blocks for `Trend in temperature` / `Trend in precipitation`
+   (assets `temp-trend` / `annual-precip-trend`, band `scale`); (c) added Land Cover
+   codes 73 (Lichens) / 74 (Moss). Lookup dicts are now complete **supersets**, so the
+   `if name in feature_names` guards keep the datacube in lockstep automatically for
+   both retrains. Static check confirms all 69 full-set features have a loader path.
+5. ✅ **DONE — Updated to Thaw Database v2.0.0.** `build_feature_table.py:19`
+   now reads `Alaska_Permafrost_Thaw_Database_v2.0.0.csv` (`webb2026-thawdb`,
+   `REFERENCES.md`). Schema verified fully compatible with v1.0.0-alpha: identical
+   12 columns/order, plain ASCII (existing `latin1` read unchanged), `ThawType`
+   categories `Abrupt`/`Non-abrupt` unchanged. 19,540 rows, 18,213 Abrupt / 1,327
+   Non-abrupt (93.21% / 6.79%) — exactly matches the published figures. No
+   adaptation of `build_feature_table.py` / `clean_feature_table.py` needed.
+   Regenerates `features_clean.csv` on the next retrain (#6).
 
 **The retrain (single combined run — #2–#5 all rewrite `features_clean.csv`)**
 
@@ -226,14 +236,17 @@ Legend: 🔴 blocking · 🟡 needed for a headline claim · ⚪ nice-to-have.
 
 ### New analyses needed
 
-10. 🟡 **Re-check discrimination after the lat/lon drop.** Confirm AUC falls to a
-    defensible range; if it stays ≈0.99, hunt the next leakage source
-    (feature-independence check). Gates whether *any* headline number is
-    manuscript-ready. → `/verify-code`
+10. 🟡 **Hunt the source of the near-perfect discrimination.** Reframed: lat/lon was
+    never in the model (item 2), so the AUC-ROC≈0.99 / AUC-PR≈0.9999 is *unexplained*,
+    not coordinate leakage. After retrain #1, if AUC stays ≈0.99 investigate the real
+    cause — near-duplicate lake-cluster points surviving dedup, a feature that proxies
+    the label, or genuine separability under 93/7 prevalence. Gates whether *any*
+    headline number is manuscript-ready. → `/verify-code`
 11. 🟡 **Canonical-model decision (calibrated vs. uncalibrated) — RE-DO.** Prior
-    "37% of pixels flip / Pearson r≈0.66 / mean P(Abrupt) 0.47 vs 0.80" was
-    measured on lat/lon-leaking models and is now STALE. Re-measure divergence on
-    the clean retrained pair, then choose the canonical model. Note the calibrated
+    "37% of pixels flip / Pearson r≈0.66 / mean P(Abrupt) 0.47 vs 0.80" predates the
+    v2.0.0 + full-feature retrain and is now STALE (and note: it was NOT lat/lon
+    leakage — see item 2). Re-measure divergence on the clean retrained pair, then
+    choose the canonical model. Note the calibrated
     track (`model_calibrated.pkl`) is currently orphaned — no predict/SHAP script
     consumes it. **Base-rate caveat:** the calibrated model was sigmoid-calibrated
     to the DB's ~93%-abrupt prior, which is a *sampling artifact* (lake/road bias),
@@ -293,8 +306,9 @@ SHAP rankings) is provisional until after retrain #2.
 - **Fire representation adequacy** — fire is present (not missing), but is
   instantaneous max-fire-temp / flammability the right encoding, or is fire
   *history* / time-since-fire needed? → `/analyze-system` (see `SCOPE.md`).
-- **DB v2.0.0 schema compatibility** — resolves once the user supplies the
-  v2.0.0 CSV and we diff its columns/categories against v1.0.0-alpha (item 5).
+- **DB v2.0.0 schema compatibility — RESOLVED (item 5).** v2.0.0 CSV supplied and
+  diffed against v1.0.0-alpha: identical columns/order/encoding and `ThawType`
+  categories; no code adaptation needed.
 
 ### Repo hygiene / documentation (⚪ nice-to-have)
 

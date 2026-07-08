@@ -16,9 +16,9 @@ from settings import DATA
 
 data = DATA
 
-thawdb = pd.read_csv(data / 'Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv', sep = ',', encoding = 'latin1')
+thawdb = pd.read_csv(data / 'Alaska_Permafrost_Thaw_Database_v2.0.0.csv', sep = ',', encoding = 'latin1')
 
-print(thawdb['ThawType'].value_counts()) # 7.28% gradual, 92.72% abrupt
+print(thawdb['ThawType'].value_counts()) # 6.79% non-abrupt, 93.21% abrupt (v2.0.0)
 thawdb['Class'] = np.where(thawdb['ThawType'] == 'Abrupt', 0, 1) # ABRUPT = 0 (majority class), GRADUAL = 1 (minority class)
 
 def sample_raster(

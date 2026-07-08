@@ -1,6 +1,6 @@
-import os
+from pathlib import Path
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.abspath(os.path.join(ROOT, 'data'))
-MODELS = os.path.abspath(os.path.join(ROOT, 'models'))
-OUTPUT = os.path.abspath(os.path.join(ROOT, 'output'))
+ROOT = Path(__file__).resolve().parent
+DATA = ROOT / 'data'
+MODELS = ROOT / 'models'
+OUTPUT = ROOT / 'output'

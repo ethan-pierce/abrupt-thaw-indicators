@@ -9,7 +9,8 @@ their own artifacts.
 | `CLAUDE.md` | Project backbone: identity, north-star, glossary, repo rules. |
 | `MAP.md` | This index. |
 | `SCOPE.md` | Manuscript scope: key background, objectives, brainstorm, open blockers. |
-| `README.md` | Human-facing overview, setup, usage, and to-do list. |
+| `REFERENCES.md` | Literature record: sources actually opened, keyed for citation by other docs. |
+| `README.md` | Human-facing overview, setup, usage, and the manuscript-prep to-do list. |
 | `settings.py` | Path configuration (`ROOT`, `DATA`, `MODELS`, `OUTPUT`). |
 | `pyproject.toml` | Poetry dependencies and project metadata. |
 | `data/` | Data-processing and feature-extraction scripts, databases, and datasets. |

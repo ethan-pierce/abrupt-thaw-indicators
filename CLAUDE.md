@@ -20,6 +20,8 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
 
 - **Abrupt thaw** — rapid, often self-reinforcing permafrost thaw (class `0`, the majority ~93% of labeled points).
 - **Gradual thaw** — slow, diffuse permafrost thaw (class `1`, the minority ~7%). Note: the training scripts treat class `1` as the metric "positive" (`predict_proba[:, 1]`), so "positive class" refers to Gradual, not Abrupt.
+- **Thaw mode** — *which* of the two thaw pathways is occurring (abrupt vs. gradual); the classification target. Distinct from thaw *stage* (how far thaw has progressed) and thaw *occurrence* (whether a given hazard forms at all).
+- **Sample prevalence vs. landscape prevalence** — the ~93%/7% abrupt/gradual split in the Thaw Database is *sample* prevalence, an artifact of lake- and road-biased collection; it is not *landscape* prevalence (the true areal fraction of each thaw mode across Alaska's permafrost), which is unknown and unrecoverable from this biased sample. The gap is why probabilities calibrated to the sample prior are suspect and why no single decision threshold is defensible.
 - **Thaw Database** — the labeled point dataset providing each site's thaw-type label.
 - **Feature table** — per-point geospatial features extracted and cleaned into model-ready training data.
 - **SHAP values** — Shapley-value attributions used to rank and interpret each feature's contribution.

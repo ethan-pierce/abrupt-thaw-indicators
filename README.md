@@ -234,6 +234,95 @@ Legend: 🔴 blocking · 🟡 needed for a headline claim · ⚪ nice-to-have.
    is computed on rows that were in the model's *training* set. Persist the
    trainer's train/test indices (or share the seed) and reuse them. → `/verify-code`
 
+**Methods cleanup (grill-with-docs 2026-07-09) — must land BEFORE the #6 rerun.**
+End-to-end methods pass; settled decisions below. Sections C–H still in progress.
+Item #9 is subsumed by B6 (canonical config + one operative model).
+
+*A. Data cleaning (`build_feature_table.py` / `clean_feature_table.py`)*
+- **A1 — Fire encoding.** Replace the `Maximum Fire Temperature` NaN→`0.0` fill with:
+  (a) a binary **`Fire Detected`** indicator derived from NaN-ness; (b) the continuous
+  value left as real Kelvin or NaN (XGBoost routes natively; cold-end/median impute for
+  the linear baseline only). Rationale: NaN = genuine "no fire" (FIRMS `T21`), and `0 K`
+  is physically absurd and poisons the linear baseline (D12).
+- **A2 — Soil NaN: no change.** Leave pass-through for XGBoost's native routing
+  (median-impute for the baseline only). *No* soil-missing indicator — it would fragment
+  the lake signal already carried by Land Cover (Open Water) = 42% of points. Measured:
+  soil-NaN is 19.4% Abrupt vs 3.4% Gradual (a lake-masking proxy). Lake confound
+  consolidated onto Land Cover for the deferred interpretation phase.
+- **A3 — Keep exact `drop_duplicates`.** Measured harmless: 1.89% of rows, all
+  co-located (≤174 m), all same-label. But the dedup **subset must exclude lat/lon**
+  (else co-located twins stop collapsing). Near-duplicate leakage is handled by the CV
+  buffer (B5c), not by dedup.
+
+*B. Spatial CV (`spatial_cv.py`, `train_xgboost.py`)*
+- **B4 — Nested spatial CV replaces the random split.** Outer folds = headline
+  (pooled-OOF AUC-PR + across-fold spread); inner folds = hyperparameter selection.
+  Prevents selection/report double-dipping.
+- **B5a — Sweep block size** (interpolation→extrapolation); emit AUC-PR + spread at each
+  scale (the full curve). How to *quote* it = deferred to the reporting phase.
+- **B5b — Equal-area km-grid blocks.** Add an Alaska Albers (EPSG:3338) km-grid block
+  method to `spatial_cv.py`; sweep cell **edge length in km** (real, interpretable
+  scale). Buffer stays haversine great-circle. Report per-fold Gradual counts so
+  minority sparsity at large blocks is visible.
+- **B5c — Fixed 1 km buffer** across all block sizes (tied to the ~1 km coarsest
+  feature resolution; covers the 62%-within-1 km near-duplicate mass). Block size, not
+  buffer, carries broad-scale autocorrelation — avoids a 2-D buffer×block sweep.
+- **B6 — Plumbing & reproducibility.** Carry `Latitude`/`Longitude` as non-model columns
+  in `features_clean.csv` (spatial CV needs them); **quarantine** them — drop from the
+  model matrix with a hard assertion they're absent from `X`. Persist the CV
+  **config + seed** (block method, swept sizes, `n_splits`, `buffer_km`, seed) for
+  deterministic fold regeneration — not saved index arrays. One operative `model.json`
+  = refit on all data with the selected hyperparameters; SHAP + `predict.py` load it
+  (SHAP-on-OOF vs. final model = F14/F15).
+
+*C. Training & selection (`train_xgboost.py`)*
+- **C8 — Select on pooled-OOF AUC-PR** (average precision, positive = Gradual), matching
+  the headline; drop Brier/F1 from selection. (Settled with E13.)
+- **C9 — `scale_pos_weight = 1`** (no reweighting). The product is a likelihood-ratio
+  index, not a 0.5-thresholded classifier, so reweighting buys nothing and keeps the
+  divided-out prior exactly the sample prevalence. (Settled with E13.)
+- **C10 — Widen the grid** on principled axes (`max_depth`, `min_child_weight`,
+  `reg_lambda`, `learning_rate`, `n_estimators`), small enough for nested CV. Replace the
+  opaque `rng.integers()` draws with explicit named seeds
+  (`SPLIT_SEED`/`MODEL_SEED`/`CV_SEED`) persisted in the B6 config (42 lineage).
+
+*D. Evaluation & baselines*
+- **D11 — Headline = AUC-PR (Gradual)** + prevalence floor (~0.068) + across-fold spread
+  (from the B5 sweep). Keep AUC-ROC as a *secondary* (imbalance-insensitive; comparison
+  to prior work). **Cut accuracy entirely** (meaningless at 93% prevalence).
+- **D12 — Baselines as internal diagnostics.** Dummy (prior/stratified) + penalized
+  logistic (sklearn Pipeline: median-impute + standardize) through the *identical* nested
+  spatial CV. Purpose is diagnostic — trivial/linear separability ⇒ proxy smell (R#10) —
+  NOT a headline "beats logistic" comparison (logistic isn't the incumbent). Depth-1
+  stump optional.
+
+*E. Susceptibility index / probability meaning (`predict.py`, calibration)*
+- **E13 — Absolute susceptibility = log-evidence / likelihood ratio.** Pipeline product is
+  `log-evidence(x) = logit(P_model(abrupt|x)) − logit(π_sample)`, with
+  π_sample(abrupt) ≈ 0.932: **absolute, prior-free**, `0 = neutral`, `>0` favors abrupt.
+  Explicitly *not* a calibrated probability (sample-prior calibration is indefensible;
+  landscape prior is unrecoverable) and *not* a ranking/percentile. It's a post-hoc
+  transform on `predict.py` output (subtract the base-rate logit); unbounded — cosmetic
+  squash only, disclosed. **Demote** the calibration analysis in `train_xgboost.py` from a
+  validity claim to (at most) a monotonicity diagnostic. Prevalence-correction to an
+  assumed landscape prior is available *only* as an optional transparent, user-adjustable
+  overlay — never baked in. Residual sampling-design (feature-bias) caveat = the deferred
+  mechanism-vs-proxy question.
+
+*F. Interpretation (`shap_values.py`)*
+- **F14 — Canonical plumbing.** SHAP uses the B6 canonical coordinates + config; remove the
+  independent `default_rng(100)` re-split (the old "SHAP on ~70% training rows" bug).
+- **F15 — Pooled out-of-fold SHAP (Package 1).** Per outer spatial fold, refit with the
+  selected hyperparameters held fixed, compute TreeSHAP on that fold's *held-out* points,
+  pool across folds → attributions on genuinely unseen data. Pre-empts the
+  SHAP-on-training-data critique: a memorization/proxy-driven feature that doesn't survive
+  held-out folds is exposed rather than written into the story. Model compute is negligible
+  vs the ~12 h GEE feature build, so cost is a non-issue. The operative refit-on-all model
+  still makes the map.
+
+*Parked / deferred:* minority-sparsity mitigation incl. presence–background → `/ideate`
+(separate brief); SHAP mechanism-vs-spatial-proxy → deferred interpretation phase.
+
 ### New analyses needed
 
 10. 🟡 **Hunt the source of the near-perfect discrimination.** Reframed: lat/lon was

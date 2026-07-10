@@ -24,16 +24,16 @@ before editing.
 
 ## Stage 1 — Data cleaning (`data/clean_feature_table.py`)
 
-- [ ] **T4 — Fire encoding.** [A1] Remove `Maximum Fire Temperature` from the
+- [x] **T4 — Fire encoding.** [A1] Remove `Maximum Fire Temperature` from the
   `fillna` list (drop the `→0.0` fill, ~line 66). Add a binary `Fire Detected`
   column = `notna(Maximum Fire Temperature)`. Leave the continuous value real-or-NaN.
   *Depends:* — *Done when:* `features_clean.csv` has `Fire Detected` ∈ {0,1} and the
   temp column retains NaNs.
-- [ ] **T5 — Dedup excludes coordinates.** [A3/B6] Change `drop_duplicates()`
+- [x] **T5 — Dedup excludes coordinates.** [A3/B6] Change `drop_duplicates()`
   (~line 109) to `drop_duplicates(subset=<all feature cols except Latitude/Longitude>)`.
   *Depends:* T6 *Done when:* dup count matches the pre-change exact-feature dedup
   (~369 rows / 105 groups on current data) with coords retained.
-- [ ] **T6 — Carry coordinates through.** [B6] Remove the unconditional lat/lon drop
+- [x] **T6 — Carry coordinates through.** [B6] Remove the unconditional lat/lon drop
   (~line 107); keep `Latitude`/`Longitude` as columns in `features_clean.csv`.
   *Depends:* — *Done when:* `features_clean.csv` includes both coordinate columns.
 

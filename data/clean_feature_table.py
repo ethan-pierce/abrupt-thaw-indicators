@@ -10,6 +10,10 @@ from settings import DATA
 
 feats = pd.read_csv(DATA / 'features_dirty.csv')
 feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Gradual = 1 (minority class)
+# Fire encoding (A1): NaN Maximum Fire Temperature = genuine "no fire" (FIRMS T21),
+# so derive a binary indicator from NaN-ness and leave the continuous Kelvin value
+# real-or-NaN (XGBoost routes NaN natively; 0 K would be physically absurd).
+feats['Fire Detected'] = feats['Maximum Fire Temperature'].notna().astype(int)
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
 feats = feats.drop('DOI', axis = 1)
@@ -22,7 +26,7 @@ feats = feats.drop('ImageryDates', axis = 1)
 feats = feats.drop('ImageryResolution_meters', axis = 1)
 
 label = ['Class']
-fillna = ['Maximum Fire Temperature']
+fillna = []  # A1: Maximum Fire Temperature no longer NaN-filled; see Fire Detected above
 categorical = ['Land Cover', 'Vegetation Mode']
 land_cover_labels = {
     0: 'NaN',
@@ -101,12 +105,19 @@ if 'Land Cover (NaN)' in feats.columns:
 if 'Vegetation Mode (NaN)' in feats.columns:
     feats.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 
-# Drop Longitude/Latitude from the feature set. This is unconditional (NOT optional):
-# raw coordinates are excluded to avoid spatial leakage, and removing them is also
-# what lets near-identical points collapse under drop_duplicates.
-feats = feats.drop(['Longitude', 'Latitude'], axis = 1)
-print('Duplicate rows:', feats.duplicated().sum())
-feats = feats.drop_duplicates(keep = 'first')
+# Carry Latitude/Longitude through as NON-MODEL columns (B6): spatial CV needs them
+# to build blocks/buffers, and the trainer quarantines them out of X with a hard
+# assertion (T7). Leakage is prevented at model-fit time, not by dropping here.
+# Dedup in FEATURE space only (A3/B6): two sites with identical features but
+# different coordinates are the same training example, so exclude Latitude/Longitude
+# from the duplicate key. keep='first' retains one representative (its coords survive).
+feature_cols = [c for c in feats.columns if c not in ('Latitude', 'Longitude')]
+n_dropped = int(feats.duplicated(subset = feature_cols).sum())                     # rows removed by dedup
+n_in_dup_groups = int(feats.duplicated(subset = feature_cols, keep = False).sum())  # rows participating in dup groups
+n_groups = n_in_dup_groups - n_dropped                                             # distinct feature-vectors with dups
+print(f'Feature-space dedup: {n_in_dup_groups} rows in {n_groups} duplicate groups '
+      f'-> dropping {n_dropped}, keeping one representative each')
+feats = feats.drop_duplicates(subset = feature_cols, keep = 'first')
 
 print(feats['Class'].value_counts())
 print(feats.shape)

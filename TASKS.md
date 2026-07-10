@@ -6,6 +6,35 @@ for each lives in `README.md` → "Methods cleanup (grill-with-docs 2026-07-09/1
 box whose *Depends* are all checked. Line numbers are current-code anchors — verify
 before editing.
 
+**PRIORITY OVERRIDE:** T0 (below) supersedes the normal dependency ordering — it is
+the top priority and must be resolved before any other task is taken.
+
+## PRIORITY — do before any other task
+
+- [ ] **T0 — Re-establish the GEE project & custom assets.** [ee-project-access-lost]
+  Access to the `ee-abrupt-thaw` project was lost (2026-07-10); its 13 custom feature
+  assets have **no local source copies**, so the entire feature side of the pipeline is
+  unreproducible until they are re-established. **Blocks the GEE datacube (T18), the Obu
+  mask (T20), and any feature/label rebuild — take it before anything else.**
+  *Depends:* — (upstream re-sourcing is gated by T29) *Done when:* a working EE project
+  resolves every custom asset, Obu2019 is uploaded for T20, and `settings.py`
+  `EE_PROJECT`/`ASSET_ROOT` point at it. Steps:
+  1. Create/choose the new EE project; set `EE_PROJECT` in `settings.py`.
+  2. Test-read each `{ASSET_ROOT}/…` asset from it — GEE asset ACLs are independent of
+     the compute project, so shared/public assets still resolve without owning
+     `ee-abrupt-thaw`. Keep `ASSET_ROOT` on the old prefix if they do.
+  3. Readable assets → keep in place, or copy into the new project for ownership.
+  4. Unreadable assets → re-source from upstream (SWE / SWE-trend / precip-trend /
+     temp-trend / projected-climate / curvature upstreams are unconfirmed → T29) and
+     re-upload under `ASSET_ROOT`. The 13: `NLCD-2016`, `AK-curvature-500m`,
+     `AK-curvature-2k`, `ALFRESCO-historical-flammability`,
+     `ALFRESCO-historical-vegetation-mode`, `max-fire-temp`, `ee-mean-annual-swe`,
+     `annual-swe-trend`, `annual-precip-trend`, `temp-trend`,
+     `summer-temperature-trend`, `winter-temperature-trend`,
+     `annual-precipitation-trend`.
+  5. Upload Obu2019 PerProb (`data/Obu2019/*.tif`) as an asset for T20.
+  6. Verify `build_feature_table.py` and `build_prediction_data.py` resolve every asset.
+
 ## Stage 0 — CV foundation (`models/spatial_cv.py`) — do first
 
 - [x] **T1 — Add equal-area km-grid block method.** [B5b] Add an Alaska Albers

@@ -130,6 +130,56 @@ def buffered_block_folds(lat, lon, blocks, n_splits=5, buffer_km=0.0, seed=0):
         yield cand_train, test_idx
 
 
+def nested_block_folds(lat, lon, blocks, n_splits_outer=5, n_splits_inner=5,
+                       buffer_km=0.0, seed=0):
+    """Yield nested buffered block folds for double-dip-free selection (B4).
+
+    For each OUTER fold produced by `buffered_block_folds` over ALL points, run
+    `buffered_block_folds` again over the outer-TRAIN subset (which already has the
+    buffer dead-zone removed) to produce INNER folds for hyperparameter selection.
+
+    Yields `(outer_train_idx, outer_test_idx, inner_folds)` where `inner_folds` is a
+    materialized list of `(inner_train_idx, inner_val_idx)` tuples. All indices refer
+    to the ORIGINAL arrays. Because inner folds are drawn only from the outer-train
+    subset, no inner point ever falls in an outer-test block.
+    """
+    lat = np.asarray(lat, float)
+    lon = np.asarray(lon, float)
+    blocks = np.asarray(blocks)
+    outer = buffered_block_folds(lat, lon, blocks, n_splits=n_splits_outer,
+                                 buffer_km=buffer_km, seed=seed)
+    for f, (outer_train_idx, outer_test_idx) in enumerate(outer):
+        # Inner CV runs on the outer-train subset only; a distinct per-fold seed
+        # keeps the inner block shuffle deterministic yet decorrelated from outer.
+        inner = buffered_block_folds(lat[outer_train_idx], lon[outer_train_idx],
+                                     blocks[outer_train_idx], n_splits=n_splits_inner,
+                                     buffer_km=buffer_km, seed=seed + f + 1)
+        inner_folds = [(outer_train_idx[itr], outer_train_idx[iva])
+                       for itr, iva in inner]
+        yield outer_train_idx, outer_test_idx, inner_folds
+
+
+def fold_class_counts(folds, y, positive=1):
+    """Per-fold train/test sizes and minority (positive=Gradual, class 1) counts.
+
+    Takes a materialized list of `(train_idx, test_idx)` folds (flat or the inner
+    folds from `nested_block_folds`) and returns a list of dicts. Lets the caller
+    log Gradual sparsity per fold at each block size (B5b): at large blocks some
+    folds may hold few or zero Gradual points, which pooled scoring must survive.
+    """
+    y = np.asarray(y)
+    rows = []
+    for f, (train_idx, test_idx) in enumerate(folds):
+        rows.append({
+            'fold': f,
+            'train_n': int(len(train_idx)),
+            'train_pos': int((y[train_idx] == positive).sum()),
+            'test_n': int(len(test_idx)),
+            'test_pos': int((y[test_idx] == positive).sum()),
+        })
+    return rows
+
+
 def pooled_oof_predict(estimator_factory, X, y, folds):
     """Fit per fold, collect out-of-fold P(class=1); return (proba, mask_scored).
 
@@ -191,6 +241,28 @@ def _selftest():
     b2 = np.array([0, 0, 1])                 # block 0 held out -> train candidates are idx 2 only anyway
     # hold out block 1 (idx2); buffer shouldn't remove the distant block-0 points
     folds = list(buffered_block_folds(lat2, lon2, b2, n_splits=2, buffer_km=1.0, seed=0))
+
+    # Nested folds: inner train/val never touch an outer-test block. Build a few
+    # blocks so both outer and inner splits are non-degenerate.
+    latn = np.array([60., 60.01, 62., 62.01, 68., 68.01, 70., 70.01])
+    lonn = np.array([-150., -150., -148., -148., -142., -142., -140., -140.])
+    bn = assign_blocks(latn, lonn, method='kmeans', n_clusters=4, seed=0)
+    for otr, ote, inner in nested_block_folds(latn, lonn, bn, n_splits_outer=2,
+                                              n_splits_inner=2, buffer_km=0.0, seed=0):
+        test_blocks = set(bn[ote])
+        for itr, iva in inner:
+            assert set(itr).isdisjoint(set(ote)) and set(iva).isdisjoint(set(ote))
+            assert set(bn[itr]).isdisjoint(test_blocks)
+            assert set(bn[iva]).isdisjoint(test_blocks)
+
+    # fold_class_counts: totals across folds match the data; each Gradual point is
+    # a test-positive in exactly one fold (pooled-OOF property).
+    yc = np.array([0, 0, 1, 0, 1, 0, 0, 1])   # 3 Gradual (class 1) among 8 points
+    cfolds = list(buffered_block_folds(latn, lonn, bn, n_splits=2, buffer_km=0.0, seed=0))
+    counts = fold_class_counts(cfolds, yc, positive=1)
+    assert sum(r['test_n'] for r in counts) == len(yc)
+    assert sum(r['test_pos'] for r in counts) == int((yc == 1).sum())
+
     print("[spatial_cv selftest] OK")
 
 

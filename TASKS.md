@@ -14,11 +14,11 @@ before editing.
   `_selftest`. *Depends:* — *Done when:* `assign_blocks(..., method='albers_grid',
   cell_km=k)` returns stable ids and `_selftest` passes; check a projection lib
   (`pyproj`) is available or add it.
-- [ ] **T2 — Nested-fold helper.** [B4] Add a helper that yields nested folds: outer
+- [x] **T2 — Nested-fold helper.** [B4] Add a helper that yields nested folds: outer
   `buffered_block_folds` over all points; for each outer fold, inner
   `buffered_block_folds` over the outer-train subset. *Depends:* T1 *Done when:* a
   self-test confirms inner folds never touch the outer test blocks.
-- [ ] **T3 — Per-fold minority reporting.** [B5b] Have the fold machinery expose the
+- [x] **T3 — Per-fold minority reporting.** [B5b] Have the fold machinery expose the
   Gradual (class-1) count per fold. *Depends:* T1 *Done when:* counts are
   returned/logged for each fold at each block size.
 

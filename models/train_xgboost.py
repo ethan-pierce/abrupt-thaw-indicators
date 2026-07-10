@@ -20,7 +20,10 @@ This script produces the CV evidence (sweep curve + config). The single operativ
 
 import os
 import json
+import hashlib
 import itertools
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -38,7 +41,7 @@ from sklearn.preprocessing import StandardScaler
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import DATA, MODELS, OUTPUT
+from settings import ROOT, DATA, MODELS, OUTPUT
 from spatial_cv import (assign_blocks, nested_block_folds, buffered_block_folds,
                         pooled_oof_predict)
 
@@ -231,20 +234,75 @@ def assert_folds_reproducible(lat, lon):
     assert signature() == signature(), "folds are not reproducible from the CV config"
 
 
-def write_cv_config():
-    """Persist the CV config + seeds for deterministic fold regeneration [B6/T11]."""
-    cfg = {
+def cv_config_dict():
+    """The CV protocol + seeds; single source of truth for config + manifest [B6/T11]."""
+    return {
         'block_method': BLOCK_METHOD,
         'sweep_cell_km': SWEEP_CELL_KM,
+        'operative_cell_km': OPERATIVE_CELL_KM,
         'buffer_km': BUFFER_KM,
         'n_splits_outer': N_OUTER,
         'n_splits_inner': N_INNER,
         'seeds': {'SPLIT_SEED': SPLIT_SEED, 'MODEL_SEED': MODEL_SEED, 'CV_SEED': CV_SEED},
         'param_grid': PARAM_GRID,
+        'logit_grid': LOGIT_GRID,
         'smoke': SMOKE,
     }
+
+
+def write_cv_config():
+    """Persist the CV config + seeds for deterministic fold regeneration [B6/T11]."""
     path = MODELS / 'cv_config.json'
-    path.write_text(json.dumps(cfg, indent=2))
+    path.write_text(json.dumps(cv_config_dict(), indent=2))
+    return path
+
+
+def _git_info():
+    """Current git SHA + dirty flag; None if unavailable (not fatal to a run)."""
+    def run(*args):
+        return subprocess.check_output(args, cwd=str(ROOT), text=True,
+                                       stderr=subprocess.DEVNULL).strip()
+    try:
+        return {'sha': run('git', 'rev-parse', 'HEAD'),
+                'dirty': bool(run('git', 'status', '--porcelain'))}
+    except Exception as e:
+        return {'sha': None, 'dirty': None, 'error': str(e)}
+
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 16), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _product_versions():
+    """Identify the upstream permafrost products by their versioned filenames [H20.1]."""
+    def names(pattern):
+        return sorted(p.name for p in DATA.glob(pattern))
+    obu = sorted(set(names('*PERPROB*') + names('Obu*')))
+    brown = 'arctic-permafrost-map' if (DATA / 'arctic-permafrost-map').is_dir() else None
+    thawdb = names('Alaska_Permafrost_Thaw_Database_v*.csv')
+    return {'obu': obu, 'brown_ipa': brown, 'thawdb': thawdb}
+
+
+def write_run_manifest(selected, path=None):
+    """Write the reproducibility manifest beside model.json, each run [H20.1/T16]."""
+    path = (MODELS / 'run_manifest.json') if path is None else Path(path)
+    feats_csv = DATA / 'features_clean.csv'
+    manifest = {
+        'created_utc': datetime.now(timezone.utc).isoformat(),
+        'git': _git_info(),
+        'features_clean_csv': {
+            'path': str(feats_csv),
+            'sha256': _sha256(feats_csv) if feats_csv.exists() else None,
+        },
+        'cv_config': cv_config_dict(),
+        'product_versions': _product_versions(),
+        'selected_hyperparameters': selected,
+    }
+    path.write_text(json.dumps(manifest, indent=2, default=float))
     return path
 
 
@@ -365,6 +423,12 @@ def main():
           f"(selection AUC-PR {ap:.4f} @ {OPERATIVE_CELL_KM} km):")
     print(f"  selected hyperparameters: {combo}")
     print(f"  saved: {MODELS / 'model.json'} and {MODELS / 'selected_hparams.json'}")
+
+    # Reproducibility manifest beside model.json [H20.1/T16].
+    selected = {'hyperparameters': combo, 'selection_auc_pr': ap,
+                'operative_cell_km': OPERATIVE_CELL_KM}
+    manifest_path = write_run_manifest(selected)
+    print(f"Wrote run manifest: {manifest_path}")
 
 
 if __name__ == '__main__':

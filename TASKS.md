@@ -72,7 +72,7 @@ before editing.
 - [ ] **T15 — Demote calibration.** [E13] Reframe the calibration block (ECE/reliability
   curves) as a monotonicity diagnostic, not a validity claim. *Depends:* — *Done when:*
   no calibration metric is presented as headline validity.
-- [ ] **T16 — Run manifest.** [H20.1] Write beside `model.json`: git SHA,
+- [x] **T16 — Run manifest.** [H20.1] Write beside `model.json`: git SHA,
   `features_clean.csv` hash, CV config+seeds, Obu/Brown versions, selected
   hyperparameters. *Depends:* T11,T14 *Done when:* the manifest file is produced each run.
 - [ ] **T17 — Remove mislabeled "CV F1".** [C8] Delete the `split0..4` "CV F1" block

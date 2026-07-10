@@ -39,34 +39,34 @@ before editing.
 
 ## Stage 2 — Training & selection (`models/train_xgboost.py`) — largest rewrite
 
-- [ ] **T7 — Load + quarantine coords.** [B6] `X = feats.drop(['Class','Latitude',
+- [x] **T7 — Load + quarantine coords.** [B6] `X = feats.drop(['Class','Latitude',
   'Longitude'])`, `y = feats['Class']`, `coords = feats[['Latitude','Longitude']]`;
   `assert 'Latitude' not in X and 'Longitude' not in X`. *Depends:* T6 *Done when:*
   the assertion is in place and passes.
-- [ ] **T8 — Nested spatial CV over a block-size sweep.** [B4/B5] Replace
+- [x] **T8 — Nested spatial CV over a block-size sweep.** [B4/B5] Replace
   `train_test_split` + `StratifiedKFold` `GridSearchCV` with the T2 nested folds run
   at each block size in the sweep (interpolation→extrapolation), buffer = 1 km.
   *Depends:* T1,T2,T7 *Done when:* the trainer produces pooled-OOF predictions per
   outer fold at each block size.
-- [ ] **T9 — Selection metric.** [C8] Inner loop selects on pooled-OOF **AUC-PR**
+- [x] **T9 — Selection metric.** [C8] Inner loop selects on pooled-OOF **AUC-PR**
   (`average_precision_score`, positive = Gradual). *Depends:* T8 *Done when:* selected
   hyperparameters maximise inner pooled-OOF AP; Brier/F1 removed from selection.
-- [ ] **T10 — `scale_pos_weight = 1`.** [C9] Remove the class-ratio reweighting
+- [x] **T10 — `scale_pos_weight = 1`.** [C9] Remove the class-ratio reweighting
   (~line 73). *Depends:* T8 *Done when:* the estimator factory sets no imbalance
   reweighting.
-- [ ] **T11 — Grid breadth + named seeds.** [C10] Widen the grid on `max_depth`,
+- [x] **T11 — Grid breadth + named seeds.** [C10] Widen the grid on `max_depth`,
   `min_child_weight`, `reg_lambda`, `learning_rate`, `n_estimators`. Replace the
   `rng.integers()` draws with explicit `SPLIT_SEED`/`MODEL_SEED`/`CV_SEED`, and persist
   the CV config + seeds to a file. *Depends:* T8 *Done when:* config+seeds are written
   and rerunning reproduces identical folds.
-- [ ] **T12 — Headline metrics.** [D11] Emit AUC-PR-vs-block-size curve + across-fold
+- [x] **T12 — Headline metrics.** [D11] Emit AUC-PR-vs-block-size curve + across-fold
   spread + prevalence floor (~0.068). Keep AUC-ROC as secondary. **Remove all accuracy
   reporting.** *Depends:* T8,T9 *Done when:* outputs contain the curve and no accuracy.
-- [ ] **T13 — Baselines as diagnostics.** [D12] Run a dummy (prior/stratified) and a
+- [x] **T13 — Baselines as diagnostics.** [D12] Run a dummy (prior/stratified) and a
   penalized logistic (sklearn Pipeline: median-impute + standardize) through the same
   nested folds. Optional depth-1 stump. *Depends:* T8 *Done when:* baseline pooled-OOF
   AUC-PR is reported alongside XGBoost.
-- [ ] **T14 — Operative model.** [B6] Refit on all data with the selected
+- [x] **T14 — Operative model.** [B6] Refit on all data with the selected
   hyperparameters → `models/model.json`. *Depends:* T9,T10,T11 *Done when:*
   `model.json` is the all-data refit and loads in `predict.py`/`shap_values.py`.
 - [ ] **T15 — Demote calibration.** [E13] Reframe the calibration block (ECE/reliability

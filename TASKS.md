@@ -69,13 +69,13 @@ before editing.
 - [x] **T14 — Operative model.** [B6] Refit on all data with the selected
   hyperparameters → `models/model.json`. *Depends:* T9,T10,T11 *Done when:*
   `model.json` is the all-data refit and loads in `predict.py`/`shap_values.py`.
-- [ ] **T15 — Demote calibration.** [E13] Reframe the calibration block (ECE/reliability
+- [x] **T15 — Demote calibration.** [E13] (delete-only; calibration block removed in the T8–T12 rewrite, no monotonicity diagnostic re-added per decision 2026-07-10) Reframe the calibration block (ECE/reliability
   curves) as a monotonicity diagnostic, not a validity claim. *Depends:* — *Done when:*
   no calibration metric is presented as headline validity.
 - [x] **T16 — Run manifest.** [H20.1] Write beside `model.json`: git SHA,
   `features_clean.csv` hash, CV config+seeds, Obu/Brown versions, selected
   hyperparameters. *Depends:* T11,T14 *Done when:* the manifest file is produced each run.
-- [ ] **T17 — Remove mislabeled "CV F1".** [C8] Delete the `split0..4` "CV F1" block
+- [x] **T17 — Remove mislabeled "CV F1".** [C8] Delete the `split0..4` "CV F1" block
   (~lines 213–230). *Depends:* T8 *Done when:* gone.
 
 ## Stage 3 — Prediction datacube (`data/build_prediction_data.py`)

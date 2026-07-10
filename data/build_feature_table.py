@@ -1,8 +1,14 @@
 """Build a feature table for the thaw database."""
 
 import ee
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import EE_PROJECT, ASSET_ROOT
+
 ee.Authenticate()
-ee.Initialize(project = 'ee-abrupt-thaw')
+ee.Initialize(project=EE_PROJECT)
 
 
 from pathlib import Path
@@ -63,7 +69,7 @@ point_collection = ee.FeatureCollection(points)
 
 # VARIABLE: Land cover
 try:
-    landcover = ee.Image('projects/ee-abrupt-thaw/assets/NLCD-2016')
+    landcover = ee.Image(f'{ASSET_ROOT}/NLCD-2016')
     add_feature(thawdb, point_collection, landcover, ee.Reducer.mode(), 30, 'Land Cover', 'b1')
     print('Added NLCD land cover')
 except:
@@ -92,14 +98,14 @@ except:
     print('Could not add aspect derived from USGS 3DEP elevation')
 
 try:
-    curve500 = ee.Image('projects/ee-abrupt-thaw/assets/AK-curvature-500m')
+    curve500 = ee.Image(f'{ASSET_ROOT}/AK-curvature-500m')
     add_feature(thawdb, point_collection, curve500, ee.Reducer.mean(), 100, 'Mean curvature (500 m)', 'MeanCurvature')
     print('Added mean 500m curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
 except:
     print('Could not add mean 500m curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
 
 try:
-    curve2k = ee.Image('projects/ee-abrupt-thaw/assets/AK-curvature-2k')
+    curve2k = ee.Image(f'{ASSET_ROOT}/AK-curvature-2k')
     add_feature(thawdb, point_collection, curve2k, ee.Reducer.mean(), 100, 'Mean curvature (2 km)', 'MeanCurvature')
     print('Added mean 2km curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
 except:
@@ -234,7 +240,7 @@ for band in ['bdod_0-5cm_mean', 'bdod_5-15cm_mean', 'bdod_15-30cm_mean', 'bdod_3
 
 # VARIABLES: flammability index
 try:
-    flammability = ee.Image('projects/ee-abrupt-thaw/assets/ALFRESCO-historical-flammability')
+    flammability = ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-flammability')
     add_feature(thawdb, point_collection, flammability, ee.Reducer.mean(), 1000, 'Flammability Index', 'b1')
     print('Added ALFRESCO flammability index')
 except:
@@ -242,7 +248,7 @@ except:
 
 # VARIABLES: vegetation mode
 try:
-    vegetation = ee.Image('projects/ee-abrupt-thaw/assets/ALFRESCO-historical-vegetation-mode')
+    vegetation = ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-vegetation-mode')
     add_feature(thawdb, point_collection, vegetation, ee.Reducer.mode(), 1000, 'Vegetation Mode', 'b1')
     print('Added ALFRESCO vegetation mode')
 except:
@@ -250,7 +256,7 @@ except:
 
 # VARIABLES: maximum fire temperature
 try:
-    firms = ee.Image('projects/ee-abrupt-thaw/assets/max-fire-temp')
+    firms = ee.Image(f'{ASSET_ROOT}/max-fire-temp')
     add_feature(thawdb, point_collection, firms, ee.Reducer.mean(), 1000, 'Maximum Fire Temperature', 'T21')
     print('Added maximum fire temperature from FIRMS')
 except:
@@ -258,28 +264,28 @@ except:
 
 # VARIABLES: swe, change in swe, change in tmax, change in prcp
 try:
-    swe = ee.Image('projects/ee-abrupt-thaw/assets/ee-mean-annual-swe')
+    swe = ee.Image(f'{ASSET_ROOT}/ee-mean-annual-swe')
     add_feature(thawdb, point_collection, swe, ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
     print('Added mean annual SWE from Daymet V4')
 except:
     print('Could not add mean annual SWE from Daymet V4')
 
 try:
-    swe_trend = ee.Image('projects/ee-abrupt-thaw/assets/annual-swe-trend')
+    swe_trend = ee.Image(f'{ASSET_ROOT}/annual-swe-trend')
     add_feature(thawdb, point_collection, swe_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
     print('Added trend in SWE, derived from Daymet V4')
 except:
     print('Could not add trend in SWE, derived from Daymet V4')
 
 try:
-    precip_trend = ee.Image('projects/ee-abrupt-thaw/assets/annual-precip-trend')
+    precip_trend = ee.Image(f'{ASSET_ROOT}/annual-precip-trend')
     add_feature(thawdb, point_collection, precip_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
     print('Added trend in precipitation, derived from Daymet V4')
 except:
     print('Could not add trend in precipitation, derived from Daymet V4')
 
 try:
-    tmax_trend = ee.Image('projects/ee-abrupt-thaw/assets/temp-trend')
+    tmax_trend = ee.Image(f'{ASSET_ROOT}/temp-trend')
     add_feature(thawdb, point_collection, tmax_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
     print('Added trend in temperature, derived from Daymet V4')
 except:
@@ -287,21 +293,21 @@ except:
 
 # VARIABLES: projected summer and winter temp change, precip change
 try:
-    projected_summer_temp = ee.Image('projects/ee-abrupt-thaw/assets/summer-temperature-trend')
+    projected_summer_temp = ee.Image(f'{ASSET_ROOT}/summer-temperature-trend')
     add_feature(thawdb, point_collection, projected_summer_temp, ee.Reducer.mean(), 1000, 'Projected summer temperature change', 'b1')
     print('Added projected summer temperature change from CRU TS3.1')
 except:
     print('Could not add projected summer temperature change from CRU TS3.1')
 
 try:
-    projected_winter_temp = ee.Image('projects/ee-abrupt-thaw/assets/winter-temperature-trend')
+    projected_winter_temp = ee.Image(f'{ASSET_ROOT}/winter-temperature-trend')
     add_feature(thawdb, point_collection, projected_winter_temp, ee.Reducer.mean(), 1000, 'Projected winter temperature change', 'b1')
     print('Added projected winter temperature change from CRU TS3.1')
 except:
     print('Could not add projected winter temperature change from CRU TS3.1')
 
 try:
-    projected_precip = ee.Image('projects/ee-abrupt-thaw/assets/annual-precipitation-trend')
+    projected_precip = ee.Image(f'{ASSET_ROOT}/annual-precipitation-trend')
     add_feature(thawdb, point_collection, projected_precip, ee.Reducer.mean(), 1000, 'Projected precipitation change', 'b1')
     print('Added projected precipitation change from CRU TS3.1')
 except:

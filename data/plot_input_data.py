@@ -1,13 +1,17 @@
 """Plot the Alaska 2k curvature dataset as a map."""
 
 import ee
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-ee.Initialize(project='ee-abrupt-thaw')
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import EE_PROJECT, ASSET_ROOT
 
-curve2k = ee.Image('projects/ee-abrupt-thaw/assets/AK-curvature-2k').select('MeanCurvature').reproject('EPSG:4326', scale=10000)
+ee.Initialize(project=EE_PROJECT)
+
+curve2k = ee.Image(f'{ASSET_ROOT}/AK-curvature-2k').select('MeanCurvature').reproject('EPSG:4326', scale=10000)
 alaska = ee.Geometry.Rectangle([-180, 51, -130, 72])
 
 image = curve2k.sampleRectangle(region=alaska, defaultValue=-9999)

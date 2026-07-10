@@ -1,8 +1,14 @@
 """Build a datacube of predictors over interior and Arctic Alaska."""
 
 import ee
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import EE_PROJECT, ASSET_ROOT
+
 ee.Authenticate()
-ee.Initialize(project = 'ee-abrupt-thaw')
+ee.Initialize(project=EE_PROJECT)
 
 from pathlib import Path
 import json
@@ -111,12 +117,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     
     # Load curvature features
     if 'Mean curvature (500 m)' in feature_names:
-        curve500 = load_data(ee.Image('projects/ee-abrupt-thaw/assets/AK-curvature-500m').select('MeanCurvature'), projection, scale)
+        curve500 = load_data(ee.Image(f'{ASSET_ROOT}/AK-curvature-500m').select('MeanCurvature'), projection, scale)
         curve500_data = extract_data_array(curve500, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (500 m)'] = np.flipud(curve500_data)
 
     if 'Mean curvature (2 km)' in feature_names:
-        curve2k = load_data(ee.Image('projects/ee-abrupt-thaw/assets/AK-curvature-2k').select('MeanCurvature'), projection, scale)
+        curve2k = load_data(ee.Image(f'{ASSET_ROOT}/AK-curvature-2k').select('MeanCurvature'), projection, scale)
         curve2k_data = extract_data_array(curve2k, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (2 km)'] = np.flipud(curve2k_data)
     
@@ -151,12 +157,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     
     # Load other continuous features
     if 'Flammability Index' in feature_names:
-        flammability = load_data(ee.Image('projects/ee-abrupt-thaw/assets/ALFRESCO-historical-flammability'), projection, scale)
+        flammability = load_data(ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-flammability'), projection, scale)
         flammability_data = extract_data_array(flammability, region, 'b1', default_value)
         feature_arrays['Flammability Index'] = np.flipud(flammability_data)
 
     if 'Maximum Fire Temperature' in feature_names:
-        firms = load_data(ee.Image('projects/ee-abrupt-thaw/assets/max-fire-temp'), projection, scale)
+        firms = load_data(ee.Image(f'{ASSET_ROOT}/max-fire-temp'), projection, scale)
         firms_data = extract_data_array(firms, region, 'T21', default_value)
         feature_arrays['Maximum Fire Temperature'] = np.flipud(firms_data)
 
@@ -169,43 +175,43 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         # the Maximum Fire Temperature layer treats as valid-vs-missing. Use 0 as the
         # fill so unobserved pixels read as "no fire", never -9999.
         firms_binary = load_data(
-            ee.Image('projects/ee-abrupt-thaw/assets/max-fire-temp'), projection, scale
+            ee.Image(f'{ASSET_ROOT}/max-fire-temp'), projection, scale
         ).select('T21').mask().gt(0)
         fire_detected_data = extract_data_array(firms_binary, region, 'T21', default_value=0)
         feature_arrays['Fire Detected'] = np.flipud(fire_detected_data)
 
     if 'Mean Annual SWE' in feature_names:
-        swe = load_data(ee.Image('projects/ee-abrupt-thaw/assets/ee-mean-annual-swe'), projection, scale)
+        swe = load_data(ee.Image(f'{ASSET_ROOT}/ee-mean-annual-swe'), projection, scale)
         swe_data = extract_data_array(swe, region, 'swe', default_value)
         feature_arrays['Mean Annual SWE'] = np.flipud(swe_data)
     
     if 'Trend in SWE' in feature_names:
-        swe_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-swe-trend').select('scale'), projection, scale)
+        swe_trend = load_data(ee.Image(f'{ASSET_ROOT}/annual-swe-trend').select('scale'), projection, scale)
         swe_trend_data = extract_data_array(swe_trend, region, 'scale', default_value)
         feature_arrays['Trend in SWE'] = np.flipud(swe_trend_data)
 
     if 'Trend in temperature' in feature_names:
-        temp_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/temp-trend').select('scale'), projection, scale)
+        temp_trend = load_data(ee.Image(f'{ASSET_ROOT}/temp-trend').select('scale'), projection, scale)
         temp_trend_data = extract_data_array(temp_trend, region, 'scale', default_value)
         feature_arrays['Trend in temperature'] = np.flipud(temp_trend_data)
 
     if 'Trend in precipitation' in feature_names:
-        precip_trend = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-precip-trend').select('scale'), projection, scale)
+        precip_trend = load_data(ee.Image(f'{ASSET_ROOT}/annual-precip-trend').select('scale'), projection, scale)
         precip_trend_data = extract_data_array(precip_trend, region, 'scale', default_value)
         feature_arrays['Trend in precipitation'] = np.flipud(precip_trend_data)
 
     if 'Projected precipitation change' in feature_names:
-        precip_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/annual-precipitation-trend'), projection, scale)
+        precip_change = load_data(ee.Image(f'{ASSET_ROOT}/annual-precipitation-trend'), projection, scale)
         precip_change_data = extract_data_array(precip_change, region, 'b1', default_value)
         feature_arrays['Projected precipitation change'] = np.flipud(precip_change_data)
 
     if 'Projected summer temperature change' in feature_names:
-        summer_temp_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/summer-temperature-trend'), projection, scale)
+        summer_temp_change = load_data(ee.Image(f'{ASSET_ROOT}/summer-temperature-trend'), projection, scale)
         summer_temp_data = extract_data_array(summer_temp_change, region, 'b1', default_value)
         feature_arrays['Projected summer temperature change'] = np.flipud(summer_temp_data)
 
     if 'Projected winter temperature change' in feature_names:
-        winter_temp_change = load_data(ee.Image('projects/ee-abrupt-thaw/assets/winter-temperature-trend'), projection, scale)
+        winter_temp_change = load_data(ee.Image(f'{ASSET_ROOT}/winter-temperature-trend'), projection, scale)
         winter_temp_data = extract_data_array(winter_temp_change, region, 'b1', default_value)
         feature_arrays['Projected winter temperature change'] = np.flipud(winter_temp_data)
     
@@ -234,7 +240,7 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     }
     
     if any('Land Cover' in name for name in feature_names):
-        landcover = load_data(ee.Image('projects/ee-abrupt-thaw/assets/NLCD-2016'), projection, scale)
+        landcover = load_data(ee.Image(f'{ASSET_ROOT}/NLCD-2016'), projection, scale)
         landcover_array = extract_data_array(landcover, region, 'b1', default_value)
         
         for code, label in land_cover_labels.items():
@@ -255,7 +261,7 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     }
     
     if any('Vegetation Mode' in name for name in feature_names):
-        vegetation = load_data(ee.Image('projects/ee-abrupt-thaw/assets/ALFRESCO-historical-vegetation-mode'), projection, scale)
+        vegetation = load_data(ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-vegetation-mode'), projection, scale)
         vegetation_array = extract_data_array(vegetation, region, 'b1', default_value)
         
         for code, label in vegetation_mode_labels.items():

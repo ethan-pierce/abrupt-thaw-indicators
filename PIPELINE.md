@@ -21,7 +21,16 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 | 19 bioclimatic variables | **WorldClim v1** BIO | `WORLDCLIM/V1/BIO` | mean @ 1 km |
 | SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | mean @ 250 m |
 
-### Features — custom uploaded assets (`projects/ee-abrupt-thaw/assets/…`)
+### Features — custom uploaded assets (`{ASSET_ROOT}/…`)
+
+> **Migration note (2026-07-10):** access to the original `ee-abrupt-thaw` project
+> was lost. The GEE compute project and the custom-asset path prefix are now
+> centralized in `settings.py` as `EE_PROJECT` (→ `ee.Initialize`) and `ASSET_ROOT`
+> (→ the paths below), and are deliberately decoupled. **No local source copies of
+> these 13 assets exist on disk** — re-establishing them (test-read old shared assets,
+> else re-source from upstream + re-upload) is the outstanding reproducibility task.
+> Public datasets above (3DEP, WorldClim, SoilGrids) are account-independent.
+
 | Feature | Asset | Upstream source | Reducer @ scale |
 | --- | --- | --- | --- |
 | Mean curvature (500 m, 2 km) | `AK-curvature-500m`, `AK-curvature-2k` | derived from DEM (confirm) | mean @ 100 m |

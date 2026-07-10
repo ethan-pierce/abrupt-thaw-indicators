@@ -11,6 +11,8 @@ their own artifacts.
 | `SCOPE.md` | Manuscript scope: key background, objectives, brainstorm, open blockers. |
 | `REFERENCES.md` | Literature record: sources actually opened, keyed for citation by other docs. |
 | `README.md` | Human-facing overview, setup, usage, and the manuscript-prep to-do list. |
+| `PIPELINE.md` | End-to-end provenance: data sources, script→artifact DAG in order, final outputs. |
+| `TASKS.md` | Atomic, dependency-ordered implementation checklist for the methods-cleanup rewrite. |
 | `settings.py` | Path configuration (`ROOT`, `DATA`, `MODELS`, `OUTPUT`). |
 | `pyproject.toml` | Poetry dependencies and project metadata. |
 | `data/` | Data-processing and feature-extraction scripts, databases, and datasets. |

@@ -26,7 +26,7 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
 - **Feature table** — per-point geospatial features extracted and cleaned into model-ready training data.
 - **SHAP values** — Shapley-value attributions used to rank and interpret each feature's contribution.
 - **Prediction datacube** — the gridded statewide feature stack the model scores to produce thaw maps.
-- **Abrupt-thaw susceptibility** — the model's continuous predicted probability of abrupt (vs. gradual) thaw at a location; contrasts with categorical thermokarst-landscape classes.
+- **Abrupt-thaw susceptibility** — the model's continuous **log-evidence (likelihood-ratio) index** for abrupt (vs. gradual) thaw at a location: how strongly local features favor abrupt over gradual, on an absolute, prior-free scale (`0` = neutral, `>0` favors abrupt). It is **not** a calibrated probability (the sample prior is a sampling artifact; the landscape prior is unrecoverable) and **not** a discrete class. Formed as `logit(P_model(abrupt|x)) − logit(π_sample)`. Contrasts with categorical thermokarst-landscape classes.
 - **Thermokarst landscape** — categorical susceptibility class (after Olefeldt et al. 2016) spanning lake/wetland/hillslope thaw forms; the incumbent map product this project's continuous surface responds to.
 
 ## Repo rules

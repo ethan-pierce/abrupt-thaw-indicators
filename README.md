@@ -320,6 +320,37 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
   vs the ~12 h GEE feature build, so cost is a non-issue. The operative refit-on-all model
   still makes the map.
 
+*G. Prediction / mapping (`predict.py`)*
+- **G17 — Domain mask = Obu 2019 permafrost probability (soft).** Mask/weight the
+  statewide surface by Obu PerProb (`data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/`),
+  resampled to the 4 km Albers grid — threshold-with-sensitivity or carry P(permafrost)
+  as a confidence layer. Replaces the feature-validity-only keep at `predict.py:94-96`
+  and supersedes the in-repo Brown 1997 map (`arctic-permafrost-map/`, kept only if a
+  categorical cross-check is wanted). Verify the A2 soil-NaN train/serve parity here.
+- **G18 — Area-of-Applicability mask.** Add an importance-weighted dissimilarity-to-
+  training mask (Meyer & Pebesma 2021) flagging where the grid extrapolates beyond the
+  training feature distribution. A late-paper *caveat* layer, not a headline. New code,
+  no heavy dependency.
+- **G19 — Ditch discrete classification entirely.** The sole product is the continuous
+  **log-evidence susceptibility surface** (E13), masked by G17 + G18. Remove the discrete
+  classification map / `prediction_classes.nc` from the core pipeline (a classifier-era
+  artifact). Any binary "hotspot" map is a deferred *reporting* choice, shown with
+  threshold sensitivity if ever done.
+- **Glossary + SCOPE.md updated** (2026-07-10) to the log-evidence-index framing:
+  `abrupt-thaw susceptibility` is now defined as the likelihood-ratio index, not a
+  calibrated probability; SCOPE Headline A / objective 4 / brainstorm aligned.
+
+*H. Reproducibility / closeout*
+- **H20.1 — Run manifest.** Persist beside `model.json`: git SHA, `features_clean.csv`
+  hash, CV config + seeds, Obu/Brown product versions, selected hyperparameters.
+- **H20.2 — Re-run + update `/verify-ml`.** Regenerate `diagnostics/FINDINGS.md` against
+  the new pipeline, checking the *new* invariants: coords quarantined from `X`, buffer
+  removes near-twins across folds, OOF SHAP explains held-out rows, shuffle-label still
+  collapses, baselines run through the same folds.
+- **Provenance doc → `PIPELINE.md`** (data sources, script→artifact order, final
+  outputs); registered in `MAP.md`. A few custom GEE assets (SWE, climate trends,
+  curvature) need their upstream source/DOI confirmed for the methods table.
+
 *Parked / deferred:* minority-sparsity mitigation incl. presence–background → `/ideate`
 (separate brief); SHAP mechanism-vs-spatial-proxy → deferred interpretation phase.
 

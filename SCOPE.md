@@ -58,10 +58,12 @@ this project's target). No incumbent predicts *mode*.
 The contribution is **thaw *mode* + its explanation**, not a continuous map per
 se (already done for *occurrence* — see Key background). Two headlines:
 
-1. **Headline A — classify thaw mode.** Predict abrupt-vs-gradual thaw *mode*
-   from geospatial features at any point, spatialized as a continuous statewide
-   (Alaska) probability surface. Novel target: incumbents predict stage or
-   single-hazard occurrence, none predict mode.
+1. **Headline A — map abrupt-thaw susceptibility.** Predict abrupt-vs-gradual thaw
+   *mode* from geospatial features at any point, spatialized as a continuous statewide
+   (Alaska) **log-evidence susceptibility surface** — an absolute, prior-free
+   likelihood-ratio index (*not* a calibrated probability, *not* a discrete
+   classification). Novel target: incumbents predict stage or single-hazard
+   occurrence, none predict mode.
 2. **Mechanism B (what makes A possible) — one mechanism-agnostic model.** A
    single classifier over a shared feature stack fuses lake/wetland/hillslope
    thaw forms, rather than one model per landform. The Thaw Database's breadth
@@ -76,9 +78,13 @@ se (already done for *occurrence* — see Key background). Two headlines:
    mechanism-vs-spatial-proxy question belongs to the results-interpretation phase
    (post-retrain-#2), NOT the pipeline rebuild. Do not re-litigate it until there
    are SHAP results to interpret.** → `/analyze-system`
-4. **Establish predictive credibility.** Calibrated probabilities and honest
-   performance under the ~93/7 class imbalance, with demonstrated generalization
-   (CV stability, train/test gap). See Open items — the leakage check gates this.
+4. **Establish predictive credibility.** Honest performance under the ~93/7 class
+   imbalance — headlined as AUC-PR (positive = Gradual) with the prevalence floor,
+   measured under **nested spatial cross-validation** across a block-size sweep
+   (interpolation→extrapolation, fixed 1 km buffer), not a random split. Calibrated
+   probabilities are explicitly *not* claimed (the deliverable is the log-evidence
+   susceptibility index — see glossary). See README to-do "Methods cleanup" for the
+   full protocol.
 5. **Position against the incumbents.** Not "continuous vs. categorical" (that
    fight is settled) but "mode vs. occurrence/stage" and "explained vs. mapped":
    what predicting *which pathway* — and *why* — buys over Olefeldt categorical
@@ -87,7 +93,7 @@ se (already done for *occurrence* — see Key background). Two headlines:
 
 ## Brainstorm (NOT VETTED — diffuse directions)
 
-- **Mode-vs-incumbent head-to-head** — overlay the mode-probability surface on
+- **Mode-vs-incumbent head-to-head** — overlay the mode-susceptibility surface on
   Olefeldt classes *and* on occurrence-susceptibility (`wang2023`); quantify where
   predicting *mode* diverges from predicting *occurrence*. (No longer the headline
   novelty — now a validation/positioning move for objective 5.)
@@ -104,8 +110,9 @@ se (already done for *occurrence* — see Key background). Two headlines:
   `clean_feature_table.py` keeps Maximum Fire Temperature. Open question is
   whether the *representation* (instantaneous max temp / flammability vs. fire
   *history*/time-since-fire) is adequate, not whether fire is present.
-- **Uncertainty as a product** — propagate calibrated probability into a
-  mode-with-uncertainty map, not just a point estimate. → `/analyze-system`
+- **Uncertainty as a product** — pair the susceptibility surface with the
+  area-of-applicability / dissimilarity mask (an explicit extrapolation-reliability
+  layer), not just a point estimate. → `/analyze-system`
 - **Transferability** — does an Alaska-trained mode classifier extend pan-Arctic?
   (Fallback framing if "mode is the story" ever needs a broader-reach angle.)
 

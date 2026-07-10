@@ -160,6 +160,20 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         firms_data = extract_data_array(firms, region, 'T21', default_value)
         feature_arrays['Maximum Fire Temperature'] = np.flipud(firms_data)
 
+    if 'Fire Detected' in feature_names:
+        # Train/serve parity with clean_feature_table.py (A1): Fire Detected = 1 where
+        # FIRMS reported a maximum fire temperature (T21 present), 0 where the pixel is
+        # masked (genuine "no fire") — the datacube analogue of
+        # `notna(Maximum Fire Temperature)`. Reproject first, then take the mask so the
+        # indicator is evaluated on the model's 4 km grid, matching the footprint that
+        # the Maximum Fire Temperature layer treats as valid-vs-missing. Use 0 as the
+        # fill so unobserved pixels read as "no fire", never -9999.
+        firms_binary = load_data(
+            ee.Image('projects/ee-abrupt-thaw/assets/max-fire-temp'), projection, scale
+        ).select('T21').mask().gt(0)
+        fire_detected_data = extract_data_array(firms_binary, region, 'T21', default_value=0)
+        feature_arrays['Fire Detected'] = np.flipud(fire_detected_data)
+
     if 'Mean Annual SWE' in feature_names:
         swe = load_data(ee.Image('projects/ee-abrupt-thaw/assets/ee-mean-annual-swe'), projection, scale)
         swe_data = extract_data_array(swe, region, 'swe', default_value)

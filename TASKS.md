@@ -80,14 +80,14 @@ before editing.
 
 ## Stage 3 — Prediction datacube (`data/build_prediction_data.py`)
 
-- [ ] **T18 — Add `Fire Detected` layer.** [A1 parity] Build a `Fire Detected` grid
+- [x] **T18 — Add `Fire Detected` layer.** [A1 parity] Build a `Fire Detected` grid
   layer (from `max-fire-temp` NaN-ness) so the datacube feature set matches the model.
   *Depends:* T4 *Done when:* the datacube contains `Fire Detected` and the
   feature-name match in `predict.py` passes.
 
 ## Stage 4 — Mapping (`models/predict.py`)
 
-- [ ] **T19 — Log-evidence output.** [E13] Emit
+- [x] **T19 — Log-evidence output.** [E13] Emit
   `log_evidence = logit(P_model(abrupt|x)) − logit(π_sample)` (π_sample(abrupt) ≈ 0.932)
   as the susceptibility surface. *Depends:* T14 *Done when:* the primary raster is
   log-evidence, `0 = neutral`.

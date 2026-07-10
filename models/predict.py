@@ -3,6 +3,7 @@
 from pathlib import Path
 import json
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import xarray as xr
 import xgboost as xgb
@@ -108,6 +109,30 @@ print("  This may take a while for large datasets...")
 # Use index 0 for abrupt thaw (majority class, ~94% of training data)
 probabilities = model.predict_proba(feature_array)[:, 0]
 
+# T19 [E13]: log-evidence susceptibility index -- the PRIMARY output surface.
+#   log_evidence = logit(P_model(abrupt|x)) - logit(pi_sample(abrupt))
+# A prior-free log-likelihood-ratio for abrupt vs gradual thaw: 0 = neutral, >0 favours
+# abrupt, <0 favours gradual. This is NOT a calibrated probability and NOT a discrete
+# class -- the sample prior is a lake-/road-biased sampling artifact and the landscape
+# prior is unrecoverable, so only the prior-free evidence is defensible.
+#
+# pi_sample(abrupt) is the abrupt (class 0) fraction of the SAME features_clean.csv the
+# operative model was refit on. With scale_pos_weight=1 (train_xgboost.py:96-98, T10)
+# that sample prevalence is exactly the prior baked into P_model, so subtracting its
+# logit divides the prior back out. Read at score time so it always tracks the refit
+# data (currently ~0.9428; the older ~0.932 figure predates the v2 table).
+pi_sample = float(
+    (pd.read_csv(data_dir / 'features_clean.csv', usecols=['Class'])['Class'] == 0).mean()
+)
+
+def _logit(p, eps=1e-7):
+    """Numerically safe logit; clips to (eps, 1-eps) so p in {0,1} stays finite."""
+    p = np.clip(p, eps, 1.0 - eps)
+    return np.log(p / (1.0 - p))
+
+log_evidence = _logit(probabilities) - _logit(pi_sample)
+print(f"Sample prior pi_sample(abrupt) = {pi_sample:.4f} (logit = {_logit(pi_sample):.4f})")
+
 # Predict binary classes using custom threshold
 # When probability of abrupt (class 0) >= threshold, predict 0 (abrupt), else 1 (gradual)
 predictions = (probabilities < DECISION_THRESHOLD).astype(int)
@@ -125,6 +150,7 @@ if n_finite_invalid > 0:
 print("\nReshaping predictions to spatial dimensions...")
 probabilities_2d = probabilities.reshape(y_size, x_size)
 predictions_2d = predictions.reshape(y_size, x_size)
+log_evidence_2d = log_evidence.reshape(y_size, x_size)
 
 # Calculate prediction statistics (only for valid pixels with sufficient valid features and finite predictions)
 print("\nPrediction Statistics (excluding invalid data):")
@@ -139,6 +165,11 @@ if n_valid_predictions > 0:
     print(f"  Probability median: {np.median(valid_probabilities):.4f}")
     print(f"  Abrupt thaw predictions: {(valid_predictions == 0).sum():,} ({(valid_predictions == 0).sum()/n_valid_predictions*100:.1f}%)")
     print(f"  Gradual thaw predictions: {(valid_predictions == 1).sum():,} ({(valid_predictions == 1).sum()/n_valid_predictions*100:.1f}%)")
+    valid_log_evidence = log_evidence[valid_pixels]
+    print(f"  Log-evidence range: [{valid_log_evidence.min():.3f}, {valid_log_evidence.max():.3f}] (0 = neutral)")
+    print(f"  Log-evidence median: {np.median(valid_log_evidence):.3f}")
+    print(f"  Pixels favouring abrupt (log-evidence > 0): {(valid_log_evidence > 0).sum():,} "
+          f"({(valid_log_evidence > 0).sum()/n_valid_predictions*100:.1f}%)")
 else:
     print("  WARNING: No valid predictions found!")
 
@@ -146,6 +177,7 @@ else:
 print("\nCreating output dataset...")
 output_ds = xr.Dataset(
     {
+        'log_evidence': (['y', 'x'], log_evidence_2d),
         'probability': (['y', 'x'], probabilities_2d),
         'prediction': (['y', 'x'], predictions_2d)
     },
@@ -156,8 +188,13 @@ output_ds = xr.Dataset(
     attrs={
         'model_path': str(model_path),
         'prediction_data_path': str(prediction_data_path),
-        'description': 'Abrupt thaw predictions from XGBoost model',
-        'probability_description': 'Probability of abrupt thaw (class 0)',
+        'description': 'Abrupt-thaw susceptibility (log-evidence) from XGBoost model',
+        'log_evidence_description': ('Primary surface [E13]: logit(P_model(abrupt|x)) '
+                                     '- logit(pi_sample(abrupt)); 0 = neutral, >0 favours '
+                                     'abrupt. Prior-free log-likelihood-ratio index, NOT a '
+                                     'calibrated probability and NOT a discrete class.'),
+        'pi_sample_abrupt': pi_sample,
+        'probability_description': 'Diagnostic only: P_model(abrupt, class 0), calibrated to the sample prior',
         'prediction_description': 'Binary prediction: 0=Abrupt Thaw, 1=Gradual Thaw',
         'decision_threshold': DECISION_THRESHOLD,
         'default_value': default_value,
@@ -170,6 +207,14 @@ output_path = data_dir / 'predictions.nc'
 print(f"\nSaving predictions to: {output_path}")
 output_ds.to_netcdf(output_path)
 print("Predictions saved successfully")
+
+# Primary product: the log-evidence susceptibility surface on its own [T19/E13].
+susceptibility_path = data_dir / 'susceptibility.nc'
+susceptibility_ds = xr.Dataset(
+    {'log_evidence': output_ds['log_evidence']}, coords=output_ds.coords, attrs=output_ds.attrs
+)
+susceptibility_ds.to_netcdf(susceptibility_path)
+print(f"  Susceptibility (log-evidence) saved to: {susceptibility_path}")
 
 # Also save as separate files for easier access
 prob_output_path = data_dir / 'prediction_probabilities.nc'
@@ -211,6 +256,35 @@ lat_min, lat_max = min(lats), max(lats)
 
 print(f"Geographic bounds: Lon [{lon_min:.2f}, {lon_max:.2f}], Lat [{lat_min:.2f}, {lat_max:.2f}]")
 
+output_dir = OUTPUT
+output_dir.mkdir(exist_ok=True)
+
+# Primary product map: log-evidence susceptibility, diverging colormap centred at 0 [T19/E13].
+print("\nCreating log-evidence susceptibility map (primary product)...")
+invalid_mask = (~valid_pixels).reshape(y_size, x_size)
+masked_log_evidence = np.where(invalid_mask, np.nan, log_evidence_2d)
+le_absmax = float(np.nanmax(np.abs(masked_log_evidence))) if np.isfinite(masked_log_evidence).any() else 1.0
+
+fig0, ax0 = plt.subplots(figsize=(14, 10))
+im0 = ax0.imshow(
+    np.flipud(masked_log_evidence),
+    extent=[lon_min, lon_max, lat_min, lat_max],
+    cmap='RdBu_r',  # red = positive (favours abrupt), white = 0 (neutral), blue = favours gradual
+    aspect='auto',
+    origin='lower',
+    interpolation='nearest',
+    vmin=-le_absmax,
+    vmax=le_absmax,
+)
+cbar0 = plt.colorbar(im0, ax=ax0, fraction=0.046, pad=0.04)
+cbar0.set_label('Abrupt-thaw log-evidence (0 = neutral, >0 favours abrupt)', rotation=270, labelpad=20)
+ax0.set_xlabel('Longitude (°E)', fontsize=12)
+ax0.set_ylabel('Latitude (°N)', fontsize=12)
+ax0.set_title('Abrupt-Thaw Susceptibility (log-evidence)', fontsize=14, fontweight='bold')
+le_map_path = output_dir / 'susceptibility_log_evidence_map.png'
+plt.savefig(le_map_path, dpi=600, bbox_inches='tight')
+print(f"Log-evidence susceptibility map saved to: {le_map_path}")
+
 # Create figure
 fig, ax = plt.subplots(figsize=(14, 10))
 
@@ -240,8 +314,6 @@ ax.set_title('Abrupt Thaw Probability', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.0, linestyle='--')
 
 # Save map
-output_dir = OUTPUT
-output_dir.mkdir(exist_ok=True)
 map_output_path = output_dir / 'prediction_probability_map.png'
 plt.savefig(map_output_path, dpi=600, bbox_inches='tight')
 print(f"Probability map saved to: {map_output_path}")
@@ -281,6 +353,8 @@ print("\n" + "="*80)
 print("PREDICTION COMPLETE")
 print("="*80)
 print(f"\nOutput files:")
+print(f"  - {susceptibility_path}  (PRIMARY: log-evidence susceptibility)")
+print(f"  - {le_map_path}  (PRIMARY map)")
 print(f"  - {output_path}")
 print(f"  - {prob_output_path}")
 print(f"  - {pred_output_path}")

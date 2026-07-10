@@ -8,7 +8,7 @@ before editing.
 
 ## Stage 0 — CV foundation (`models/spatial_cv.py`) — do first
 
-- [ ] **T1 — Add equal-area km-grid block method.** [B5b] Add an Alaska Albers
+- [x] **T1 — Add equal-area km-grid block method.** [B5b] Add an Alaska Albers
   (EPSG:3338) grid option to `assign_blocks`: reproject lat/lon → metres, floor to
   cells of a given **edge length in km**. Keep the buffer on haversine. Extend
   `_selftest`. *Depends:* — *Done when:* `assign_blocks(..., method='albers_grid',

@@ -31,6 +31,9 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
 
 ## Repo rules
 
+- **Always run Python through Poetry** (`poetry run python ...`, `poetry run pytest`, etc.).
+  The project dependencies (`pyproj`, `xgboost`, `sklearn`, …) live only in the Poetry
+  virtualenv; the bare `python` on PATH does not have them.
 - **Class encoding is fixed: `0 = Abrupt` (majority ~93%), `1 = Gradual` (minority ~7%).**
   This has been miscoded before (legacy artifacts use the reverse) — verify the
   encoding whenever touching labels, `predict_proba` indexing, class names, or

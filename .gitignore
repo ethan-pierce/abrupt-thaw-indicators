@@ -1,6 +1,7 @@
 data/*.nc
 data/*.tif
-data/*.pyc
+data/__pycache__/*.pyc
+__pycache__/*.pyc
 data/Obu2019
 # SNAP projected-climate rasters — large, regenerate with data/fetch_snap_projections.py
 data/snap/*.tif

@@ -177,12 +177,23 @@ the top priority and must be resolved before any other task is taken. (T0 is don
 
 ## Stage 5 — Interpretation (`models/shap_values.py`)
 
-- [ ] **T24 — Canonical plumbing.** [F14] Remove the independent `default_rng(100)`
+- [x] **T24 — Canonical plumbing.** [F14] Remove the independent `default_rng(100)`
   re-split; load the B6 coords + persisted CV config. *Depends:* T11 *Done when:* no
-  independent split remains.
-- [ ] **T25 — Pooled out-of-fold SHAP.** [F15] Per outer fold, refit with the selected
+  independent split remains. **✓ 2026-07-13:** `shap_values.py` rewritten — the
+  `train_test_split` is gone; `load_inputs` applies the T7 coord quarantine and
+  `load_cv_config` reads `models/cv_config.json` (with trainer-default fallbacks for a
+  stale config missing `operative_cell_km`).
+- [x] **T25 — Pooled out-of-fold SHAP.** [F15] Per outer fold, refit with the selected
   hyperparameters fixed, TreeSHAP on held-out points, pool across folds. *Depends:*
-  T2,T14,T24 *Done when:* SHAP outputs are computed only on held-out rows.
+  T2,T14,T24 *Done when:* SHAP outputs are computed only on held-out rows. **✓
+  2026-07-13:** `pooled_oof_shap` refits per single-level buffered block fold (operative
+  cell km, fixed hyperparameters from `selected_hparams.json`) and runs TreeSHAP on the
+  held-out points only, pooling so each point is explained out-of-fold. Margin/log-odds
+  space (`model_output='raw'`, tree_path_dependent), negated to Abrupt (class 0)
+  orientation per the T19 log-evidence scale. `model.json` intentionally unused (OOF needs
+  per-fold refits). Smoke-verified (`SHAP_SMOKE=1`) end-to-end; **authoritative run
+  deferred** until the rebuilt features + trainer run produce `selected_hparams.json` and
+  a matching `features_clean.csv` (needs T30).
 
 ## Stage 6 — Scope reduction & closeout
 

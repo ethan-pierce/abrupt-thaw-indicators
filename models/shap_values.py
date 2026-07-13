@@ -1,253 +1,238 @@
-"""Investigate the SHAP values of the best XGBoost model for abrupt thaw features."""
+"""Pooled out-of-fold SHAP for the operative thaw-mode model (TASKS T24/T25).
 
+Canonical plumbing (T24): there is NO independent re-split here. The old script did its
+own `default_rng(100)` + `train_test_split`, an arbitrary holdout unrelated to the real
+CV. This loads `features_clean.csv` with the B6 coordinate quarantine (lat/lon carried
+for spatial CV, never in the model matrix) and the persisted CV protocol
+(`models/cv_config.json`) — the same spatial-block scheme the trainer uses.
+
+Pooled out-of-fold SHAP (T25): the operative model's SELECTED hyperparameters are held
+fixed (read from `models/selected_hparams.json`, the trainer's canonical output). Over
+single-level buffered spatial-block folds at the operative cell size, per fold we refit
+on the fold-train subset and run TreeSHAP on the HELD-OUT points only, pooling across
+folds so every point receives an attribution from a model that never trained on it. The
+all-data `model.json` is deliberately not used — OOF attribution requires per-fold refits.
+
+Output space: MARGIN (log-odds), `model_output='raw'` with the exact tree-path-dependent
+perturbation (no background dataset). This matches the T19 log-evidence susceptibility
+scale. The raw margin of `binary:logistic` is the log-odds of class 1 (Gradual); we
+negate so positive SHAP pushes toward Abrupt (class 0), preserving the Abrupt-oriented
+sign convention of the earlier figures.
+"""
+
+import os
+import json
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # headless: save figures, never block on plt.show()
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-import xgboost as xgb
 import shap
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
+from spatial_cv import assign_blocks, buffered_block_folds
+# Identical estimator factory + protocol defaults -> parity with training.
+from train_xgboost import xgb_builder, OPERATIVE_CELL_KM, BUFFER_KM, N_OUTER, CV_SEED
 
-data = DATA
-feats = pd.read_csv(data / 'features_clean.csv')
-rng = np.random.default_rng(100)
+# Fast smoke config for correctness checks (SHAP_SMOKE=1); does not affect real runs.
+SMOKE = bool(os.environ.get('SHAP_SMOKE'))
+SMOKE_N = 1500
+SMOKE_SPLITS = 3
+# Smoke-only fallback hyperparameters (used only if selected_hparams.json is absent AND
+# SHAP_SMOKE is set); real runs require the trainer's selected_hparams.json.
+SMOKE_HPARAMS = {'max_depth': 3, 'min_child_weight': 20, 'reg_lambda': 10.0,
+                 'learning_rate': 0.1, 'n_estimators': 50}
 
-matrix = feats.drop('Class', axis = 1)
-target = feats['Class']
-X_train, X_test, y_train, y_test = train_test_split(
-    matrix, target, 
-    test_size = 0.3, 
-    random_state = rng.integers(0, 100), 
-    shuffle = True, 
-    stratify = target
-)
-dtrain = xgb.DMatrix(X_train, label = y_train, missing = np.nan)
-dtest = xgb.DMatrix(X_test, label = y_test, missing = np.nan)
-
-model = xgb.XGBClassifier()
-model.load_model(str(MODELS / 'model.json'))
-
-# Calculate SHAP values
-# For binary classification, we want SHAP values for class 0 (Abrupt - majority class)
-# Compute SHAP values in probability space (requires interventional feature perturbation with background data)
-# Use a large background dataset for accuracy (more samples = more accurate but slower)
-background_data = X_train.sample(min(5000, len(X_train)), random_state=42)
-explainer = shap.TreeExplainer(model, background_data, model_output='probability', feature_perturbation='interventional')
-shap_values = explainer(X_test)
+# Dependence plots to emit: (primary feature, interaction feature, output filename).
+# Guarded against missing columns so the script survives feature-set changes.
+DEPENDENCE_SPECS = [
+    ('Slope',                  'Slope',                  'shap_dependence_plot_slope.png'),
+    ('Mean curvature (500 m)', 'Mean curvature (500 m)', 'shap_dependence_plot_curvature.png'),
+    ('Nitrogen (0-30 cm)',     'Nitrogen (30-200 cm)',   'shap_dependence_plot_nitrogen.png'),
+    ('Silt (0-30 cm)',         'Silt (30-200 cm)',       'shap_dependence_plot_sil.png'),
+    ('Trend in SWE',           'Trend in SWE',           'shap_dependence_plot_trend_swe.png'),
+    ('Mean Annual SWE',        'Mean Annual SWE',        'shap_dependence_plot_mean_annual_swe.png'),
+    ('Annual Precipitation',   'Annual Precipitation',   'shap_dependence_plot_annual_precip.png'),
+]
 
 
-# For binary classification with XGBClassifier, TreeExplainer returns 2D array (samples, features)
-# representing the positive class (Class 1 = Gradual)
-# Transform to Class 0 (Abrupt) SHAP values:
-# Since probabilities sum to 1: P(Class 0) = 1 - P(Class 1)
-# Therefore: SHAP(Class 0) = -SHAP(Class 1)
-base_value_class_1 = explainer.expected_value
-shap_values_class_1 = shap_values
+# --------------------------------------------------------------------------
+# inputs (canonical plumbing — T24)
+# --------------------------------------------------------------------------
+def load_inputs(feats_csv):
+    """Load features with the B6 coordinate quarantine (T7 parity).
 
-# Transform to Class 0 (Abrupt) SHAP values
-# Base value for Class 0 is 1 - base_value_class_1
-# SHAP values for Class 0 are negative of Class 1 SHAP values
-if np.isscalar(base_value_class_1):
-    base_value_class_0 = 1 - base_value_class_1
-else:
-    base_value_class_0 = 1 - base_value_class_1[0] if len(base_value_class_1) > 0 else 1 - base_value_class_1
-
-# Create new Explanation object for Class 0 with negated SHAP values
-shap_values_abrupt_class = shap.Explanation(
-    values=-shap_values_class_1.values,
-    base_values=np.full(len(X_test), base_value_class_0),
-    data=shap_values_class_1.data,
-    feature_names=shap_values_class_1.feature_names
-)
-
-# Find indices for abrupt thaw (class 0)
-# Note: Encoding is: Abrupt=0 (majority class), Gradual=1 (minority class)
-abrupt_indices = np.where(y_test == 0)[0]
-
-base_values_rounded = base_value_class_0.round(2)
-shap_values_rounded = shap_values_abrupt_class.values.round(2)
-X_test_rounded = X_test.round(2)
+    Returns (X, y, lat, lon): X has Class + coords dropped; lat/lon are kept only for
+    spatial-block CV, never entering the model matrix.
+    """
+    feats = pd.read_csv(feats_csv)
+    drop = [c for c in ('Class', 'Latitude', 'Longitude') if c in feats.columns]
+    X = feats.drop(columns=drop)
+    y = feats['Class'].to_numpy()
+    lat = feats['Latitude'].to_numpy()
+    lon = feats['Longitude'].to_numpy()
+    assert 'Latitude' not in X.columns and 'Longitude' not in X.columns, \
+        "coordinate quarantine failed: Latitude/Longitude leaked into X"
+    return X, y, lat, lon
 
 
-# idx = abrupt_indices[100]
+def load_cv_config(path):
+    """Load the persisted CV protocol, resolving missing keys to the trainer defaults.
 
-# im = shap.plots.force(
-#     base_values_rounded,
-#     shap_values_rounded[idx],
-#     X_test_rounded.iloc[idx],
-#     contribution_threshold = 0.1,
-#     matplotlib = True,
-#     show = False,
-#     figsize = (12, 4)
-# )
-# plt.tight_layout()
-# plt.savefig('output/shap_force_plot_abrupt.png', dpi = 300)
-# plt.show()
+    An older `cv_config.json` may predate some keys (e.g. `operative_cell_km`); falling
+    back to `train_xgboost`'s constants keeps parity and survives a stale config until
+    the next training run rewrites it [B6/T11/T24].
+    """
+    cfg = json.loads(Path(path).read_text())
+    cfg.setdefault('operative_cell_km', OPERATIVE_CELL_KM)
+    cfg.setdefault('buffer_km', BUFFER_KM)
+    cfg.setdefault('n_splits_outer', N_OUTER)
+    cfg.setdefault('seeds', {})
+    cfg['seeds'].setdefault('CV_SEED', CV_SEED)
+    return cfg
 
 
-# Use SHAP values for Abrupt class (class 0) for main plots
-# This shows what features drive predictions toward Abrupt thaw
-shap_values_for_plot = shap_values_abrupt_class.values if hasattr(shap_values_abrupt_class, 'values') else shap_values_abrupt_class
+def load_selected_hparams(path):
+    """Load the operative model's selected hyperparameters [T14/T25].
 
-# # ============================================================================
-# # COMPUTE SHAP INTERACTION VALUES
-# # ============================================================================
-# print("\n" + "="*80)
-# print("COMPUTING SHAP INTERACTION VALUES")
-# print("="*80)
-# print("This may take a while for large datasets...")
+    `selected_hparams.json` is the trainer's canonical record of the hyperparameters
+    the operative model was fit with; OOF SHAP refits every fold with these fixed.
+    """
+    return json.loads(Path(path).read_text())['hyperparameters']
 
-# # Compute SHAP interaction values (for class 0 - Abrupt)
-# # Interaction values show how features interact with each other
-# shap_interaction_values = explainer.shap_interaction_values(X_test)
 
-# # Handle binary classification: extract interactions for class 0 (Abrupt)
-# if len(shap_interaction_values.shape) == 4:
-#     # Shape: (samples, features, features, classes)
-#     shap_interaction_values_abrupt = shap_interaction_values[:, :, :, 0]
-# else:
-#     # Shape: (samples, features, features)
-#     shap_interaction_values_abrupt = shap_interaction_values
+# --------------------------------------------------------------------------
+# pooled out-of-fold SHAP (T25)
+# --------------------------------------------------------------------------
+def pooled_oof_shap(X, y, lat, lon, *, cell_km, buffer_km, n_splits, seed, hparams):
+    """Per-fold refit (fixed hyperparameters) + held-out TreeSHAP, pooled across folds.
 
-# print(f"Interaction values shape: {shap_interaction_values_abrupt.shape}")
-# print("(samples, features, features) - each [i,j] entry shows interaction between feature i and j")
+    Uses single-level buffered spatial-block folds at `cell_km` (the interpolation scale
+    the statewide map serves): each point is held out exactly once, so pooling yields a
+    full out-of-fold attribution matrix. SHAP is computed in margin (log-odds) space and
+    negated to the Abrupt (class 0) orientation.
 
-# # Compute mean absolute interaction strength for each feature pair
-# # Average across all samples to get overall interaction strength
-# mean_interaction_strength = np.abs(shap_interaction_values_abrupt).mean(axis=0)
-# # Shape: (features, features) - symmetric matrix
+    Returns (explanation_abrupt, scored_mask). Points in a fold whose training subset is
+    single-class are left unscored (mask False) rather than explained by a degenerate fit.
+    """
+    y = np.asarray(y)
+    n, n_feat = X.shape
+    values = np.full((n, n_feat), np.nan)
+    base = np.full(n, np.nan)
+    scored = np.zeros(n, dtype=bool)
 
-# # Get feature names
-# feature_names = X_test.columns.tolist()
-# n_features = len(feature_names)
+    blocks = assign_blocks(lat, lon, method='albers_grid', cell_km=cell_km)
+    folds = buffered_block_folds(lat, lon, blocks, n_splits=n_splits,
+                                 buffer_km=buffer_km, seed=seed)
+    factory = xgb_builder(hparams)
+    for f, (train_idx, test_idx) in enumerate(folds):
+        ytr = y[train_idx]
+        if len(np.unique(ytr)) < 2 or len(test_idx) == 0:
+            continue  # degenerate fold: leave these test points unscored
+        est = factory(ytr)
+        est.fit(X.iloc[train_idx], ytr)
+        # Exact, background-free TreeSHAP in margin (log-odds of class 1 = Gradual).
+        explainer = shap.TreeExplainer(est, model_output='raw',
+                                       feature_perturbation='tree_path_dependent')
+        expl = explainer(X.iloc[test_idx])
+        values[test_idx] = expl.values
+        base[test_idx] = np.asarray(explainer.expected_value).reshape(-1)[0]
+        scored[test_idx] = True
 
-# # Create a list of all feature pairs with their interaction strengths
-# interaction_pairs = []
-# for i in range(n_features):
-#     for j in range(i+1, n_features):  # Only upper triangle to avoid duplicates
-#         interaction_strength = mean_interaction_strength[i, j]
-#         interaction_pairs.append({
-#             'feature_i': feature_names[i],
-#             'feature_j': feature_names[j],
-#             'interaction_strength': interaction_strength,
-#             'index_i': i,
-#             'index_j': j
-#         })
+    n_unscored = int((~scored).sum())
+    if n_unscored:
+        print(f"  [warn] {n_unscored}/{n} points left unscored (single-class fold train); "
+              f"excluded from SHAP outputs")
 
-# # Sort by interaction strength (descending)
-# interaction_pairs_sorted = sorted(interaction_pairs, key=lambda x: x['interaction_strength'], reverse=True)
+    # Negate margin SHAP -> Abrupt (class 0) orientation: positive pushes toward Abrupt.
+    expl_abrupt = shap.Explanation(
+        values=-values[scored],
+        base_values=-base[scored],
+        data=X.values[scored],
+        feature_names=list(X.columns),
+    )
+    return expl_abrupt, scored
 
-# # Display top interactions
-# print("\n" + "-"*80)
-# print("TOP 20 STRONGEST FEATURE INTERACTIONS")
-# print("-"*80)
-# print(f"{'Rank':<6} {'Feature 1':<35} {'Feature 2':<35} {'Strength':<12}")
-# print("-"*80)
 
-# for rank, pair in enumerate(interaction_pairs_sorted[:20], 1):
-#     print(f"{rank:<6} {pair['feature_i']:<35} {pair['feature_j']:<35} {pair['interaction_strength']:.6f}")
+# --------------------------------------------------------------------------
+# figures
+# --------------------------------------------------------------------------
+def make_plots(expl, X_scored, y_scored, out_dir):
+    """Emit the SHAP figure set (Abrupt-oriented, margin space) to `out_dir`."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cols = list(X_scored.columns)
+    values = expl.values
 
-# # Save top interactions to CSV
-# output_dir = Path(__file__).parent.parent / 'output'
-# output_dir.mkdir(exist_ok=True)
-# interactions_df = pd.DataFrame(interaction_pairs_sorted)
-# interactions_df.to_csv(output_dir / 'shap_interaction_strengths.csv', index=False)
-# print(f"\nAll interaction strengths saved to: {output_dir / 'shap_interaction_strengths.csv'}")
+    # Dependence plots (skip any whose primary feature is absent).
+    for primary, interaction, fname in DEPENDENCE_SPECS:
+        if primary not in cols:
+            print(f"  [skip] dependence '{primary}': column not present")
+            continue
+        inter = interaction if interaction in cols else 'auto'
+        shap.dependence_plot(primary, values, X_scored, interaction_index=inter, show=False)
+        plt.tight_layout()
+        plt.savefig(out_dir / fname, dpi=300)
+        plt.close()
 
-# # Create a heatmap of top interactions
-# print("\nCreating interaction strength heatmap...")
-# top_n = 15  # Show top N features by total interaction strength
-# # Calculate total interaction strength per feature (sum of all interactions)
-# feature_total_interactions = mean_interaction_strength.sum(axis=0) + mean_interaction_strength.sum(axis=1)
-# top_feature_indices = np.argsort(feature_total_interactions)[-top_n:][::-1]
-# top_feature_names = [feature_names[i] for i in top_feature_indices]
+    # Global summary (top features driving Abrupt).
+    shap.summary_plot(expl, max_display=10, show=False)
+    plt.tight_layout()
+    plt.savefig(out_dir / 'shap_summary_plot.png', dpi=300)
+    plt.close()
 
-# # Extract submatrix for top features
-# interaction_submatrix = mean_interaction_strength[np.ix_(top_feature_indices, top_feature_indices)]
+    # Beeswarm over actual Abrupt points (class 0): what drives Abrupt predictions.
+    abrupt = np.where(y_scored == 0)[0]
+    shap.plots.beeswarm(expl[abrupt], max_display=10, show=False)
+    plt.tight_layout()
+    plt.savefig(out_dir / 'shap_beeswarm_abrupt.png', dpi=300)
+    plt.close()
 
-# # Create heatmap
-# fig, ax = plt.subplots(figsize=(14, 12))
-# im = ax.imshow(interaction_submatrix, cmap='YlOrRd', aspect='auto')
-# ax.set_xticks(range(len(top_feature_names)))
-# ax.set_yticks(range(len(top_feature_names)))
-# ax.set_xticklabels(top_feature_names, rotation=45, ha='right')
-# ax.set_yticklabels(top_feature_names)
-# ax.set_title(f'SHAP Interaction Strength Matrix (Top {top_n} Features)', fontsize=14, fontweight='bold')
-# plt.colorbar(im, ax=ax, label='Mean Absolute Interaction Strength')
-# plt.tight_layout()
-# plt.savefig(output_dir / 'shap_interaction_heatmap.png', dpi=300)
-# print(f"Interaction heatmap saved to: {output_dir / 'shap_interaction_heatmap.png'}")
-# plt.show()
 
-# print("\n" + "="*80)
-# print("INTERACTION ANALYSIS COMPLETE")
-# print("="*80)
+# --------------------------------------------------------------------------
+# main
+# --------------------------------------------------------------------------
+def main():
+    cfg = load_cv_config(MODELS / 'cv_config.json')
 
-# Dependence plot for Slope
-var = "Slope"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_slope.png', dpi=300)
-plt.show()
+    hp_path = MODELS / 'selected_hparams.json'
+    if hp_path.exists():
+        hparams = load_selected_hparams(hp_path)
+    elif SMOKE:
+        print("[smoke] selected_hparams.json absent; using SMOKE_HPARAMS")
+        hparams = SMOKE_HPARAMS
+    else:
+        raise FileNotFoundError(
+            f"{hp_path} not found — run models/train_xgboost.py first so the operative "
+            "hyperparameters are recorded (OOF SHAP refits each fold with them).")
 
-# Dependence plot for Mean Curvature (2 km)
-var = "Mean curvature (500 m)"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_curvature.png', dpi=300)
-plt.show()
+    X, y, lat, lon = load_inputs(DATA / 'features_clean.csv')
 
-# Dependence plot for Nitrogen (0-30 cm)
-var = "Nitrogen (0-30 cm)"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index="Nitrogen (30-200 cm)", show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_nitrogen.png', dpi=300)
-plt.show()
+    n_splits = cfg['n_splits_outer']
+    if SMOKE:
+        rng = np.random.default_rng(cfg['seeds']['CV_SEED'])
+        sel = rng.choice(len(y), size=min(SMOKE_N, len(y)), replace=False)
+        X, y, lat, lon = X.iloc[sel].reset_index(drop=True), y[sel], lat[sel], lon[sel]
+        n_splits = SMOKE_SPLITS
+        print(f"[smoke] subsampled to {len(y)} points, {n_splits} folds")
 
-# Dependence plot for Silt (0-30 cm)
-var = "Silt (0-30 cm)"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index="Silt (30-200 cm)", show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_sil.png', dpi=300)
-plt.show()
+    print(f"Pooled OOF SHAP: {len(y)} points | {X.shape[1]} features | "
+          f"operative cell {cfg['operative_cell_km']} km | buffer {cfg['buffer_km']} km | "
+          f"{n_splits} folds | hyperparameters {hparams}")
 
-# Dependence plot for Trend in SWE
-var = "Trend in SWE"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_trend_swe.png', dpi=300)
-plt.show()
+    expl, scored = pooled_oof_shap(
+        X, y, lat, lon,
+        cell_km=cfg['operative_cell_km'], buffer_km=cfg['buffer_km'],
+        n_splits=n_splits, seed=cfg['seeds']['CV_SEED'], hparams=hparams,
+    )
 
-# Dependence plot for Mean Annual SWE
-var = "Mean Annual SWE"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_mean_annual_swe.png', dpi=300)
-plt.show()
+    make_plots(expl, X[scored].reset_index(drop=True), y[scored], OUTPUT)
+    print(f"Wrote SHAP figures to {OUTPUT} ({int(scored.sum())} points explained out-of-fold)")
 
-# Dependence plot for Annual Precipitation
-var = "Annual Precipitation"
-shap.dependence_plot(var, shap_values_for_plot, X_test, interaction_index=var, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_dependence_plot_annual_precip.png', dpi=300)
-plt.show()
 
-# Summary plot using SHAP values for Abrupt class (class 0)
-shap.summary_plot(shap_values_abrupt_class, max_display = 10, show = False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_summary_plot.png', dpi = 300)
-plt.show()
-
-# Create beeswarm plot for abrupt thaw points only
-# Using SHAP values for Abrupt class (class 0) to see what drives Abrupt predictions
-shap_values_abrupt_samples = shap_values_abrupt_class[abrupt_indices]
-
-# Beeswarm plot for actual abrupt thaw points (using Abrupt class SHAP values)
-shap.plots.beeswarm(shap_values_abrupt_samples, max_display=10, show=False)
-plt.tight_layout()
-plt.savefig(OUTPUT / 'shap_beeswarm_abrupt.png', dpi=300)
-plt.show()
+if __name__ == '__main__':
+    main()

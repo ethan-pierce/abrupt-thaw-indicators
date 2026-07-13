@@ -1,11 +1,23 @@
-"""Build a feature table for the thaw database."""
+"""Build a feature table for the thaw database.
+
+Two-track feature sourcing (no custom GEE assets; see TASKS T0):
+  * GEE track   -> public catalog data sampled server-side. Public datasets
+    (3DEP terrain, WorldClim bioclim, SoilGrids) are sampled inline here;
+    the climate/terrain layers that were formerly custom assets (curvature,
+    SWE + trends, max fire temperature) come from ``gee_features.py``.
+  * LOCAL track -> ``local_rasters.py`` nearest-samples downloaded rasters at
+    the point coordinates for the four features with no GEE-catalog upstream
+    (ALFRESCO flammability + vegetation mode, NLCD land cover, SNAP projected
+    climate change).
+There is no ``ASSET_ROOT`` dependency.
+"""
 
 import ee
 
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import EE_PROJECT, ASSET_ROOT
+from settings import EE_PROJECT
 
 ee.Authenticate()
 ee.Initialize(project=EE_PROJECT)
@@ -18,7 +30,10 @@ import matplotlib.pyplot as plt
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA
+import gee_features
+import local_rasters
 
 data = DATA
 
@@ -67,13 +82,7 @@ def add_feature(
 points = [ee.Feature(ee.Geometry.Point([lon, lat])) for lon, lat in zip(thawdb['Longitude'], thawdb['Latitude'])]
 point_collection = ee.FeatureCollection(points)
 
-# VARIABLE: Land cover
-try:
-    landcover = ee.Image(f'{ASSET_ROOT}/NLCD-2016')
-    add_feature(thawdb, point_collection, landcover, ee.Reducer.mode(), 30, 'Land Cover', 'b1')
-    print('Added NLCD land cover')
-except:
-    print('Could not add NLCD land cover')
+# VARIABLE: Land cover -> LOCAL track (see the LOCAL block near the end).
 
 # VARIABLES: terrain analysis
 try:
@@ -97,19 +106,22 @@ try:
 except:
     print('Could not add aspect derived from USGS 3DEP elevation')
 
+# GEE track: curvature re-derived inline from 3DEP via the TAGEE-family port
+# (gee_features.mean_curvature), no custom asset. Sampled at the analysis cell
+# size (window/2 = 250 m / 1000 m).
 try:
-    curve500 = ee.Image(f'{ASSET_ROOT}/AK-curvature-500m')
-    add_feature(thawdb, point_collection, curve500, ee.Reducer.mean(), 100, 'Mean curvature (500 m)', 'MeanCurvature')
-    print('Added mean 500m curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
-except:
-    print('Could not add mean 500m curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
+    curve500 = gee_features.mean_curvature(500)
+    add_feature(thawdb, point_collection, curve500, ee.Reducer.mean(), 250, 'Mean curvature (500 m)', 'MeanCurvature')
+    print('Added mean 500m curvature (TAGEE-family port of USGS 3DEP elevation)')
+except Exception as e:
+    print('Could not add mean 500m curvature:', e)
 
 try:
-    curve2k = ee.Image(f'{ASSET_ROOT}/AK-curvature-2k')
-    add_feature(thawdb, point_collection, curve2k, ee.Reducer.mean(), 100, 'Mean curvature (2 km)', 'MeanCurvature')
-    print('Added mean 2km curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
-except:
-    print('Could not add mean 2km curvature derived from TAGEE algorithm applied to USGS 3DEP elevation')
+    curve2k = gee_features.mean_curvature(2000)
+    add_feature(thawdb, point_collection, curve2k, ee.Reducer.mean(), 1000, 'Mean curvature (2 km)', 'MeanCurvature')
+    print('Added mean 2km curvature (TAGEE-family port of USGS 3DEP elevation)')
+except Exception as e:
+    print('Could not add mean 2km curvature:', e)
 
 # VARIABLES: bioclimatic variables
 bioclim = ee.Image('WORLDCLIM/V1/BIO')
@@ -238,80 +250,65 @@ for band in ['bdod_0-5cm_mean', 'bdod_5-15cm_mean', 'bdod_15-30cm_mean', 'bdod_3
     except:
         print('Could not add', bandmap[band], 'from SoilGrids')
 
-# VARIABLES: flammability index
+# GEE track: maximum fire temperature re-derived inline from FIRMS (no asset).
 try:
-    flammability = ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-flammability')
-    add_feature(thawdb, point_collection, flammability, ee.Reducer.mean(), 1000, 'Flammability Index', 'b1')
-    print('Added ALFRESCO flammability index')
-except:
-    print('Could not add ALFRESCO flammability index')
-
-# VARIABLES: vegetation mode
-try:
-    vegetation = ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-vegetation-mode')
-    add_feature(thawdb, point_collection, vegetation, ee.Reducer.mode(), 1000, 'Vegetation Mode', 'b1')
-    print('Added ALFRESCO vegetation mode')
-except:
-    print('Could not add ALFRESCO vegetation mode')
-
-# VARIABLES: maximum fire temperature
-try:
-    firms = ee.Image(f'{ASSET_ROOT}/max-fire-temp')
+    firms = gee_features.max_fire_temp()
     add_feature(thawdb, point_collection, firms, ee.Reducer.mean(), 1000, 'Maximum Fire Temperature', 'T21')
     print('Added maximum fire temperature from FIRMS')
-except:
-    print('Could not add maximum fire temperature from FIRMS')
+except Exception as e:
+    print('Could not add maximum fire temperature from FIRMS:', e)
 
-# VARIABLES: swe, change in swe, change in tmax, change in prcp
+# GEE track: SWE + SWE/precip/temp trends re-derived inline from Daymet V4.
 try:
-    swe = ee.Image(f'{ASSET_ROOT}/ee-mean-annual-swe')
-    add_feature(thawdb, point_collection, swe, ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
+    add_feature(thawdb, point_collection, gee_features.mean_annual_swe(), ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
     print('Added mean annual SWE from Daymet V4')
-except:
-    print('Could not add mean annual SWE from Daymet V4')
+except Exception as e:
+    print('Could not add mean annual SWE from Daymet V4:', e)
 
 try:
-    swe_trend = ee.Image(f'{ASSET_ROOT}/annual-swe-trend')
-    add_feature(thawdb, point_collection, swe_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
+    add_feature(thawdb, point_collection, gee_features.swe_trend(), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
     print('Added trend in SWE, derived from Daymet V4')
-except:
-    print('Could not add trend in SWE, derived from Daymet V4')
+except Exception as e:
+    print('Could not add trend in SWE, derived from Daymet V4:', e)
 
 try:
-    precip_trend = ee.Image(f'{ASSET_ROOT}/annual-precip-trend')
-    add_feature(thawdb, point_collection, precip_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
+    add_feature(thawdb, point_collection, gee_features.precip_trend(), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
     print('Added trend in precipitation, derived from Daymet V4')
-except:
-    print('Could not add trend in precipitation, derived from Daymet V4')
+except Exception as e:
+    print('Could not add trend in precipitation, derived from Daymet V4:', e)
 
 try:
-    tmax_trend = ee.Image(f'{ASSET_ROOT}/temp-trend')
-    add_feature(thawdb, point_collection, tmax_trend.select('scale'), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
+    add_feature(thawdb, point_collection, gee_features.temp_trend(), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
     print('Added trend in temperature, derived from Daymet V4')
-except:
-    print('Could not add trend in temperature, derived from Daymet V4')
+except Exception as e:
+    print('Could not add trend in temperature, derived from Daymet V4:', e)
 
-# VARIABLES: projected summer and winter temp change, precip change
-try:
-    projected_summer_temp = ee.Image(f'{ASSET_ROOT}/summer-temperature-trend')
-    add_feature(thawdb, point_collection, projected_summer_temp, ee.Reducer.mean(), 1000, 'Projected summer temperature change', 'b1')
-    print('Added projected summer temperature change from CRU TS3.1')
-except:
-    print('Could not add projected summer temperature change from CRU TS3.1')
+# --------------------------------------------------------------------------
+# LOCAL track: nearest-sample downloaded rasters at the point coordinates for
+# the four features with no GEE-catalog upstream (local_rasters.py). Land Cover
+# and Vegetation Mode stay raw integer codes here; clean_feature_table.py
+# one-hot encodes them (0 / nodata -> 'NaN' bucket, dropped there).
+# --------------------------------------------------------------------------
+lons, lats = thawdb['Longitude'].to_numpy(), thawdb['Latitude'].to_numpy()
 
-try:
-    projected_winter_temp = ee.Image(f'{ASSET_ROOT}/winter-temperature-trend')
-    add_feature(thawdb, point_collection, projected_winter_temp, ee.Reducer.mean(), 1000, 'Projected winter temperature change', 'b1')
-    print('Added projected winter temperature change from CRU TS3.1')
-except:
-    print('Could not add projected winter temperature change from CRU TS3.1')
+# Land cover (NLCD 2016): missing -> code 0 so clean's land_cover_labels[0]='NaN'.
+lc = local_rasters.sample_points(local_rasters.NLCD_IMG, lons, lats)
+thawdb['Land Cover'] = np.where(np.isnan(lc), 0.0, lc)
+print('Added NLCD land cover (LOCAL)')
 
-try:
-    projected_precip = ee.Image(f'{ASSET_ROOT}/annual-precipitation-trend')
-    add_feature(thawdb, point_collection, projected_precip, ee.Reducer.mean(), 1000, 'Projected precipitation change', 'b1')
-    print('Added projected precipitation change from CRU TS3.1')
-except:
-    print('Could not add projected precipitation change from CRU TS3.1')
+# Vegetation mode (ALFRESCO): keep NaN for nodata; clean skips the NaN category.
+thawdb['Vegetation Mode'] = local_rasters.sample_points(local_rasters.VEGMODE_TIF, lons, lats)
+print('Added ALFRESCO vegetation mode (LOCAL)')
+
+# Flammability index (ALFRESCO), continuous.
+thawdb['Flammability Index'] = local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats)
+print('Added ALFRESCO flammability index (LOCAL)')
+
+# Projected climate change (SNAP AR5/CMIP5): 2090s minus 2010s.
+thawdb['Projected summer temperature change'] = local_rasters.sample_snap_change('summer', lons, lats)
+thawdb['Projected winter temperature change'] = local_rasters.sample_snap_change('winter', lons, lats)
+thawdb['Projected precipitation change'] = local_rasters.sample_snap_change('precip', lons, lats)
+print('Added projected summer/winter temperature + precipitation change from SNAP (LOCAL)')
 
 # Save the updated feature table
 print(thawdb.columns)

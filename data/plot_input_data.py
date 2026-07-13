@@ -7,11 +7,14 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import EE_PROJECT, ASSET_ROOT
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from settings import EE_PROJECT
+import gee_features
 
 ee.Initialize(project=EE_PROJECT)
 
-curve2k = ee.Image(f'{ASSET_ROOT}/AK-curvature-2k').select('MeanCurvature').reproject('EPSG:4326', scale=10000)
+# Re-derived inline from 3DEP (no custom asset; see gee_features.mean_curvature).
+curve2k = gee_features.mean_curvature(2000).select('MeanCurvature').reproject('EPSG:4326', scale=10000)
 alaska = ee.Geometry.Rectangle([-180, 51, -130, 72])
 
 image = curve2k.sampleRectangle(region=alaska, defaultValue=-9999)

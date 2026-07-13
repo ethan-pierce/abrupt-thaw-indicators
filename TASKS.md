@@ -11,46 +11,47 @@ the top priority and must be resolved before any other task is taken.
 
 ## PRIORITY — do before any other task
 
-- [ ] **T0 — Re-establish the GEE project & custom assets.** [ee-project-access-lost]
+- [x] **T0 — Re-establish the GEE project & custom assets.** [ee-project-access-lost]
   Access to the `ee-abrupt-thaw` project was lost (2026-07-10); its 13 custom feature
-  assets have **no local source copies**, so the entire feature side of the pipeline is
-  unreproducible until they are re-established. **Blocks the GEE datacube (T18), the Obu
-  mask (T20), and any feature/label rebuild — take it before anything else.**
-  *Depends:* — *Done when:* the feature build resolves every feature with **no custom
-  GEE asset** and no `ASSET_ROOT` dependency, from public GEE catalog data + local rasters.
+  assets had **no local source copies**. Resolved by rebuilding the feature side with
+  **zero custom assets** (two tracks). *Depends:* — *Done when:* the feature build
+  resolves every feature with **no custom GEE asset** and no `ASSET_ROOT` dependency,
+  from public GEE catalog data + local rasters. **✓ 2026-07-13.**
 
-  > **RESUMPTION STATE (2026-07-13) — safe to clear context here.** Access is fixed and
-  > **all data is acquired**; only the code restructure remains. Done: new EE project
-  > `abrupt-thaw-indicators` wired into `settings.py`; old assets confirmed unreadable;
-  > decision to rebuild feature sourcing with ZERO custom assets (two tracks); all LOCAL
-  > rasters on disk (`data/snap/` via `fetch_snap_projections.py`, `data/alfresco/` via
-  > `fetch_alfresco.py`, `data/NLCD2016/` user-provided); `rioxarray` added; rasterio
-  > sampling smoke-tested. **NEXT (remaining T0):** steps 4–6 below — restructure
-  > `build_feature_table.py` into the two tracks and give the prediction datacube parity.
-  > Full sourcing map: `PIPELINE.md` "Features — formerly custom assets". Context in
-  > memory [[ee-project-access-lost]]. Steps:
+  > **DONE (2026-07-13).** Feature sourcing fully rebuilt with zero custom assets. New
+  > modules `data/gee_features.py` (GEE track: TAGEE-family mean curvature from 3DEP;
+  > SWE + SWE/precip/temp trends from Daymet V4 `linearFit`; max fire temp from FIRMS)
+  > and `data/local_rasters.py` (LOCAL track: nearest point/grid sampling of
+  > `data/{alfresco,NLCD2016,snap}` + Obu). `build_feature_table.py` and
+  > `build_prediction_data.py` both restructured onto the two tracks; `ASSET_ROOT`
+  > **removed from `settings.py`** and from all code (`plot_input_data.py` too). LOCAL
+  > track validated offline over all 19,540 ThawDB points (97–100% coverage, plausible
+  > ranges). **Not yet executed against GEE** — the GEE track (curvature/Daymet/FIRMS)
+  > is import/compile-verified but its first real run is the ~12h feature build, deferred
+  > under dev-mode; validate the TAGEE curvature port on GEE before trusting those two
+  > columns. Full sourcing map: `PIPELINE.md`. Context: memory [[ee-project-access-lost]].
   1. [x] Create/choose the new EE project; set `EE_PROJECT` in `settings.py`. **Done
-     2026-07-13:** new project `abrupt-thaw-indicators` (EE API enabled); `EE_PROJECT`
-     + `ASSET_ROOT` (= `projects/abrupt-thaw-indicators/assets`) updated in `settings.py`.
-  2. [x] Test-read each `{ASSET_ROOT}/…` asset from it — GEE asset ACLs are independent of
-     the compute project, so shared/public assets still resolve without owning
-     `ee-abrupt-thaw`. **Done 2026-07-13: all 13 FAILED** (old project inaccessible —
-     `earthengine.assets.list` denied), so the shared-ACL shortcut does not apply.
-  3. [x] Readable assets → keep in place, or copy into the new project. N/A — none readable.
-  4. [ ] Restructure `build_feature_table.py` into two tracks (data all acquired — T29 done):
-     **(GEE)** inline from public catalog data — curvature (**3DEP + TAGEE Python/`ee`
-     port — the one real lift**), Mean Annual SWE + SWE/precip/temp trends (Daymet V4 +
-     `linearFit`), Maximum Fire Temperature (FIRMS `T21`); **(LOCAL)** rioxarray point
-     sampling of `data/{snap,alfresco,NLCD2016}` — reproject each point to the raster CRS,
-     nearest for categorical (veg mode, NLCD), bilinear/nearest for continuous; merge on
-     point id. Record reconstructed params (curvature smoothing, Daymet year range,
-     aggregations) in the methods table.
-  5. [ ] Obu2019 domain mask for T20: sample the **local** PerProb GeoTIFF
-     (`data/Obu2019/*.tif`, present) with rasterio — no asset upload needed under the
-     no-custom-asset design.
-  6. [ ] Verify `build_feature_table.py` and `build_prediction_data.py` resolve every
-     feature (public catalog loads + local rasters), with **no `ASSET_ROOT` reference
-     remaining**.
+     2026-07-13:** new project `abrupt-thaw-indicators` (EE API enabled).
+  2. [x] Test-read each old asset — **Done 2026-07-13: all 13 FAILED** (old project
+     inaccessible — `earthengine.assets.list` denied), so no shared-ACL shortcut.
+  3. [x] Readable assets → keep/copy. N/A — none readable.
+  4. [x] **Done 2026-07-13.** Restructured `build_feature_table.py` into two tracks:
+     **(GEE)** `gee_features.py` — curvature (3DEP + TAGEE-family `ee` port, Zevenbergen-
+     Thorne mean curvature at cell size = window/2), Mean Annual SWE + SWE/precip/temp
+     trends (Daymet V4 + `linearFit`), Maximum Fire Temperature (FIRMS `T21`);
+     **(LOCAL)** `local_rasters.py` — nearest point-sampling of `data/{snap,alfresco,
+     NLCD2016}`, reprojecting each point to the raster CRS (nearest for all: matches the
+     original point `reduceRegion(mean)` = covering pixel, and is required for the
+     categorical veg-mode/NLCD layers). Reconstructed params documented in each module's
+     docstring; still to copy into the methods table (T29 remainder).
+  5. [x] **Done 2026-07-13.** Obu2019 domain mask for T20: the **local** PerProb GeoTIFF
+     (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`) samples cleanly with
+     rasterio (0–1, 99.7% coverage over training points) — no asset upload. Exposed as
+     `local_rasters.OBU_TIF` + `sample_points` for T20 to consume.
+  6. [x] **Done 2026-07-13.** Verified: no live `ASSET_ROOT` reference remains in any
+     `.py` (grep clean; `ASSET_ROOT` deleted from `settings.py`); both build scripts and
+     `plot_input_data.py` `py_compile` clean and resolve every feature from public
+     catalog loads + local rasters.
 
 ## Stage 0 — CV foundation (`models/spatial_cv.py`) — do first
 
@@ -138,8 +139,9 @@ the top priority and must be resolved before any other task is taken.
   as the susceptibility surface. *Depends:* T14 *Done when:* the primary raster is
   log-evidence, `0 = neutral`.
 - [ ] **T20 — Obu domain mask.** [G17] Soft-mask/weight by Obu PerProb
-  (`data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/`), resampled to the 4 km Albers
-  grid; replaces the feature-validity-only keep (`predict.py:94-96`). *Depends:* T19
+  (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`; sample via
+  `local_rasters.OBU_TIF` / `sample_points`), resampled to the 4 km Albers grid;
+  replaces the feature-validity-only keep (`predict.py:94-96`). *Depends:* T19, T0
   *Done when:* off-permafrost pixels are masked/down-weighted.
 - [ ] **T21 — AOA mask.** [G18] Add an importance-weighted dissimilarity-to-training
   mask with a CV-derived threshold; output as a reliability layer. *Depends:* T14,T19

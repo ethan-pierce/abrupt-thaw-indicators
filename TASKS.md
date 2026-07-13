@@ -186,12 +186,21 @@ the top priority and must be resolved before any other task is taken. (T0 is don
 
 ## Stage 6 — Scope reduction & closeout
 
-- [ ] **T26 — Archive training-lands path.** [README #8] Move
+- [x] **T26 — Archive training-lands path.** [README #8] Move
   `build_prediction_data_traininglands.py`, `predict_traininglands.py`, and
   `*_traininglands.*` outputs to `archive/`. *Depends:* — *Done when:* moved.
-- [ ] **T27 — Retire calibrated artifacts.** [pipeline-rebuild-v2] Confirm nothing
+  **✓ 2026-07-13:** `build_prediction_data_traininglands.py` → `archive/data/`,
+  `predict_traininglands.py` → `archive/`, both `*_traininglands.png` → `archive/output/`
+  (no `.nc` outputs on disk — gitignored/never generated). No live script imports them
+  (only README/PIPELINE docs referenced them, now updated). Live tree grep-clean.
+- [x] **T27 — Retire calibrated artifacts.** [pipeline-rebuild-v2] Confirm nothing
   regenerates `model_calibrated*`; archive the stale files. *Depends:* — *Done when:*
-  no live script references them.
+  no live script references them. **✓ 2026-07-13:** verified only generator was
+  `train_xgboost_calibrated.py` itself (nothing else consumes `model_calibrated*`;
+  `predict.py`'s "calibrated" mentions are descriptive text only). Archived to `archive/`:
+  `train_xgboost_calibrated.py`, `model_calibrated.pkl`, `model_calibrated_base.json`, and
+  all `output/*_calibrated.png`. Also swept two orphaned stale curves
+  (`calibration_curve.png`, `calibration_curve_enhanced.png`) — no generator since T15.
 - [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] Re-point the
   `diagnostics/` suite at the new invariants (coord quarantine, buffer removal, OOF
   SHAP on held-out, baselines) and regenerate `FINDINGS.md`. *Depends:* T14,T19,T25

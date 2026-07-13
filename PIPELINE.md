@@ -16,26 +16,27 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 ### Features — public datasets (Google Earth Engine)
 | Feature(s) | Source | GEE id | Reducer @ scale |
 | --- | --- | --- | --- |
-| Land Cover | USGS **NLCD 2016** (AK) | `projects/ee-abrupt-thaw/assets/NLCD-2016` | mode @ 30 m |
 | Elevation, Slope, Aspect | USGS **3DEP 10 m** DEM | `USGS/3DEP/10m` | mean @ 10 m |
 | 19 bioclimatic variables | **WorldClim v1** BIO | `WORLDCLIM/V1/BIO` | mean @ 1 km |
 | SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | mean @ 250 m |
 
 ### Features — formerly custom assets, now re-derived (no custom GEE assets)
 
-> **Migration note (updated 2026-07-13):** access to the original `ee-abrupt-thaw`
-> project was lost (2026-07-10). Compute has moved to the new project
+> **Migration note (rebuild complete 2026-07-13):** access to the original
+> `ee-abrupt-thaw` project was lost (2026-07-10). Compute has moved to the new project
 > `abrupt-thaw-indicators` (`settings.EE_PROJECT`). All 13 old custom assets were
-> confirmed **unreadable** (old project inaccessible) and no local copies exist, so
-> they are being **rebuilt from first-party sources — with zero custom uploaded
-> assets** — to end the project-scoped-asset fragility for good. Two tracks:
-> **(GEE)** inline computation from account-independent public catalog datasets; and
-> **(LOCAL)** sampling downloaded source rasters at the point coordinates in Python
-> (rasterio), with source files stored under `data/` + a DOI. `ASSET_ROOT` is
-> retained only as a fallback and should end up unused. Exact original derivation
-> parameters are unrecoverable (build code was lost with the project), so re-derived
-> layers use **documented, reconstructed** choices (fine for the v2.0.0 rebuild — no
-> byte-match to the lost assets is required).
+> confirmed **unreadable** (old project inaccessible) and no local copies existed, so
+> they were **rebuilt from first-party sources — with zero custom uploaded assets** — to
+> end the project-scoped-asset fragility for good. `ASSET_ROOT` has been **removed** from
+> `settings.py` and from all code (TASKS T0). Two tracks:
+> **(GEE)** `data/gee_features.py` — inline computation from account-independent public
+> catalog datasets; and **(LOCAL)** `data/local_rasters.py` — nearest point/grid
+> sampling of downloaded source rasters under `data/` (rasterio). Exact original
+> derivation parameters are unrecoverable (build code was lost with the project), so
+> re-derived layers use **documented, reconstructed** choices (fine for the v2.0.0
+> rebuild — no byte-match to the lost assets is required). ⚠ The GEE track has not yet
+> been executed against Earth Engine (its first run is the ~12h feature build); validate
+> the TAGEE curvature port on GEE before trusting the two curvature columns.
 
 | Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |

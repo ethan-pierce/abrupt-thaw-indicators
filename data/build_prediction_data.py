@@ -1,11 +1,19 @@
-"""Build a datacube of predictors over interior and Arctic Alaska."""
+"""Build a datacube of predictors over interior and Arctic Alaska.
+
+Same two-track sourcing as build_feature_table.py (no custom GEE assets, see
+TASKS T0): public-catalog + re-derived GEE layers come from ``gee_features.py``
+(curvature, SWE + trends, max fire temperature), and the four features with no
+GEE-catalog upstream (ALFRESCO flammability + vegetation mode, NLCD land cover,
+SNAP projected change) are nearest-sampled from local rasters at the datacube's
+own cell centres via ``local_rasters.py``. No ``ASSET_ROOT`` dependency.
+"""
 
 import ee
 
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import EE_PROJECT, ASSET_ROOT
+from settings import EE_PROJECT
 
 ee.Authenticate()
 ee.Initialize(project=EE_PROJECT)
@@ -20,7 +28,10 @@ import xarray as xr
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA, MODELS
+import gee_features
+import local_rasters
 
 data = DATA
 
@@ -99,7 +110,22 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     elevation_image = ee.Image('USGS/3DEP/10m').select('elevation')
     elevation = load_data(elevation_image, 'EPSG:4326', scale)
     projection = elevation.projection()
-    
+
+    # LOCAL track: the per-cell WGS84 lon/lat of the datacube grid, so local
+    # rasters can be nearest-sampled at the exact same cell centres as the GEE
+    # layers. Extracted in GEE-native orientation (no flip); local arrays are
+    # sampled at these coords and then np.flipud'd to match the flipped GEE
+    # features below.
+    lonlat = load_data(ee.Image.pixelLonLat(), projection, scale)
+    lon2d = extract_data_array(lonlat, region, 'longitude', default_value)
+    lat2d = extract_data_array(lonlat, region, 'latitude', default_value)
+
+    def sample_local(path):
+        """Nearest-sample a local raster onto the datacube grid (native
+        orientation; caller flips to match the GEE features)."""
+        flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel())
+        return flat.reshape(lon2d.shape)
+
     if 'Elevation' in feature_names:
         feature_arrays['Elevation'] = extract_data_array(elevation, region, 'elevation', default_value)
 
@@ -115,14 +141,14 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         aspect_data = extract_data_array(aspect, region, 'aspect', default_value)
         feature_arrays['Aspect'] = np.flipud(aspect_data)
     
-    # Load curvature features
+    # Load curvature features (GEE track: TAGEE-family port, no custom asset)
     if 'Mean curvature (500 m)' in feature_names:
-        curve500 = load_data(ee.Image(f'{ASSET_ROOT}/AK-curvature-500m').select('MeanCurvature'), projection, scale)
+        curve500 = load_data(gee_features.mean_curvature(500).select('MeanCurvature'), projection, scale)
         curve500_data = extract_data_array(curve500, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (500 m)'] = np.flipud(curve500_data)
 
     if 'Mean curvature (2 km)' in feature_names:
-        curve2k = load_data(ee.Image(f'{ASSET_ROOT}/AK-curvature-2k').select('MeanCurvature'), projection, scale)
+        curve2k = load_data(gee_features.mean_curvature(2000).select('MeanCurvature'), projection, scale)
         curve2k_data = extract_data_array(curve2k, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (2 km)'] = np.flipud(curve2k_data)
     
@@ -155,14 +181,13 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
             bioclim_data = extract_data_array(bioclim_img, region, band, default_value)
             feature_arrays[name] = np.flipud(bioclim_data)
     
-    # Load other continuous features
+    # Flammability Index (LOCAL track): nearest-sample ALFRESCO at cell centres.
     if 'Flammability Index' in feature_names:
-        flammability = load_data(ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-flammability'), projection, scale)
-        flammability_data = extract_data_array(flammability, region, 'b1', default_value)
-        feature_arrays['Flammability Index'] = np.flipud(flammability_data)
+        feature_arrays['Flammability Index'] = np.flipud(sample_local(local_rasters.FLAMMABILITY_TIF))
 
+    # Maximum fire temperature + Fire Detected (GEE track: FIRMS, no asset)
     if 'Maximum Fire Temperature' in feature_names:
-        firms = load_data(ee.Image(f'{ASSET_ROOT}/max-fire-temp'), projection, scale)
+        firms = load_data(gee_features.max_fire_temp(), projection, scale)
         firms_data = extract_data_array(firms, region, 'T21', default_value)
         feature_arrays['Maximum Fire Temperature'] = np.flipud(firms_data)
 
@@ -175,46 +200,48 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         # the Maximum Fire Temperature layer treats as valid-vs-missing. Use 0 as the
         # fill so unobserved pixels read as "no fire", never -9999.
         firms_binary = load_data(
-            ee.Image(f'{ASSET_ROOT}/max-fire-temp'), projection, scale
+            gee_features.max_fire_temp(), projection, scale
         ).select('T21').mask().gt(0)
         fire_detected_data = extract_data_array(firms_binary, region, 'T21', default_value=0)
         feature_arrays['Fire Detected'] = np.flipud(fire_detected_data)
 
+    # SWE + SWE/precip/temp trends (GEE track: Daymet V4, no asset)
     if 'Mean Annual SWE' in feature_names:
-        swe = load_data(ee.Image(f'{ASSET_ROOT}/ee-mean-annual-swe'), projection, scale)
+        swe = load_data(gee_features.mean_annual_swe(), projection, scale)
         swe_data = extract_data_array(swe, region, 'swe', default_value)
         feature_arrays['Mean Annual SWE'] = np.flipud(swe_data)
-    
+
     if 'Trend in SWE' in feature_names:
-        swe_trend = load_data(ee.Image(f'{ASSET_ROOT}/annual-swe-trend').select('scale'), projection, scale)
+        swe_trend = load_data(gee_features.swe_trend(), projection, scale)
         swe_trend_data = extract_data_array(swe_trend, region, 'scale', default_value)
         feature_arrays['Trend in SWE'] = np.flipud(swe_trend_data)
 
     if 'Trend in temperature' in feature_names:
-        temp_trend = load_data(ee.Image(f'{ASSET_ROOT}/temp-trend').select('scale'), projection, scale)
+        temp_trend = load_data(gee_features.temp_trend(), projection, scale)
         temp_trend_data = extract_data_array(temp_trend, region, 'scale', default_value)
         feature_arrays['Trend in temperature'] = np.flipud(temp_trend_data)
 
     if 'Trend in precipitation' in feature_names:
-        precip_trend = load_data(ee.Image(f'{ASSET_ROOT}/annual-precip-trend').select('scale'), projection, scale)
+        precip_trend = load_data(gee_features.precip_trend(), projection, scale)
         precip_trend_data = extract_data_array(precip_trend, region, 'scale', default_value)
         feature_arrays['Trend in precipitation'] = np.flipud(precip_trend_data)
 
+    # Projected climate change (LOCAL track): SNAP 2090s minus 2010s at cell centres.
     if 'Projected precipitation change' in feature_names:
-        precip_change = load_data(ee.Image(f'{ASSET_ROOT}/annual-precipitation-trend'), projection, scale)
-        precip_change_data = extract_data_array(precip_change, region, 'b1', default_value)
-        feature_arrays['Projected precipitation change'] = np.flipud(precip_change_data)
+        early = sample_local(local_rasters.SNAP_PRECIP[2010])
+        late = sample_local(local_rasters.SNAP_PRECIP[2090])
+        feature_arrays['Projected precipitation change'] = np.flipud(late - early)
 
     if 'Projected summer temperature change' in feature_names:
-        summer_temp_change = load_data(ee.Image(f'{ASSET_ROOT}/summer-temperature-trend'), projection, scale)
-        summer_temp_data = extract_data_array(summer_temp_change, region, 'b1', default_value)
-        feature_arrays['Projected summer temperature change'] = np.flipud(summer_temp_data)
+        early = sample_local(local_rasters.SNAP_SUMMER[2010])
+        late = sample_local(local_rasters.SNAP_SUMMER[2090])
+        feature_arrays['Projected summer temperature change'] = np.flipud(late - early)
 
     if 'Projected winter temperature change' in feature_names:
-        winter_temp_change = load_data(ee.Image(f'{ASSET_ROOT}/winter-temperature-trend'), projection, scale)
-        winter_temp_data = extract_data_array(winter_temp_change, region, 'b1', default_value)
-        feature_arrays['Projected winter temperature change'] = np.flipud(winter_temp_data)
-    
+        early = sample_local(local_rasters.SNAP_WINTER[2010])
+        late = sample_local(local_rasters.SNAP_WINTER[2090])
+        feature_arrays['Projected winter temperature change'] = np.flipud(late - early)
+
     # Load categorical features (Land Cover and Vegetation Mode) - one-hot encoded
     land_cover_labels = {
         11: 'Open Water',
@@ -240,9 +267,11 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     }
     
     if any('Land Cover' in name for name in feature_names):
-        landcover = load_data(ee.Image(f'{ASSET_ROOT}/NLCD-2016'), projection, scale)
-        landcover_array = extract_data_array(landcover, region, 'b1', default_value)
-        
+        # LOCAL track: NLCD 2016 nearest-sampled at cell centres, already in the
+        # flipped orientation of the other features. NaN (off-footprint) cells
+        # equal no code, so they get an all-zero one-hot (the dropped 'NaN' bucket).
+        landcover_array = np.flipud(sample_local(local_rasters.NLCD_IMG))
+
         for code, label in land_cover_labels.items():
             feature_name = f'Land Cover ({label})'
             if feature_name in feature_names:
@@ -261,9 +290,9 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     }
     
     if any('Vegetation Mode' in name for name in feature_names):
-        vegetation = load_data(ee.Image(f'{ASSET_ROOT}/ALFRESCO-historical-vegetation-mode'), projection, scale)
-        vegetation_array = extract_data_array(vegetation, region, 'b1', default_value)
-        
+        # LOCAL track: ALFRESCO vegetation mode nearest-sampled at cell centres.
+        vegetation_array = np.flipud(sample_local(local_rasters.VEGMODE_TIF))
+
         for code, label in vegetation_mode_labels.items():
             feature_name = f'Vegetation Mode ({label})'
             if feature_name in feature_names:   

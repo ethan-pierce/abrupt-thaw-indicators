@@ -43,7 +43,7 @@ Some scripts require Google Earth Engine authentication. To set this up:
    ```python
    import ee
    ee.Authenticate()
-   ee.Initialize(project='ee-abrupt-thaw')
+   ee.Initialize(project='abrupt-thaw-indicators')  # see settings.EE_PROJECT
    ```
 
 2. Or run the authentication command from the command line:

@@ -16,24 +16,41 @@ the top priority and must be resolved before any other task is taken.
   assets have **no local source copies**, so the entire feature side of the pipeline is
   unreproducible until they are re-established. **Blocks the GEE datacube (T18), the Obu
   mask (T20), and any feature/label rebuild — take it before anything else.**
-  *Depends:* — (upstream re-sourcing is gated by T29) *Done when:* a working EE project
-  resolves every custom asset, Obu2019 is uploaded for T20, and `settings.py`
-  `EE_PROJECT`/`ASSET_ROOT` point at it. Steps:
-  1. Create/choose the new EE project; set `EE_PROJECT` in `settings.py`.
-  2. Test-read each `{ASSET_ROOT}/…` asset from it — GEE asset ACLs are independent of
+  *Depends:* — *Done when:* the feature build resolves every feature with **no custom
+  GEE asset** and no `ASSET_ROOT` dependency, from public GEE catalog data + local rasters.
+
+  > **RESUMPTION STATE (2026-07-13) — safe to clear context here.** Access is fixed and
+  > **all data is acquired**; only the code restructure remains. Done: new EE project
+  > `abrupt-thaw-indicators` wired into `settings.py`; old assets confirmed unreadable;
+  > decision to rebuild feature sourcing with ZERO custom assets (two tracks); all LOCAL
+  > rasters on disk (`data/snap/` via `fetch_snap_projections.py`, `data/alfresco/` via
+  > `fetch_alfresco.py`, `data/NLCD2016/` user-provided); `rioxarray` added; rasterio
+  > sampling smoke-tested. **NEXT (remaining T0):** steps 4–6 below — restructure
+  > `build_feature_table.py` into the two tracks and give the prediction datacube parity.
+  > Full sourcing map: `PIPELINE.md` "Features — formerly custom assets". Context in
+  > memory [[ee-project-access-lost]]. Steps:
+  1. [x] Create/choose the new EE project; set `EE_PROJECT` in `settings.py`. **Done
+     2026-07-13:** new project `abrupt-thaw-indicators` (EE API enabled); `EE_PROJECT`
+     + `ASSET_ROOT` (= `projects/abrupt-thaw-indicators/assets`) updated in `settings.py`.
+  2. [x] Test-read each `{ASSET_ROOT}/…` asset from it — GEE asset ACLs are independent of
      the compute project, so shared/public assets still resolve without owning
-     `ee-abrupt-thaw`. Keep `ASSET_ROOT` on the old prefix if they do.
-  3. Readable assets → keep in place, or copy into the new project for ownership.
-  4. Unreadable assets → re-source from upstream (SWE / SWE-trend / precip-trend /
-     temp-trend / projected-climate / curvature upstreams are unconfirmed → T29) and
-     re-upload under `ASSET_ROOT`. The 13: `NLCD-2016`, `AK-curvature-500m`,
-     `AK-curvature-2k`, `ALFRESCO-historical-flammability`,
-     `ALFRESCO-historical-vegetation-mode`, `max-fire-temp`, `ee-mean-annual-swe`,
-     `annual-swe-trend`, `annual-precip-trend`, `temp-trend`,
-     `summer-temperature-trend`, `winter-temperature-trend`,
-     `annual-precipitation-trend`.
-  5. Upload Obu2019 PerProb (`data/Obu2019/*.tif`) as an asset for T20.
-  6. Verify `build_feature_table.py` and `build_prediction_data.py` resolve every asset.
+     `ee-abrupt-thaw`. **Done 2026-07-13: all 13 FAILED** (old project inaccessible —
+     `earthengine.assets.list` denied), so the shared-ACL shortcut does not apply.
+  3. [x] Readable assets → keep in place, or copy into the new project. N/A — none readable.
+  4. [ ] Restructure `build_feature_table.py` into two tracks (data all acquired — T29 done):
+     **(GEE)** inline from public catalog data — curvature (**3DEP + TAGEE Python/`ee`
+     port — the one real lift**), Mean Annual SWE + SWE/precip/temp trends (Daymet V4 +
+     `linearFit`), Maximum Fire Temperature (FIRMS `T21`); **(LOCAL)** rioxarray point
+     sampling of `data/{snap,alfresco,NLCD2016}` — reproject each point to the raster CRS,
+     nearest for categorical (veg mode, NLCD), bilinear/nearest for continuous; merge on
+     point id. Record reconstructed params (curvature smoothing, Daymet year range,
+     aggregations) in the methods table.
+  5. [ ] Obu2019 domain mask for T20: sample the **local** PerProb GeoTIFF
+     (`data/Obu2019/*.tif`, present) with rasterio — no asset upload needed under the
+     no-custom-asset design.
+  6. [ ] Verify `build_feature_table.py` and `build_prediction_data.py` resolve every
+     feature (public catalog loads + local rasters), with **no `ASSET_ROOT` reference
+     remaining**.
 
 ## Stage 0 — CV foundation (`models/spatial_cv.py`) — do first
 
@@ -158,5 +175,12 @@ the top priority and must be resolved before any other task is taken.
 
 ## Non-code (user / methods table)
 
-- [ ] **T29 — Confirm custom-asset sources.** Fill in upstream product/DOI for the SWE,
-  climate-trend, projected-climate, and curvature GEE assets (flagged in `PIPELINE.md`).
+- [x] **T29 — Acquire the LOCAL-track source rasters.** **Done 2026-07-13.** GEE-track
+  upstreams resolved (Daymet V4, FIRMS, 3DEP+TAGEE — public, no acquisition). SNAP
+  "projected" ×3: UAF SNAP AR5/CMIP5 771 m, 5modelAvg/RCP 8.5, change = 2090–99 − 2010–19
+  (JJA/DJF/annual) → `data/fetch_snap_projections.py` → `data/snap/`. ALFRESCO ×2:
+  historical CRU/observed runs → `data/fetch_alfresco.py` → `data/alfresco/` (flammability
+  continuous; vegetation mode categorical 0–8). NLCD-2016 Alaska: user-provided ERDAS
+  `.img`+`.ige` in `data/NLCD2016/`. All EPSG:3338/WGS84-Albers, rasterio-readable,
+  smoke-tested. *Remaining (non-blocking):* record the reconstructed GEE-track params
+  (curvature smoothing / Daymet year-range / aggregation) in the methods table.

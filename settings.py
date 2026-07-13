@@ -14,13 +14,14 @@ OUTPUT = ROOT / 'output'
 # datasets (USGS/3DEP, WORLDCLIM, projects/soilgrids-isric/*) are account-
 # independent and are NOT routed through ASSET_ROOT.
 #
-# These are deliberately DECOUPLED: access to the original `ee-abrupt-thaw`
-# project was lost (2026-07-10), so compute must move to a new project. If the
-# old custom assets turn out to be shared-readable, point EE_PROJECT at the new
-# project but leave ASSET_ROOT on `ee-abrupt-thaw` to keep reading them; if not,
-# re-upload the assets under the new project and set ASSET_ROOT to match.
-#
-# TODO(migration): set EE_PROJECT to the new project id once it exists, and set
-# ASSET_ROOT to wherever the custom assets end up living.
-EE_PROJECT = 'ee-abrupt-thaw'
+# These are deliberately DECOUPLED so ASSET_ROOT can lag EE_PROJECT during a
+# migration. Access to the original `ee-abrupt-thaw` project was lost
+# (2026-07-10); compute has moved to the new project `abrupt-thaw-indicators`
+# (2026-07-13). On 2026-07-13 all 13 old custom assets were confirmed
+# UNREADABLE from the new project (the old project itself is inaccessible:
+# `earthengine.assets.list` denied), so the shared-readable shortcut does not
+# apply — every custom asset must be re-sourced and re-uploaded under the new
+# ASSET_ROOT. That re-upload is still pending (blocked on T29 for the SWE /
+# climate-trend / curvature upstreams), so no custom asset resolves yet.
+EE_PROJECT = 'abrupt-thaw-indicators'
 ASSET_ROOT = f'projects/{EE_PROJECT}/assets'

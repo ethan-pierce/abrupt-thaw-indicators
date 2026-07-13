@@ -21,29 +21,43 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 | 19 bioclimatic variables | **WorldClim v1** BIO | `WORLDCLIM/V1/BIO` | mean @ 1 km |
 | SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | mean @ 250 m |
 
-### Features — custom uploaded assets (`{ASSET_ROOT}/…`)
+### Features — formerly custom assets, now re-derived (no custom GEE assets)
 
-> **Migration note (2026-07-10):** access to the original `ee-abrupt-thaw` project
-> was lost. The GEE compute project and the custom-asset path prefix are now
-> centralized in `settings.py` as `EE_PROJECT` (→ `ee.Initialize`) and `ASSET_ROOT`
-> (→ the paths below), and are deliberately decoupled. **No local source copies of
-> these 13 assets exist on disk** — re-establishing them (test-read old shared assets,
-> else re-source from upstream + re-upload) is the outstanding reproducibility task.
-> Public datasets above (3DEP, WorldClim, SoilGrids) are account-independent.
+> **Migration note (updated 2026-07-13):** access to the original `ee-abrupt-thaw`
+> project was lost (2026-07-10). Compute has moved to the new project
+> `abrupt-thaw-indicators` (`settings.EE_PROJECT`). All 13 old custom assets were
+> confirmed **unreadable** (old project inaccessible) and no local copies exist, so
+> they are being **rebuilt from first-party sources — with zero custom uploaded
+> assets** — to end the project-scoped-asset fragility for good. Two tracks:
+> **(GEE)** inline computation from account-independent public catalog datasets; and
+> **(LOCAL)** sampling downloaded source rasters at the point coordinates in Python
+> (rasterio), with source files stored under `data/` + a DOI. `ASSET_ROOT` is
+> retained only as a fallback and should end up unused. Exact original derivation
+> parameters are unrecoverable (build code was lost with the project), so re-derived
+> layers use **documented, reconstructed** choices (fine for the v2.0.0 rebuild — no
+> byte-match to the lost assets is required).
 
-| Feature | Asset | Upstream source | Reducer @ scale |
+| Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |
-| Mean curvature (500 m, 2 km) | `AK-curvature-500m`, `AK-curvature-2k` | derived from DEM (confirm) | mean @ 100 m |
-| Flammability Index | `ALFRESCO-historical-flammability` | UAF SNAP **ALFRESCO** | mean @ 1 km |
-| Vegetation Mode | `ALFRESCO-historical-vegetation-mode` | UAF SNAP **ALFRESCO** | mode @ 1 km |
-| Maximum Fire Temperature | `max-fire-temp` (band `T21`) | NASA **FIRMS** (MODIS ~4 µm brightness temp, K) | mean @ 1 km |
-| Mean Annual SWE | `ee-mean-annual-swe` | **confirm upstream** | mean @ 1 km |
-| Trend in SWE / precip / temp | `annual-swe-trend`, `annual-precip-trend`, `temp-trend` (band `scale`) | **confirm upstream** | mean @ 1 km |
-| Projected summer/winter temp change, precip change | `summer-temperature-trend`, `winter-temperature-trend`, `annual-precipitation-trend` | **confirm upstream** | mean @ 1 km |
+| Mean curvature (500 m, 2 km) | GEE | USGS **3DEP 10 m** (`USGS/3DEP/10m`) | mean curvature via TAGEE algorithm (needs Python/ee port of TAGEE); 500 m vs 2 km = DEM smoothing window (reconstructed) |
+| Mean Annual SWE | GEE | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`) | annual→temporal mean; confirm year range + annual aggregation |
+| Trend in SWE / precip / temp | GEE | **Daymet V4** (`swe` / `prcp` / `tmax`) | per-pixel `ee.Reducer.linearFit()` slope (`scale` band); precip = annual sum, temp/SWE = annual mean |
+| Maximum Fire Temperature | GEE | NASA **FIRMS** (band `T21`, MODIS ~4 µm brightness temp, K) | temporal max of `T21`; also drives `Fire Detected` (A1) |
+| Flammability Index | LOCAL | UAF **SNAP ALFRESCO** historical, CRU TS4.0 1900–1999 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | continuous 0–~0.02, EPSG:3338 1 km, nodata −9999; bilinear/nearest sample |
+| Vegetation Mode | LOCAL | UAF **SNAP ALFRESCO** historical mode statistic, 1950–2008 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | **categorical** veg-type codes 0–8, EPSG:3338 1 km; **nearest** sample (never mean) |
+| Land cover | LOCAL | **NLCD 2016 Alaska** ERDAS `.img`+`.ige` in `data/NLCD2016/` (user-provided) — *resolved 2026-07-13* | categorical NLCD codes, WGS84-Albers 30 m; windowed/nearest sample (8.4 B px — don't load whole array) |
+| Projected summer/winter temp change, precip change | LOCAL | **UAF SNAP** AR5/CMIP5 771 m decadal summaries, 5modelAvg / RCP 8.5 (`data/fetch_snap_projections.py`) — *resolved 2026-07-13* | change = 2090–99 minus 2010–19; summer=JJA, winter=DJF, precip=annual total; EPSG:3338 → rasterio sample at points |
 
-> **Confirm:** the SWE, trend, projected-climate, and curvature assets are custom
-> uploads whose upstream product/DOI isn't in the code. Fill these in for the
-> manuscript methods table.
+> **All LOCAL-track sources resolved (2026-07-13).** SNAP ×3 → UAF SNAP AR5/CMIP5
+> 771 m decadal summaries (5modelAvg, RCP 8.5), change = 2090–99 minus 2010–19,
+> summer=JJA / winter=DJF / precip=annual (`data/fetch_snap_projections.py`;
+> smoke-tested: Fairbanks +3.9 °C summer, +6.5 °C winter, +125 mm precip — winter>summer
+> Arctic-amplification sanity check). ALFRESCO ×2 → historical CRU/observed runs
+> (`data/fetch_alfresco.py`). NLCD → user-provided ERDAS `.img` in `data/NLCD2016/`.
+> All are EPSG:3338 or WGS84-Albers, ready for rasterio point-sampling; raster
+> binaries are git-ignored and regenerable from the fetch scripts. **Remaining for
+> T29:** just documenting the reconstructed GEE-track choices (curvature smoothing
+> window, Daymet year range, annual aggregations) in the methods table.
 
 ### Masks (prediction domain / reliability)
 - **Permafrost domain** — Obu et al. 2019 permafrost probability (PerProb 5.0),
@@ -53,7 +67,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 
 ## 2. Execution order (script → artifact)
 
-1. **`data/build_feature_table.py`** *(GEE; needs `ee.Authenticate()`, project `ee-abrupt-thaw`)*
+1. **`data/build_feature_table.py`** *(GEE; needs `ee.Authenticate()`, project `abrupt-thaw-indicators` via `settings.EE_PROJECT`)*
    reads the v2.0.0 database + all §1 feature sources → **`data/features_dirty.csv`**.
 2. **`data/clean_feature_table.py`** reads `features_dirty.csv` → **`data/features_clean.csv`**.
    *(new)* derives the `Fire Detected` indicator (A1); carries `Latitude`/`Longitude`

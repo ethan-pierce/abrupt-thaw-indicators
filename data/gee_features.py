@@ -44,8 +44,8 @@ def mean_curvature(window_m: float) -> ee.Image:
     """Reconstructed TAGEE-family **mean curvature** of the 3DEP 10 m DEM.
 
     ``window_m`` (500 or 2000) is the DEM-smoothing scale that distinguished the
-    two original curvature assets. Method (documented reconstruction): aggregate
-    the DEM to a cell size ``d = window_m / 2`` in EPSG:3338 by mean (so a 3x3
+    two original curvature assets. Method (documented reconstruction): resample
+    the DEM to a cell size ``d = window_m / 2`` in EPSG:3338 (so a 3x3
     neighbourhood spans ``window_m``), then form the Zevenbergen-Thorne partial
     derivatives with fixed convolution kernels and evaluate
 
@@ -53,13 +53,22 @@ def mean_curvature(window_m: float) -> ee.Image:
 
     where p, q are first and r, s, t second partials. Output band
     ``'MeanCurvature'`` (units 1/m), on the EPSG:3338 grid at cell size ``d``.
+
+    Coarsening uses ``resample('bilinear')`` rather than ``reduceResolution``:
+    reduceResolution reads *every* 10 m pixel under each ``d`` cell, which is fine
+    for point sampling (tiny neighbourhoods) but makes a statewide
+    ``sampleRectangle`` in build_prediction_data.py exceed Earth Engine's 2^31
+    pixels-per-request limit. Bilinear samples ~4 source pixels per node, so the
+    identical definition works in both the point and datacube paths (train/serve
+    parity). The trade-off is no sub-cell averaging; acceptable for the v2.0.0
+    reconstruction (no byte-match to the lost assets is required).
     """
     d = float(window_m) / 2.0
     dem = ee.Image(_DEM_ID).select('elevation')
-    # Aggregate 10 m -> d m by mean, in the metric projection, so convolution
-    # neighbours are exactly d metres apart and the kernel spacing terms hold.
+    # Coarsen 10 m -> d m in the metric projection so convolution neighbours are
+    # exactly d metres apart and the kernel spacing terms hold. Bounded read.
     dem_d = (dem
-             .reduceResolution(reducer=ee.Reducer.mean(), maxPixels=65536)
+             .resample('bilinear')
              .reproject(crs=CURVATURE_CRS, scale=d))
 
     # Zevenbergen-Thorne (1987) finite-difference kernels on a 3x3 window; rows

@@ -6,10 +6,32 @@ for each lives in `README.md` → "Methods cleanup (grill-with-docs 2026-07-09/1
 box whose *Depends* are all checked. Line numbers are current-code anchors — verify
 before editing.
 
-**PRIORITY OVERRIDE:** T0 (below) supersedes the normal dependency ordering — it is
-the top priority and must be resolved before any other task is taken.
+**PRIORITY OVERRIDE:** T30 (below) supersedes the normal dependency ordering — it is
+the top priority and must be resolved before any other task is taken. (T0 is done.)
 
 ## PRIORITY — do before any other task
+
+- [ ] **T30 — Heavy inline-GEE features hang at full-N point sampling.**
+  [ee-project-access-lost] *Depends:* T0 *Done when:* Maximum Fire Temperature,
+  Mean Annual SWE, and Trend in SWE/precip/temperature each resolve over all 19,540
+  points in `build_feature_table.py` to completion with correct values in minutes
+  (not tens of minutes), without the `try/except` swallowing a timeout; parity with
+  the datacube path preserved; no custom asset reintroduced.
+
+  **Problem:** T0 replaced precomputed assets with on-the-fly GEE computations
+  (`data/gee_features.py`). Sampling a deep temporal reduction at 19,540 points via
+  the legacy `add_feature` pattern (`points.map(reduceRegion)` + one
+  `computeFeatures`) degrades catastrophically. FIRMS max (`ImageCollection('FIRMS')
+  .select('T21').max()`, ~9,000 images): datacube single-`sampleRectangle` path
+  **completes in 219 s**, but the point path at full N **hung >26 min with no error**
+  (killed). SWE + the 3 trends are the same shape of risk but were **not** reached in
+  testing — verify them too. Everything else from T0 is verified PASS at full scale.
+
+  **Candidate fixes (unchosen):** chunk points into batches; use
+  `reduceRegions`/`sampleRegions` (correct band handling — single-mean → `mean`);
+  or compute once over Alaska (datacube-style, which works) and sample points from
+  the materialized array. Code: `data/gee_features.py`, `data/build_feature_table.py`
+  (`add_feature`), `data/build_prediction_data.py` (working datacube path).
 
 - [x] **T0 — Re-establish the GEE project & custom assets.** [ee-project-access-lost]
   Access to the `ee-abrupt-thaw` project was lost (2026-07-10); its 13 custom feature

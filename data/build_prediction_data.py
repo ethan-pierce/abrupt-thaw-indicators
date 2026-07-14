@@ -127,6 +127,37 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel(), band=band)
         return flat.reshape(lon2d.shape)
 
+    def assert_local_orientation(sample, layer_name):
+        """T31 orientation guard for LOCAL categorical layers.
+
+        Every LOCAL layer is nearest-sampled at the same cell centres and
+        flipped exactly once, so a correctly oriented categorical must carry
+        data where a reference LOCAL layer (Flammability) does — and *not*
+        where that reference's vertical mirror does. This trips if a double
+        ``np.flipud`` is ever reintroduced (the bug T31 fixed), before it can
+        silently regress a render. ``sample`` is the raw sampled array in its
+        final (single-flipped) orientation.
+
+        Skips silently when there is no orientation signal: a ``sample`` whose
+        footprint is ~full (e.g. NLCD declares no nodata, so off-domain reads
+        as code 0, not NaN). Land Cover and Vegetation Mode share an identical
+        sample+flip code path, so Vegetation Mode's informative (ALFRESCO-
+        nodata) footprint transitively witnesses Land Cover's too.
+        """
+        ref_fp = np.isfinite(np.flipud(sample_local(local_rasters.FLAMMABILITY_TIF)))
+        if not (ref_fp.any() and (~ref_fp).any()):
+            return  # reference footprint carries no orientation information
+        cat_fp = np.isfinite(sample)
+        if cat_fp.mean() > 0.98:
+            return  # ~full footprint (e.g. NLCD) — no orientation signal here
+        oriented = cat_fp[ref_fp].mean()
+        mirror = cat_fp[np.flipud(ref_fp)].mean()
+        assert oriented > mirror, (
+            f"{layer_name}: LOCAL categorical appears vertically mirrored "
+            f"against the stack (footprint agreement {oriented:.3f} <= mirror "
+            f"{mirror:.3f}) — check for a reintroduced double np.flipud (T31)."
+        )
+
     if 'Elevation' in feature_names:
         feature_arrays['Elevation'] = extract_data_array(elevation, region, 'elevation', default_value)
 
@@ -243,12 +274,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         # flipped orientation of the other features. NaN (off-footprint) cells
         # equal no code, so they get an all-zero one-hot (the dropped 'NaN' bucket).
         landcover_array = np.flipud(sample_local(local_rasters.NLCD_IMG))
+        assert_local_orientation(landcover_array, 'Land Cover')
 
         for code, label in land_cover_labels.items():
             feature_name = f'Land Cover ({label})'
             if feature_name in feature_names:
-                landcover_data = (landcover_array == code).astype(float)
-                feature_arrays[feature_name] = np.flipud(landcover_data)
+                feature_arrays[feature_name] = (landcover_array == code).astype(float)
 
     vegetation_mode_labels = {
         1: 'Black spruce',
@@ -264,12 +295,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     if any('Vegetation Mode' in name for name in feature_names):
         # LOCAL track: ALFRESCO vegetation mode nearest-sampled at cell centres.
         vegetation_array = np.flipud(sample_local(local_rasters.VEGMODE_TIF))
+        assert_local_orientation(vegetation_array, 'Vegetation Mode')
 
         for code, label in vegetation_mode_labels.items():
             feature_name = f'Vegetation Mode ({label})'
-            if feature_name in feature_names:   
-                vegetation_data = (vegetation_array == code).astype(float)
-                feature_arrays[feature_name] = np.flipud(vegetation_data)
+            if feature_name in feature_names:
+                feature_arrays[feature_name] = (vegetation_array == code).astype(float)
     
     # Load soil variables (need to aggregate depths)
     soil_vars = ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Silt', 'Clay']

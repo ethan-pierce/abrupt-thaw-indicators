@@ -52,15 +52,17 @@ column-changing wiring, then the dry-run gate before the overnight run.
   T32 (aspect) and T34 (`log upa`) are already-decided instances. Note: pure monotonic
   transforms are **no-ops for the XGBoost fit/ranking** — payoff is buckets (1) and (2).
 
-- [ ] **T31 — Fix the datacube categorical double-flip.** [FABLE A3§1] *(datacube path only)*
-  Land Cover and Vegetation Mode are `np.flipud`-ed **twice** (`build_prediction_data.py:245`+`:251`
-  and `:266`+`:272`) while every other layer flips once — so those two categoricals are
-  vertically mirrored against the rest of the stack. Introduced by the T0 LOCAL migration
-  (the inner flip is GEE-era, correct then; the outer flip was added for `sample_local`,
-  the inner left in). *Depends:* — *Done when:* the inner `np.flipud` at `:251` and `:272`
-  is removed (single outer flip, matching Flammability/Daymet), **and** an orientation
-  guard asserts the categorical layers' non-NaN footprint coincides with a continuous
-  LOCAL layer's so it can't silently regress before the next render.
+- [x] **T31 — Fix the datacube categorical double-flip.** [FABLE A3§1] *(datacube path only)*
+  ✓ 2026-07-14 Land Cover and Vegetation Mode were `np.flipud`-ed **twice** while every
+  other layer flips once — those two categoricals were vertically mirrored against the
+  rest of the stack. Introduced by the T0 LOCAL migration (inner flip GEE-era, correct
+  then; outer flip added for `sample_local`, inner left in). Removed the inner one-hot
+  flips so both are `np.flipud(sample_local(...))` once, matching Flammability/Daymet.
+  Added the `assert_local_orientation` guard (`build_prediction_data.py`): a
+  vertical-mirror footprint test against the Flammability reference, run on each
+  categorical's raw sample before one-hot. It witnesses Vegetation Mode directly (ALFRESCO
+  nodata → informative footprint); Land Cover shares the identical sample+flip path so it's
+  covered transitively (its own NLCD footprint is ~full → no nodata → auto-skipped).
 
 - [ ] **T32 — Aspect → northness/eastness.** [FABLE A1§2] Both paths. Replace raw `Aspect`
   (degrees, circular; `build_feature_table.py:110-111`, `build_prediction_data.py:140-143`)

@@ -3,6 +3,8 @@ data/*.tif
 # Compiled Python (any directory)
 __pycache__/
 *.pyc
+# macOS Finder metadata
+.DS_Store
 data/Obu2019
 # ALFRESCO historical rasters — regenerate with data/fetch_alfresco.py
 data/alfresco/*.tif

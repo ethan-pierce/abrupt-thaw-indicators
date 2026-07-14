@@ -10,7 +10,7 @@ targets (→ `/analyze-system`), not settled claims.
 Grounded sources live in `REFERENCES.md` and are cited below by key. The
 incumbent landscape separates along a three-way distinction the project turns
 on (now in the glossary): thaw **stage** (how far thaw has progressed), thaw
-**occurrence** (whether a hazard forms), and thaw **mode** (abrupt vs. gradual —
+**occurrence** (whether a hazard forms), and thaw **mode** (abrupt vs. non-abrupt —
 this project's target). No incumbent predicts *mode*.
 
 - **Categorical / rule-based mapping is the oldest incumbent.** Olefeldt et al.
@@ -47,18 +47,33 @@ this project's target). No incumbent predicts *mode*.
   denser along roads, and the authors themselves warn this "could skew model
   outputs toward aquatic thaw processes while underrepresenting terrestrial
   forms." The 93.2%/6.8% abrupt/non-abrupt split matches this repo's balance.
+- **Temporally undated labels — a hard limitation.** The thaw labels record
+  *that* a site is undergoing abrupt vs. non-abrupt thaw, not *when*. There is no
+  reliable observation date: the `ImageryDates` field tracks imagery **retrieval**,
+  not the timing of thaw, so the pipeline **cannot distinguish thaw that occurred
+  decades ago from thaw occurring today.** This is why the deliverable is an
+  inherently **static susceptibility** surface — it predicts thaw *mode*, never
+  thaw *timing* or *rate* — and why feature windows spanning ~1960–2020 are
+  matched to undated labels without temporal alignment (the feature vector is
+  read as a static site descriptor, not a time-referenced predictor). `ImageryDates`
+  is therefore dropped, not retained (it would invite a false timing audit).
+- **Terrain & soil coverage gaps.** USGS 3DEP 10 m coverage over Alaska is
+  **incomplete** (much is IFSAR-derived or absent), and SoilGrids confidence is low at
+  high latitude — so terrain and soil features may be NaN or noisy over large statewide
+  regions. Large NaN extents in those layers are **expected coverage gaps, not build
+  failures**; quantified empirically in the T39 dry-run (statewide NaN fractions).
 - **Data lineage — RESOLVED, now on v2.0.0.** This repo's Thaw Database *is*
   `webb2026-thawdb`, at the published **v2.0.0**
   (`Alaska_Permafrost_Thaw_Database_v2.0.0.csv`, wired into `build_feature_table.py`;
   19,540 rows, 93.21%/6.79% abrupt/non-abrupt). v2.0.0 is the version the pipeline
   is being rebuilt against — see README to-do #5/#6.
 
-## Objectives (north-star decomposed — target question: *"why is this point undergoing abrupt rather than gradual thaw?"*)
+## Objectives (north-star decomposed — target question: *"why is this point undergoing abrupt rather than non-abrupt thaw?"*)
 
 The contribution is **thaw *mode* + its explanation**, not a continuous map per
 se (already done for *occurrence* — see Key background). Two headlines:
 
-1. **Headline A — map abrupt-thaw susceptibility.** Predict abrupt-vs-gradual thaw
+1. **Headline A — map abrupt-thaw susceptibility.** Predict abrupt-vs-non-abrupt thaw
    *mode* from geospatial features at any point, spatialized as a continuous statewide
    (Alaska) **log-evidence susceptibility surface** — an absolute, prior-free
    likelihood-ratio index (*not* a calibrated probability, *not* a discrete
@@ -70,7 +85,7 @@ se (already done for *occurrence* — see Key background). Two headlines:
    (`webb2026-thawdb`) is the enabling asset; its lake-dominance is the honest
    limit (scopes A and C).
 3. **Headline C (secondary) — explain the mode.** Rank and physically interpret
-   the geospatial indicators (SHAP) that drive the abrupt-vs-gradual call — the
+   the geospatial indicators (SHAP) that drive the abrupt-vs-non-abrupt call — the
    *why* half of the target question, and the part no incumbent (including the
    bivariate `webb2026-thawdb` analysis) has done multivariately and per-point.
    Caveat to carry: SHAP attributions inherit the DB's lake-dominance and may
@@ -79,7 +94,7 @@ se (already done for *occurrence* — see Key background). Two headlines:
    (post-retrain-#2), NOT the pipeline rebuild. Do not re-litigate it until there
    are SHAP results to interpret.** → `/analyze-system`
 4. **Establish predictive credibility.** Honest performance under the ~93/7 class
-   imbalance — headlined as AUC-PR (positive = Gradual) with the prevalence floor,
+   imbalance — headlined as AUC-PR (positive = Non-abrupt) with the prevalence floor,
    measured under **nested spatial cross-validation** across a block-size sweep
    (interpolation→extrapolation, fixed 1 km buffer), not a random split. Calibrated
    probabilities are explicitly *not* claimed (the deliverable is the log-evidence
@@ -120,7 +135,7 @@ se (already done for *occurrence* — see Key background). Two headlines:
 
 - **Class encoding — RESOLVED (was doc-only drift).** An `/audit-repo` pass
   confirmed the live pipeline *and* the calibrated track are consistent:
-  `0 = Abrupt` (majority ~93%), `1 = Gradual` (minority ~7%), set in
+  `0 = Abrupt` (majority ~93%), `1 = Non-abrupt` (minority ~7%), set in
   `clean_feature_table.py`. Earlier "blocker" framing was wrong — it trusted a
   stale `CLASS_ENCODING_VERIFICATION.md` that actually described a legacy
   `Abrupt = 1` model. Confusion matrix / SHAP plots from the live scripts are
@@ -133,7 +148,7 @@ se (already done for *occurrence* — see Key background). Two headlines:
 - **Near-perfect discrimination — possible leakage/overfit.** Both models score
   AUC-ROC ≈ 0.99 and AUC-PR ≈ 0.9999 (93% prevalence). Warrants a leakage /
   feature-independence check before the numbers go in the manuscript. → `/verify-code`
-- **Metric "positive class" = Gradual** — `train_xgboost*.py` report AUC-PR /
-  precision / recall / F1 for class `1` (Gradual, minority) via `predict_proba[:, 1]`,
+- **Metric "positive class" = Non-abrupt** — `train_xgboost*.py` report AUC-PR /
+  precision / recall / F1 for class `1` (Non-abrupt, minority) via `predict_proba[:, 1]`,
   while `predict.py` maps P(Abrupt) = `predict_proba[:, 0]`. Coherent, but the
   write-up must state which class each headline metric describes. → `/verify-code`

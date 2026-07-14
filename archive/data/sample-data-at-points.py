@@ -1,4 +1,12 @@
-"""Sample data at site locations using GEE tools."""
+"""Sample data at site locations using GEE tools.
+
+LEGACY / KNOWN-FRAGILE (do not resurrect as-is): this archived script reads a
+v1-era CSV (verified-points.csv) and points at the retired 'ee-abrupt-thaw'
+project. Its add_feature (below) also relies on computeFeatures returning rows in
+input order and assigns them to the frame by position -- the same positional-trust
+pattern reworked out of the live build_feature_table.py under TASKS T30. If this
+is ever revived, key the reassembly by an explicit row id (see data/ee_sampling.py).
+"""
 
 import ee
 ee.Authenticate()

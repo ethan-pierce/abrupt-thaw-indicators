@@ -6,9 +6,8 @@ Two-track feature sourcing (no custom GEE assets; see TASKS T0):
     the climate/terrain layers that were formerly custom assets (curvature,
     SWE + trends, max fire temperature) come from ``gee_features.py``.
   * LOCAL track -> ``local_rasters.py`` nearest-samples downloaded rasters at
-    the point coordinates for the four features with no GEE-catalog upstream
-    (ALFRESCO flammability + vegetation mode, NLCD land cover, SNAP projected
-    climate change).
+    the point coordinates for the three features with no GEE-catalog upstream
+    (ALFRESCO flammability + vegetation mode, NLCD land cover).
 There is no ``ASSET_ROOT`` dependency.
 """
 
@@ -34,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA
 import gee_features
 import local_rasters
+import ee_sampling
 
 data = DATA
 
@@ -81,6 +81,12 @@ def add_feature(
 # Create point collection for all data points
 points = [ee.Feature(ee.Geometry.Point([lon, lat])) for lon, lat in zip(thawdb['Longitude'], thawdb['Latitude'])]
 point_collection = ee.FeatureCollection(points)
+
+# T30: coordinate arrays shared by the LOCAL track and ee_sampling's chunked
+# reduceRegions fallback, plus a collector of features that fail to import so
+# the end-of-run report can surface them (a timeout must never be swallowed).
+lons, lats = thawdb['Longitude'].to_numpy(), thawdb['Latitude'].to_numpy()
+failed_features = []
 
 # VARIABLE: Land cover -> LOCAL track (see the LOCAL block near the end).
 
@@ -251,36 +257,56 @@ for band in ['bdod_0-5cm_mean', 'bdod_5-15cm_mean', 'bdod_15-30cm_mean', 'bdod_3
         print('Could not add', bandmap[band], 'from SoilGrids')
 
 # GEE track: maximum fire temperature re-derived inline from FIRMS (no asset).
+# T30: FIRMS max is a ~9,000-image temporal reduction; the old add_feature path
+# hung >26 min at full N, so this feature uses the shared-computation reduceRegions
+# fallback (ee_sampling), which computes the reduction once and reads all points
+# from it (the same "compute once" principle the datacube path relies on).
+# Sampled at 4 km: reduceRegions cost scales with tile count, and 1 km was killed
+# >60 min at full N while 4 km completed in ~2.5 min. 4 km is also the grid the
+# datacube serves FIRMS on (build_prediction_data.py), so training and inference
+# treat the fire layer at the same resolution.
 try:
     firms = gee_features.max_fire_temp()
-    add_feature(thawdb, point_collection, firms, ee.Reducer.mean(), 1000, 'Maximum Fire Temperature', 'T21')
+    ee_sampling.add_feature_reduceregions(thawdb, lons, lats, firms, ee.Reducer.mean(), 4000, 'Maximum Fire Temperature', 'T21')
     print('Added maximum fire temperature from FIRMS')
 except Exception as e:
+    failed_features.append(('Maximum Fire Temperature', repr(e)))
     print('Could not add maximum fire temperature from FIRMS:', e)
 
 # GEE track: SWE + SWE/precip/temp trends re-derived inline from Daymet V4.
+# T30: same "deep temporal reduction" shape as FIRMS, but never reached in T30
+# testing, so we have no evidence they fail. Kept on the old add_feature path
+# pending a full-N probe; if a feature exceeds the 10-min cap, flip it with a
+# one-line change:
+#     add_feature(thawdb, point_collection, IMG, ee.Reducer.mean(), SCALE, NAME, BAND)
+#   ->
+#     ee_sampling.add_feature_reduceregions(thawdb, lons, lats, IMG, ee.Reducer.mean(), SCALE, NAME, BAND)
 try:
     add_feature(thawdb, point_collection, gee_features.mean_annual_swe(), ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
     print('Added mean annual SWE from Daymet V4')
 except Exception as e:
+    failed_features.append(('Mean Annual SWE', repr(e)))
     print('Could not add mean annual SWE from Daymet V4:', e)
 
 try:
     add_feature(thawdb, point_collection, gee_features.swe_trend(), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
     print('Added trend in SWE, derived from Daymet V4')
 except Exception as e:
+    failed_features.append(('Trend in SWE', repr(e)))
     print('Could not add trend in SWE, derived from Daymet V4:', e)
 
 try:
     add_feature(thawdb, point_collection, gee_features.precip_trend(), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
     print('Added trend in precipitation, derived from Daymet V4')
 except Exception as e:
+    failed_features.append(('Trend in precipitation', repr(e)))
     print('Could not add trend in precipitation, derived from Daymet V4:', e)
 
 try:
     add_feature(thawdb, point_collection, gee_features.temp_trend(), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
     print('Added trend in temperature, derived from Daymet V4')
 except Exception as e:
+    failed_features.append(('Trend in temperature', repr(e)))
     print('Could not add trend in temperature, derived from Daymet V4:', e)
 
 # --------------------------------------------------------------------------
@@ -289,7 +315,7 @@ except Exception as e:
 # and Vegetation Mode stay raw integer codes here; clean_feature_table.py
 # one-hot encodes them (0 / nodata -> 'NaN' bucket, dropped there).
 # --------------------------------------------------------------------------
-lons, lats = thawdb['Longitude'].to_numpy(), thawdb['Latitude'].to_numpy()
+# (lons, lats defined once near the point collection above.)
 
 # Land cover (NLCD 2016): missing -> code 0 so clean's land_cover_labels[0]='NaN'.
 lc = local_rasters.sample_points(local_rasters.NLCD_IMG, lons, lats)
@@ -304,11 +330,29 @@ print('Added ALFRESCO vegetation mode (LOCAL)')
 thawdb['Flammability Index'] = local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats)
 print('Added ALFRESCO flammability index (LOCAL)')
 
-# Projected climate change (SNAP AR5/CMIP5): 2090s minus 2010s.
-thawdb['Projected summer temperature change'] = local_rasters.sample_snap_change('summer', lons, lats)
-thawdb['Projected winter temperature change'] = local_rasters.sample_snap_change('winter', lons, lats)
-thawdb['Projected precipitation change'] = local_rasters.sample_snap_change('precip', lons, lats)
-print('Added projected summer/winter temperature + precipitation change from SNAP (LOCAL)')
+# --------------------------------------------------------------------------
+# T30: end-of-run import report. Keep per-feature failures non-fatal (so a late
+# failure never discards hours of unrelated feature work), but surface anything
+# that raised or came through entirely empty, so an incomplete table can never
+# pass silently downstream.
+# --------------------------------------------------------------------------
+all_nan = [c for c in thawdb.columns
+           if np.issubdtype(thawdb[c].dtype, np.number) and thawdb[c].isna().all()]
+
+print('\n' + '=' * 70)
+print('[T30] Feature import report')
+print('=' * 70)
+if failed_features:
+    print('Features that raised during import (missing from the table):')
+    for fname, err in failed_features:
+        print(f'  - {fname}: {err}')
+if all_nan:
+    print('Columns present but ENTIRELY empty (all-NaN) — check these:')
+    for c in all_nan:
+        print(f'  - {c}')
+if not failed_features and not all_nan:
+    print('All features imported with at least some valid values.')
+print('=' * 70 + '\n')
 
 # Save the updated feature table
 print(thawdb.columns)

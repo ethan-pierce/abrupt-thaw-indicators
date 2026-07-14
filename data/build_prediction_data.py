@@ -2,10 +2,10 @@
 
 Same two-track sourcing as build_feature_table.py (no custom GEE assets, see
 TASKS T0): public-catalog + re-derived GEE layers come from ``gee_features.py``
-(curvature, SWE + trends, max fire temperature), and the four features with no
-GEE-catalog upstream (ALFRESCO flammability + vegetation mode, NLCD land cover,
-SNAP projected change) are nearest-sampled from local rasters at the datacube's
-own cell centres via ``local_rasters.py``. No ``ASSET_ROOT`` dependency.
+(curvature, SWE + trends, max fire temperature), and the three features with no
+GEE-catalog upstream (ALFRESCO flammability + vegetation mode, NLCD land cover)
+are nearest-sampled from local rasters at the datacube's own cell centres via
+``local_rasters.py``. No ``ASSET_ROOT`` dependency.
 """
 
 import ee
@@ -225,22 +225,6 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         precip_trend = load_data(gee_features.precip_trend(), projection, scale)
         precip_trend_data = extract_data_array(precip_trend, region, 'scale', default_value)
         feature_arrays['Trend in precipitation'] = np.flipud(precip_trend_data)
-
-    # Projected climate change (LOCAL track): SNAP 2090s minus 2010s at cell centres.
-    if 'Projected precipitation change' in feature_names:
-        early = sample_local(local_rasters.SNAP_PRECIP[2010])
-        late = sample_local(local_rasters.SNAP_PRECIP[2090])
-        feature_arrays['Projected precipitation change'] = np.flipud(late - early)
-
-    if 'Projected summer temperature change' in feature_names:
-        early = sample_local(local_rasters.SNAP_SUMMER[2010])
-        late = sample_local(local_rasters.SNAP_SUMMER[2090])
-        feature_arrays['Projected summer temperature change'] = np.flipud(late - early)
-
-    if 'Projected winter temperature change' in feature_names:
-        early = sample_local(local_rasters.SNAP_WINTER[2010])
-        late = sample_local(local_rasters.SNAP_WINTER[2090])
-        feature_arrays['Projected winter temperature change'] = np.flipud(late - early)
 
     # Load categorical features (Land Cover and Vegetation Mode) - one-hot encoded
     land_cover_labels = {

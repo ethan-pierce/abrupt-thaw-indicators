@@ -3,8 +3,6 @@ data/*.tif
 data/__pycache__/*.pyc
 __pycache__/*.pyc
 data/Obu2019
-# SNAP projected-climate rasters — large, regenerate with data/fetch_snap_projections.py
-data/snap/*.tif
 # ALFRESCO historical rasters — regenerate with data/fetch_alfresco.py
 data/alfresco/*.tif
 # NLCD 2016 Alaska (ERDAS IMAGINE .img + .ige spill file) — large local download

@@ -29,23 +29,31 @@ untouched. See CLAUDE.md glossary + SCOPE.md.
 Ordered: pre-build probes first (their results shape the build), then the
 column-changing wiring, then the dry-run gate before the overnight run.
 
-- [ ] **T37 — Terrain train/serve scale: probe first, don't coarsen blind.** [FABLE A1§1 / A2]
-  The point path samples slope/curvature at native scale (`build_feature_table.py:104`,
-  `reduceRegion(mean, scale=10)`); the datacube extracts at `SCALE=4000`
-  (`build_prediction_data.py:134`). Whether this is a *severe* or *mild* mismatch
-  hinges on EE `reproject` semantics (recompute-at-4 km vs. resample-a-10 m-value),
-  which is unknown. *Depends:* — *Done when:* a quick GEE probe (~200 points, native-mean
-  vs. 4 km-reproject for slope + both curvature scales) settles recompute-vs-resample;
-  **if** divergence is material, the coarsen-vs-matching-columns fix is decided and
-  applied to both paths **before** the full build; if mild, documented and left. Aspect
-  is already reprojection-safe via T32. *(The per-feature parity confirmation is the
-  DEFERRED T23.)*
+- [x] **T37 — Terrain train/serve scale: probe first, don't coarsen blind.** [FABLE A1§1 / A2]
+  ✓ 2026-07-14 **Probe (`diagnostics/probe_terrain_scale.py`): the mismatch is a
+  *recompute*, and severe.** EE reproject to 4 km recomputes the derivative on a
+  pyramid-aggregated DEM — slope collapsed to |·| median 0.31° vs. 1.08° native
+  (ratio 0.28, corr 0.64); 500 m curvature decorrelated (corr ~0). A follow-up
+  (`probe_native_serve.py`) showed `resample('bilinear'/'bicubic')` does **not**
+  recover native for down-sampling — only literal native point-sampling does.
+  **Decision (with Ethan, 2026-07-14): serve terrain natively AND upscale the
+  prediction surface 4 km → 1 km** (see build_prediction_data `SCALE=1000` note).
+  Point path keeps native sampling (unchanged — now correct). Datacube point-samples
+  elevation/slope/aspect/curv-500 m at 1 km cell centres via
+  `ee_sampling.sample_points_reduceregions_chunked` (chunked `reduceRegions` at
+  native scale) — identical construction to the point path, so parity is exact by
+  construction. Curv-2 km + bioclim served by `reproject(1 km)` (native grid ≈1 km,
+  exact). SoilGrids (250 m) left on `reproject(1 km)` (mild; verified by T23).
+  Validated: `diagnostics/probe_chunked_sampler.py` (chunked == single-call, max
+  diff 0; off-grid → NaN). *(Per-feature parity confirmation is the DEFERRED T23.)*
 
 - [ ] **T35 — Systematic feature-transform audit.** [user-requested; generalizes A1§2]
   For every feature decide whether it needs a transform, in three buckets: **(1)
   non-monotonic-for-correctness** (circular → cos/sin; signed quantities); **(2)
-  must-precede-4 km-reprojection-averaging** (heavy-tailed → `log` *before* the mean —
-  the datacube averages, a non-tree op); **(3)** linear-baseline (T13) / SHAP-readability
+  must-precede-reprojection-averaging** (heavy-tailed → `log` *before* the mean — the
+  datacube `reproject`-averages any feature coarser than its 1 km grid, a non-tree op;
+  post-T37 this is soil + `log(upa)`, since terrain is now served natively); **(3)**
+  linear-baseline (T13) / SHAP-readability
   only. *Depends:* — *Done when:* the audit is recorded and every bucket-(1)/(2) transform
   is baked into **both** build paths. **Owns the sand+silt+clay closure** (exact
   compositional dependence, sum ≈ 100%): drop one component or use isometric log-ratios.
@@ -64,12 +72,13 @@ column-changing wiring, then the dry-run gate before the overnight run.
   nodata → informative footprint); Land Cover shares the identical sample+flip path so it's
   covered transitively (its own NLCD footprint is ~full → no nodata → auto-skipped).
 
-- [ ] **T32 — Aspect → northness/eastness.** [FABLE A1§2] Both paths. Replace raw `Aspect`
-  (degrees, circular; `build_feature_table.py:110-111`, `build_prediction_data.py:140-143`)
-  with `northness = cos(aspect)`, `eastness = sin(aspect)`. On flats (**slope < 1°**) set
-  both to `0` (no preferred direction — keeps the row's other terrain info). Drop raw
-  `Aspect` from the model set entirely. *Depends:* — *Done when:* both paths emit
-  northness/eastness, flats are neutralized, and no raw `Aspect` column remains.
+- [x] **T32 — Aspect → northness/eastness.** [FABLE A1§2] ✓ 2026-07-14 Both paths now
+  emit `Northness = cos(aspect)`, `Eastness = sin(aspect)` from natively-sampled aspect,
+  with flats (**slope < 1°**) neutralized to `0` and NaN slope kept (mask → False); raw
+  `Aspect` is dropped before save (point path) and never built (datacube). Point path:
+  `build_feature_table.py` transform block after sampling. Datacube: computed in the T37
+  terrain block from `sample_native(aspect)` + the shared slope array. Verified
+  cos²+sin²≈1 off flats in `diagnostics/probe_chunked_sampler.py`.
 
 - [ ] **T33 — Add Yedoma as a feature.** [FABLE A1§7] The excess-ice/ground-ice control
   that mechanistically separates abrupt from non-abrupt thaw (replaces the rejected
@@ -86,16 +95,17 @@ column-changing wiring, then the dry-run gate before the overnight run.
   GEE track, `MERIT/Hydro/v1_0_1` (official catalog — **not** the `sat-io` community
   layer). Add `hnd` (height above nearest drainage, raw) and `log(upa)` (for the water-
   convergence signal). *Depends:* — *Done when:* both paths emit `hnd` and `log(upa)`.
-  Document the 4 km-reprojection caveat on `log(upa)` (heavy-tailed area averaged to
-  4 km; the single worst feature for the T37 scale question — flag it there too).
+  Document the 1 km-reprojection caveat on `log(upa)` (heavy-tailed area averaged to
+  1 km — MERIT native ~90 m is finer than the 1 km grid, so unlike terrain it is *not*
+  served natively; take `log` before the reproject-average, T35 bucket (2)).
 
 - [ ] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4]
   **Drop** continuous `Maximum Fire Temperature` (peak brightness of one detection, not
-  regime) and binary `Fire Detected` (near-constant at 4 km → interior-vs-tundra
+  regime) and binary `Fire Detected` (near-constant at 1 km → interior-vs-tundra
   geography) — this **reverts the completed T4/T18**. **Keep** Flammability Index
   (long-term modeled regime proxy). **Add** MODIS `MCD64A1`-derived **time-since-last-fire**
   + **burn-count**, materialized to a local raster via the `build_daymet_rasters.py`
-  pattern, kept **near native ~500 m** (datacube resamples to 4 km later). *Depends:* — *Done
+  pattern, kept **near native ~500 m** (datacube resamples to 1 km later). *Depends:* — *Done
   when:* both paths carry Flammability + time-since-fire + burn-count and no FIRMS
   `T21`/`Fire Detected` columns; the **24-yr right-censoring** caveat ("no fire since
   2000" ≠ never-burned) is documented.
@@ -116,25 +126,28 @@ column-changing wiring, then the dry-run gate before the overnight run.
 
 - [ ] **T43 — CV buffer from the empirical autocorrelation range.** [FABLE A2§3]
   `spatial_cv.py` fixes `BUFFER_KM = 1.0`; with 97% of points within 5 km of a neighbor
-  and features up to 4 km, near-seam leakage may inflate the headline AUC-PR. *Depends:*
+  and features with multi-km spatial support (e.g. the 2 km curvature window), near-seam
+  leakage may inflate the headline AUC-PR. *Depends:*
   rebuild. *Done when:* `diagnostics/leakage_decay.py` measures the leakage-decay range
   (where OOF performance stops dropping as the buffer grows), the operative buffer is set
-  to that range with **no nominal-scale floor** (let the data decide — 4 km is a
-  *resampling* grid, not native; coarsest native ≈ 1 km), and a buffer-sensitivity sweep
+  to that range with **no nominal-scale floor** (let the data decide — the 1 km serve grid
+  is a *resampling* grid, not a native floor; terrain is served at native scale), and a buffer-sensitivity sweep
   (1/2/5/10 km) is reported. *(Not the explanation for the old random-split near-perfect
   discrimination — that predates the buffer; separate leakage question → SCOPE.)*
 
 - [ ] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
   *Depends:* rebuild. *Done when:* a per-feature **training-column-vs-datacube-pixel
   distribution-parity** check is documented for **every** feature (not soil-NaN only),
-  including: soil-NaN reproduction; terrain slope/curvature (confirming the T37 probe's
-  expectation); and the **land-cover/veg category-set subset check** (report any class
-  present statewide but absent from training points, and the area affected — silent
+  including: soil-NaN reproduction; **the soil 250 m→1 km `reproject`-averaging** left
+  unfixed under T37 (the one remaining terrain/soil scale gap — confirm it is as mild as
+  assumed); terrain (now served natively both sides → expect near-exact parity, the T37
+  construction check); and the **land-cover/veg category-set subset check** (report any
+  class present statewide but absent from training points, and the area affected — silent
   reference-bucket absorption). No change to one-hot construction.
 
 - [ ] **T20 — Obu domain mask.** [G17] Soft-mask/weight by Obu PerProb
   (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`; `local_rasters.OBU_TIF` /
-  `sample_points`), resampled to the 4 km Albers grid; replaces the feature-validity keep
+  `sample_points`), resampled to the 1 km Albers grid; replaces the feature-validity keep
   (`predict.py:94-96`). Obu is **mask-only** (not a feature — decision 2026-07-14).
   *Depends:* T19 (done). *Done when:* off-permafrost pixels are masked/down-weighted.
 

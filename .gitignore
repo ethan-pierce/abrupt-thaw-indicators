@@ -1,9 +1,12 @@
 data/*.nc
 data/*.tif
 data/__pycache__/*.pyc
+models/__pycache__/*.pyc
 __pycache__/*.pyc
 data/Obu2019
 # ALFRESCO historical rasters — regenerate with data/fetch_alfresco.py
 data/alfresco/*.tif
+# Daymet V4 reductions raster — regenerate with data/build_daymet_rasters.py
+data/daymet/*.tif
 # NLCD 2016 Alaska (ERDAS IMAGINE .img + .ige spill file) — large local download
 data/NLCD2016

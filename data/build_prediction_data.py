@@ -1,10 +1,11 @@
 """Build a datacube of predictors over interior and Arctic Alaska.
 
 Same two-track sourcing as build_feature_table.py (no custom GEE assets, see
-TASKS T0): public-catalog + re-derived GEE layers come from ``gee_features.py``
-(curvature, SWE + trends, max fire temperature), and the three features with no
-GEE-catalog upstream (ALFRESCO flammability + vegetation mode, NLCD land cover)
-are nearest-sampled from local rasters at the datacube's own cell centres via
+TASKS T0): public-catalog + re-derived GEE layers (curvature, max fire
+temperature) come from ``gee_features.py``, and the LOCAL features (ALFRESCO
+flammability + vegetation mode, NLCD land cover, and the Daymet SWE +
+SWE/precip/temp trends materialized by ``build_daymet_rasters.py``) are
+nearest-sampled from local rasters at the datacube's own cell centres via
 ``local_rasters.py``. No ``ASSET_ROOT`` dependency.
 """
 
@@ -120,10 +121,10 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     lon2d = extract_data_array(lonlat, region, 'longitude', default_value)
     lat2d = extract_data_array(lonlat, region, 'latitude', default_value)
 
-    def sample_local(path):
-        """Nearest-sample a local raster onto the datacube grid (native
+    def sample_local(path, band=1):
+        """Nearest-sample a local raster band onto the datacube grid (native
         orientation; caller flips to match the GEE features)."""
-        flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel())
+        flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel(), band=band)
         return flat.reshape(lon2d.shape)
 
     if 'Elevation' in feature_names:
@@ -205,26 +206,13 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         fire_detected_data = extract_data_array(firms_binary, region, 'T21', default_value=0)
         feature_arrays['Fire Detected'] = np.flipud(fire_detected_data)
 
-    # SWE + SWE/precip/temp trends (GEE track: Daymet V4, no asset)
-    if 'Mean Annual SWE' in feature_names:
-        swe = load_data(gee_features.mean_annual_swe(), projection, scale)
-        swe_data = extract_data_array(swe, region, 'swe', default_value)
-        feature_arrays['Mean Annual SWE'] = np.flipud(swe_data)
-
-    if 'Trend in SWE' in feature_names:
-        swe_trend = load_data(gee_features.swe_trend(), projection, scale)
-        swe_trend_data = extract_data_array(swe_trend, region, 'scale', default_value)
-        feature_arrays['Trend in SWE'] = np.flipud(swe_trend_data)
-
-    if 'Trend in temperature' in feature_names:
-        temp_trend = load_data(gee_features.temp_trend(), projection, scale)
-        temp_trend_data = extract_data_array(temp_trend, region, 'scale', default_value)
-        feature_arrays['Trend in temperature'] = np.flipud(temp_trend_data)
-
-    if 'Trend in precipitation' in feature_names:
-        precip_trend = load_data(gee_features.precip_trend(), projection, scale)
-        precip_trend_data = extract_data_array(precip_trend, region, 'scale', default_value)
-        feature_arrays['Trend in precipitation'] = np.flipud(precip_trend_data)
+    # SWE + SWE/precip/temp trends (LOCAL track: Daymet V4 materialized raster,
+    # build_daymet_rasters.py). Deep temporal reductions can't be sampled live on
+    # GEE without hanging (T30), so they are nearest-sampled at cell centres like
+    # the other LOCAL features. Bands per local_rasters.DAYMET_BANDS.
+    for _feat, _band in local_rasters.DAYMET_BANDS.items():
+        if _feat in feature_names:
+            feature_arrays[_feat] = np.flipud(sample_local(local_rasters.DAYMET_TIF, _band))
 
     # Load categorical features (Land Cover and Vegetation Mode) - one-hot encoded
     land_cover_labels = {

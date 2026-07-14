@@ -2,12 +2,13 @@
 
 Two-track feature sourcing (no custom GEE assets; see TASKS T0):
   * GEE track   -> public catalog data sampled server-side. Public datasets
-    (3DEP terrain, WorldClim bioclim, SoilGrids) are sampled inline here;
-    the climate/terrain layers that were formerly custom assets (curvature,
-    SWE + trends, max fire temperature) come from ``gee_features.py``.
-  * LOCAL track -> ``local_rasters.py`` nearest-samples downloaded rasters at
-    the point coordinates for the three features with no GEE-catalog upstream
-    (ALFRESCO flammability + vegetation mode, NLCD land cover).
+    (3DEP terrain, WorldClim bioclim, SoilGrids) are sampled inline here, as are
+    the re-derived curvature and max-fire-temperature layers (``gee_features.py``).
+  * LOCAL track -> ``local_rasters.py`` nearest-samples downloaded rasters at the
+    point coordinates: ALFRESCO flammability + vegetation mode, NLCD land cover,
+    and the Daymet SWE + SWE/precip/temp trends materialized to a local raster by
+    ``build_daymet_rasters.py`` (deep temporal reductions that hang if sampled
+    live at scattered points — T30).
 There is no ``ASSET_ROOT`` dependency.
 """
 
@@ -273,42 +274,6 @@ except Exception as e:
     failed_features.append(('Maximum Fire Temperature', repr(e)))
     print('Could not add maximum fire temperature from FIRMS:', e)
 
-# GEE track: SWE + SWE/precip/temp trends re-derived inline from Daymet V4.
-# T30: same "deep temporal reduction" shape as FIRMS, but never reached in T30
-# testing, so we have no evidence they fail. Kept on the old add_feature path
-# pending a full-N probe; if a feature exceeds the 10-min cap, flip it with a
-# one-line change:
-#     add_feature(thawdb, point_collection, IMG, ee.Reducer.mean(), SCALE, NAME, BAND)
-#   ->
-#     ee_sampling.add_feature_reduceregions(thawdb, lons, lats, IMG, ee.Reducer.mean(), SCALE, NAME, BAND)
-try:
-    add_feature(thawdb, point_collection, gee_features.mean_annual_swe(), ee.Reducer.mean(), 1000, 'Mean Annual SWE', 'swe')
-    print('Added mean annual SWE from Daymet V4')
-except Exception as e:
-    failed_features.append(('Mean Annual SWE', repr(e)))
-    print('Could not add mean annual SWE from Daymet V4:', e)
-
-try:
-    add_feature(thawdb, point_collection, gee_features.swe_trend(), ee.Reducer.mean(), 1000, 'Trend in SWE', 'scale')
-    print('Added trend in SWE, derived from Daymet V4')
-except Exception as e:
-    failed_features.append(('Trend in SWE', repr(e)))
-    print('Could not add trend in SWE, derived from Daymet V4:', e)
-
-try:
-    add_feature(thawdb, point_collection, gee_features.precip_trend(), ee.Reducer.mean(), 1000, 'Trend in precipitation', 'scale')
-    print('Added trend in precipitation, derived from Daymet V4')
-except Exception as e:
-    failed_features.append(('Trend in precipitation', repr(e)))
-    print('Could not add trend in precipitation, derived from Daymet V4:', e)
-
-try:
-    add_feature(thawdb, point_collection, gee_features.temp_trend(), ee.Reducer.mean(), 1000, 'Trend in temperature', 'scale')
-    print('Added trend in temperature, derived from Daymet V4')
-except Exception as e:
-    failed_features.append(('Trend in temperature', repr(e)))
-    print('Could not add trend in temperature, derived from Daymet V4:', e)
-
 # --------------------------------------------------------------------------
 # LOCAL track: nearest-sample downloaded rasters at the point coordinates for
 # the four features with no GEE-catalog upstream (local_rasters.py). Land Cover
@@ -329,6 +294,14 @@ print('Added ALFRESCO vegetation mode (LOCAL)')
 # Flammability index (ALFRESCO), continuous.
 thawdb['Flammability Index'] = local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats)
 print('Added ALFRESCO flammability index (LOCAL)')
+
+# Mean annual SWE + SWE/precip/temp trends (Daymet V4): deep temporal reductions
+# that hang when point-sampled live on GEE (T30), so they are materialized once to
+# a local 1 km raster by build_daymet_rasters.py and read here. Bands per
+# local_rasters.DAYMET_BANDS.
+for _feat, _band in local_rasters.DAYMET_BANDS.items():
+    thawdb[_feat] = local_rasters.sample_points(local_rasters.DAYMET_TIF, lons, lats, band=_band)
+print('Added Daymet mean annual SWE + SWE/precip/temp trends (LOCAL)')
 
 # --------------------------------------------------------------------------
 # T30: end-of-run import report. Keep per-feature failures non-fatal (so a late

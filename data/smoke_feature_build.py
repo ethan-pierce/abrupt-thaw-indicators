@@ -117,6 +117,15 @@ probe(lambda: add_feature_gee(gf.mean_curvature(500), ee.Reducer.mean(), 250,
 probe(lambda: add_feature_gee(gf.mean_curvature(2000), ee.Reducer.mean(), 1000,
                               'Mean curvature (2 km)', 'MeanCurvature'), 'Mean curvature (2 km)')
 
+# ---- GEE inline: hydrological terrain (MERIT Hydro, T34) -----------------
+print('GEE inline — MERIT Hydro (hnd + log upstream area):')
+probe(lambda: add_feature_gee(gf.height_above_drainage(), ee.Reducer.mean(),
+                              gf.MERIT_SCALE, 'Height Above Nearest Drainage', 'hnd'),
+      'Height Above Nearest Drainage')
+probe(lambda: add_feature_gee(gf.log_upstream_area(), ee.Reducer.mean(),
+                              gf.MERIT_SCALE, 'Log Upstream Area', 'log_upa'),
+      'Log Upstream Area')
+
 # ---- GEE inline: bioclim (representative bands) --------------------------
 print('GEE inline — WorldClim bioclim (representative):')
 bioclim = ee.Image('WORLDCLIM/V1/BIO')

@@ -55,6 +55,19 @@ NLCD_IMG = DATA / 'NLCD2016' / 'NLCD_2016_Land_Cover_AK_20200724.img'
 OBU_TIF = (DATA / 'Obu2019' /
            'UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif')
 
+# Yedoma (IRYP v2, Strauss et al.) — ice-rich, excess-ground-ice permafrost, the
+# mechanistic control that separates abrupt from non-abrupt thaw (TASKS T33).
+# Vector, not raster: polygons of mapped yedoma extent tagged with a mapping-
+# confidence tier via ``conf_id`` (a two-digit code: first digit = confidence
+# {1 confirmed, 2 likely, 3 uncertain}, second digit = mapping source, NOT
+# ordinal). Sampled as a BINARY confirmed/unconfirmed presence feature (decision
+# with Ethan, 2026-07-14): 1 inside a confirmed (tier-1) polygon, 0 elsewhere.
+# Within the Alaska ROI "likely" is absent and "uncertain" is a 0.6% sliver, so
+# confirmed-vs-everything is effectively presence-vs-absence. CRS EPSG:3571.
+YEDOMA_SHP = (DATA / 'IRYP_v2_yedoma_confidence_Shapefile' /
+              'IRYP_v2_yedoma_confidence.shp')
+YEDOMA_CONFIRMED_TIER = 1  # conf_id // 10 == 1  ->  "confirmed"
+
 # Daymet V4 reductions (Mean Annual SWE + SWE/precip/temp trends) materialized to
 # one 4-band local raster by ``build_daymet_rasters.py``. These are deep temporal
 # reductions that hang when point-sampled live on GEE (T30), so they are computed
@@ -104,6 +117,57 @@ def sample_points(path, lons, lats, band: int = 1) -> np.ndarray:
     return out
 
 
+_yedoma_confirmed = None  # cached confirmed-tier polygons (loaded once, reprojected to WGS84)
+
+
+def _load_yedoma_confirmed():
+    """Load + cache the confirmed-tier (``conf_id // 10 == 1``) yedoma polygons,
+    reprojected to WGS84 so points can be tested in their native lon/lat."""
+    global _yedoma_confirmed
+    if _yedoma_confirmed is None:
+        import geopandas as gpd
+        gdf = gpd.read_file(YEDOMA_SHP)
+        gdf = gdf[gdf['conf_id'] // 10 == YEDOMA_CONFIRMED_TIER]
+        gdf = gdf.to_crs('EPSG:4326')
+        gdf['geometry'] = gdf.geometry.buffer(0)  # heal any invalid rings
+        _yedoma_confirmed = gdf[['geometry']].reset_index(drop=True)
+    return _yedoma_confirmed
+
+
+def sample_yedoma(lons, lats) -> np.ndarray:
+    """Binary confirmed-yedoma presence at WGS84 ``lons``/``lats`` (TASKS T33).
+
+    Returns ``1.0`` where a point falls inside a confirmed (tier-1) IRYP v2
+    polygon, ``0.0`` where it does not, and ``NaN`` for non-finite / out-of-range
+    coordinates (the datacube's off-ROI cells carry a -9999 lon/lat fill that must
+    not be tested — matching ``sample_points``). This is a point-in-polygon test at
+    exactly the coordinates the caller supplies, so the point path (training points)
+    and the datacube path (1 km cell centres) run the identical construction and
+    agree by construction — the same train/serve-parity principle as T37 terrain.
+    """
+    import geopandas as gpd
+
+    lons = np.asarray(lons, dtype=float)
+    lats = np.asarray(lats, dtype=float)
+    out = np.full(lons.shape, np.nan, dtype=float)
+    ok = (np.isfinite(lons) & np.isfinite(lats)
+          & (np.abs(lons) <= 180) & (np.abs(lats) <= 90))
+    if not ok.any():
+        return out
+
+    polys = _load_yedoma_confirmed()
+    pts = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy(lons[ok], lats[ok]), crs='EPSG:4326')
+    # Spatial-index-backed point-in-polygon; a point may hit >1 polygon, so reduce
+    # to a per-point "matched any" flag on the (0..n_ok-1) positional index.
+    hit = gpd.sjoin(pts, polys, how='left', predicate='within')
+    matched = hit.index[hit['index_right'].notna()].unique()
+    vals = np.zeros(int(ok.sum()), dtype=float)
+    vals[matched] = 1.0
+    out[ok] = vals
+    return out
+
+
 if __name__ == '__main__':
     # Smoke test: sample every LOCAL raster at a few known Alaska sites.
     sites = {'Fairbanks': (-147.72, 64.84),
@@ -115,3 +179,4 @@ if __name__ == '__main__':
     print('Vegetation   :', dict(zip(sites, sample_points(VEGMODE_TIF, lons, lats))))
     print('Land cover    :', dict(zip(sites, sample_points(NLCD_IMG, lons, lats))))
     print('Obu PerProb  :', dict(zip(sites, np.round(sample_points(OBU_TIF, lons, lats), 3))))
+    print('Yedoma       :', dict(zip(sites, sample_yedoma(lons, lats))))

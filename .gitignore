@@ -12,3 +12,5 @@ data/alfresco/*.tif
 data/daymet/*.tif
 # NLCD 2016 Alaska (ERDAS IMAGINE .img + .ige spill file) — large local download
 data/NLCD2016
+# IRYP v2 yedoma confidence shapefile (T33) — large in-repo source download
+data/IRYP_v2_yedoma_confidence_Shapefile

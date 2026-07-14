@@ -146,6 +146,52 @@ def temp_trend() -> ee.Image:
 
 
 # ==========================================================================
+# MERIT Hydro: hydrological terrain (T34)
+# ==========================================================================
+# Official catalog asset MERIT/Hydro/v1_0_1 (Yamazaki et al. 2019) — NOT the
+# `sat-io` community mirror. Native resolution 3 arc-seconds (~92.77 m in
+# EPSG:4326), finer than the 1 km serve grid, which shapes how each band is
+# served (see the two constructors below and TASKS T34).
+_MERIT_HYDRO = 'MERIT/Hydro/v1_0_1'
+MERIT_SCALE = 90                  # round native scale (~92.77 m) both build paths
+                                  # sample at, so train/serve agree by construction
+
+
+def height_above_drainage() -> ee.Image:
+    """MERIT Hydro **height above nearest drainage** (metres), raw. Band ``'hnd'``.
+
+    A fine-scale hydrological-terrain control: low ``hnd`` marks valley bottoms
+    and drainage lines where water — and thermokarst — concentrate. Served
+    **natively** in both paths (like the 3DEP terrain, T37): it is a stored
+    height, so a 1 km reproject would average the ~120 native pixels under each
+    cell and blur the valley/slope contrast that matters for a fine-scale process.
+    Instead both paths point-sample at ``MERIT_SCALE``, so they agree by
+    construction (the point path's ``reduceRegion`` and the datacube's per-cell
+    ``reduceRegions`` both read the native pixel).
+    """
+    return ee.Image(_MERIT_HYDRO).select('hnd')
+
+
+def log_upstream_area() -> ee.Image:
+    """Natural log of MERIT Hydro **upstream drainage area** (``upa``, km^2) — the
+    water-convergence signal. Band ``'log_upa'``.
+
+    ``upa`` is strictly positive (minimum = one native cell, ~0.0037 km^2) and
+    heavy-tailed across many orders of magnitude, so the log is applied **here**,
+    before any aggregation. The order matters for the datacube (T34 / T35 bucket
+    2): MERIT's ~90 m native grid is finer than the 1 km serve grid, so — unlike
+    the natively-served terrain — ``log(upa)`` IS reproject-averaged to 1 km, and
+    that average must act on the **log**. A plain ``reproject`` of this image would
+    silently average raw ``upa`` first and then log it (``log(mean(upa))``,
+    dominated by the few largest channels — empirically verified), so the datacube
+    aggregates it with an explicit ``reduceResolution(mean)`` on the native-pinned
+    log; the point path samples this same image at native scale (no aggregation),
+    so both paths share one definition.
+    """
+    return ee.Image(_MERIT_HYDRO).select('upa').log().rename('log_upa')
+
+
+# ==========================================================================
 # FIRMS: maximum fire temperature
 # ==========================================================================
 def max_fire_temp() -> ee.Image:

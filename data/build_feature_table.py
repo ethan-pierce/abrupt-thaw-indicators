@@ -138,6 +138,31 @@ try:
 except Exception as e:
     print('Could not add mean 2km curvature:', e)
 
+# VARIABLES: hydrological terrain (MERIT Hydro v1.0.1, T34)
+# GEE track, MERIT/Hydro/v1_0_1 (official catalog, NOT the sat-io mirror); native
+# ~90 m. Both features are sampled at native scale here — a point sample reads one
+# native pixel, so there is no aggregation-order concern in this path. `hnd` (raw
+# height above nearest drainage) is served natively in the datacube too (like the
+# 3DEP terrain, T37); `log(upa)` samples the log-transformed image so the datacube
+# can average on the log scale (T34/T35 bucket 2). See gee_features docstrings.
+try:
+    hnd = gee_features.height_above_drainage()
+    add_feature(thawdb, point_collection, hnd, ee.Reducer.mean(),
+                gee_features.MERIT_SCALE, 'Height Above Nearest Drainage', 'hnd')
+    print('Added MERIT Hydro height above nearest drainage')
+except Exception as e:
+    failed_features.append(('Height Above Nearest Drainage', repr(e)))
+    print('Could not add MERIT Hydro height above nearest drainage:', e)
+
+try:
+    log_upa = gee_features.log_upstream_area()
+    add_feature(thawdb, point_collection, log_upa, ee.Reducer.mean(),
+                gee_features.MERIT_SCALE, 'Log Upstream Area', 'log_upa')
+    print('Added MERIT Hydro log upstream area')
+except Exception as e:
+    failed_features.append(('Log Upstream Area', repr(e)))
+    print('Could not add MERIT Hydro log upstream area:', e)
+
 # VARIABLES: bioclimatic variables
 bioclim = ee.Image('WORLDCLIM/V1/BIO')
 biovars = {
@@ -310,6 +335,12 @@ print('Added ALFRESCO flammability index (LOCAL)')
 for _feat, _band in local_rasters.DAYMET_BANDS.items():
     thawdb[_feat] = local_rasters.sample_points(local_rasters.DAYMET_TIF, lons, lats, band=_band)
 print('Added Daymet mean annual SWE + SWE/precip/temp trends (LOCAL)')
+
+# Yedoma (IRYP v2, T33): binary confirmed-presence via point-in-polygon. The
+# datacube path runs the identical sample_yedoma call at its cell centres, so
+# train/serve parity is exact by construction (as with T37 terrain).
+thawdb['Yedoma'] = local_rasters.sample_yedoma(lons, lats)
+print('Added IRYP v2 confirmed-yedoma presence (LOCAL)')
 
 # --------------------------------------------------------------------------
 # T32: encode aspect as northness = cos(aspect), eastness = sin(aspect). Raw

@@ -92,6 +92,11 @@ failed_features = []
 # VARIABLE: Land cover -> LOCAL track (see the LOCAL block near the end).
 
 # VARIABLES: terrain analysis
+# T37: terrain is sampled at NATIVE scale (10 m / 250 m / 1000 m) on purpose — do
+# not "fix" this to 4 km / 1 km. The probe (diagnostics/probe_native_serve.py)
+# showed a coarse reproject pyramid-aggregates the derivative (slope collapses to
+# ~0.28x native at 4 km); the datacube matches this native sampling by
+# point-sampling its 1 km cell centres, so train and serve agree at native scale.
 try:
     elevation = ee.Image('USGS/3DEP/10m').select('elevation')
     add_feature(thawdb, point_collection, elevation, ee.Reducer.mean(), 10, 'Elevation', 'elevation')
@@ -106,6 +111,9 @@ try:
 except:
     print('Could not add slope derived from USGS 3DEP elevation')
 
+# T32: sample raw aspect (native) into a temporary column, then encode as
+# northness/eastness and neutralize flats below; raw circular Aspect is dropped
+# and never enters the model set.
 try:
     aspect = ee.Terrain.aspect(elevation)
     add_feature(thawdb, point_collection, aspect, ee.Reducer.mean(), 10, 'Aspect', 'aspect')
@@ -302,6 +310,25 @@ print('Added ALFRESCO flammability index (LOCAL)')
 for _feat, _band in local_rasters.DAYMET_BANDS.items():
     thawdb[_feat] = local_rasters.sample_points(local_rasters.DAYMET_TIF, lons, lats, band=_band)
 print('Added Daymet mean annual SWE + SWE/precip/temp trends (LOCAL)')
+
+# --------------------------------------------------------------------------
+# T32: encode aspect as northness = cos(aspect), eastness = sin(aspect). Raw
+# Aspect is circular (0 deg == 360 deg) and non-monotonic, which a tree splits
+# poorly; the cos/sin pair is continuous and reprojection-safe. On flats
+# (slope < 1 deg) there is no preferred direction, so both are neutralized to 0
+# (keeping the row's other terrain info). Raw Aspect is dropped from the table.
+# --------------------------------------------------------------------------
+if 'Aspect' in thawdb.columns:
+    _asp = np.deg2rad(thawdb['Aspect'].to_numpy(dtype=float))
+    _flat = thawdb['Slope'].to_numpy(dtype=float) < 1.0  # NaN slope -> False (kept)
+    _north = np.cos(_asp)
+    _east = np.sin(_asp)
+    _north[_flat] = 0.0
+    _east[_flat] = 0.0
+    thawdb['Northness'] = _north
+    thawdb['Eastness'] = _east
+    thawdb = thawdb.drop(columns=['Aspect'])
+    print('Encoded aspect -> Northness/Eastness (flats < 1 deg neutralized); dropped raw Aspect (T32)')
 
 # --------------------------------------------------------------------------
 # T30: end-of-run import report. Keep per-feature failures non-fatal (so a late

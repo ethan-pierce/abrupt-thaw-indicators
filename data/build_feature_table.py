@@ -34,7 +34,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA
 import gee_features
 import local_rasters
-import ee_sampling
 
 data = DATA
 
@@ -290,23 +289,6 @@ for band in ['bdod_0-5cm_mean', 'bdod_5-15cm_mean', 'bdod_15-30cm_mean', 'bdod_3
     except:
         print('Could not add', bandmap[band], 'from SoilGrids')
 
-# GEE track: maximum fire temperature re-derived inline from FIRMS (no asset).
-# T30: FIRMS max is a ~9,000-image temporal reduction; the old add_feature path
-# hung >26 min at full N, so this feature uses the shared-computation reduceRegions
-# fallback (ee_sampling), which computes the reduction once and reads all points
-# from it (the same "compute once" principle the datacube path relies on).
-# Sampled at 4 km: reduceRegions cost scales with tile count, and 1 km was killed
-# >60 min at full N while 4 km completed in ~2.5 min. 4 km is also the grid the
-# datacube serves FIRMS on (build_prediction_data.py), so training and inference
-# treat the fire layer at the same resolution.
-try:
-    firms = gee_features.max_fire_temp()
-    ee_sampling.add_feature_reduceregions(thawdb, lons, lats, firms, ee.Reducer.mean(), 4000, 'Maximum Fire Temperature', 'T21')
-    print('Added maximum fire temperature from FIRMS')
-except Exception as e:
-    failed_features.append(('Maximum Fire Temperature', repr(e)))
-    print('Could not add maximum fire temperature from FIRMS:', e)
-
 # --------------------------------------------------------------------------
 # LOCAL track: nearest-sample downloaded rasters at the point coordinates for
 # the four features with no GEE-catalog upstream (local_rasters.py). Land Cover
@@ -335,6 +317,15 @@ print('Added ALFRESCO flammability index (LOCAL)')
 for _feat, _band in local_rasters.DAYMET_BANDS.items():
     thawdb[_feat] = local_rasters.sample_points(local_rasters.DAYMET_TIF, lons, lats, band=_band)
 print('Added Daymet mean annual SWE + SWE/precip/temp trends (LOCAL)')
+
+# Fire history (MODIS MCD64A1, T36): Time Since Last Fire + Burn Count. Like
+# Daymet, deep temporal reductions that hang when point-sampled live on GEE (T30),
+# so materialized once to a local ~500 m raster by build_modis_fire_rasters.py and
+# read here. Both are right-censored to the ~24-yr record ("no fire since 2001" !=
+# never-burned; see gee_features). Bands per local_rasters.MODIS_FIRE_BANDS.
+for _feat, _band in local_rasters.MODIS_FIRE_BANDS.items():
+    thawdb[_feat] = local_rasters.sample_points(local_rasters.MODIS_FIRE_TIF, lons, lats, band=_band)
+print('Added MODIS MCD64A1 time-since-last-fire + burn count (LOCAL)')
 
 # Yedoma (IRYP v2, T33): binary confirmed-presence via point-in-polygon. The
 # datacube path runs the identical sample_yedoma call at its cell centres, so

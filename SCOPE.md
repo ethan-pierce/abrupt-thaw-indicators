@@ -119,12 +119,16 @@ se (already done for *occurrence* — see Key background). Two headlines:
 - **Indicators as mechanism** — curvature / SWE trend / silt / nitrogen read as
   proxies for ground-ice, drainage, and soil texture; could crystallize into a
   physically-motivated susceptibility index. → `/derive-equations`
-- **Missing driver: fire — PARTLY RESOLVED.** `zhang2025-thawstage` found fire
-  dominant for thaw stage; fire is *not* absent here — `build_feature_table.py`
-  pulls ALFRESCO flammability and FIRMS max-fire-temperature, and
-  `clean_feature_table.py` keeps Maximum Fire Temperature. Open question is
-  whether the *representation* (instantaneous max temp / flammability vs. fire
-  *history*/time-since-fire) is adequate, not whether fire is present.
+- **Missing driver: fire — RESOLVED (T36).** `zhang2025-thawstage` found fire
+  dominant for thaw stage. The representation question — instantaneous intensity
+  vs. fire *history* — is now settled on the side of history: the FIRMS
+  `Maximum Fire Temperature` (peak brightness of a single detection, not a regime)
+  and near-constant `Fire Detected` were **dropped**, and `build_feature_table.py`
+  now carries MODIS MCD64A1 **`Time Since Last Fire` + `Burn Count`** alongside the
+  retained ALFRESCO flammability. Two residual caveats (documented in
+  `gee_features.py` / PIPELINE): the record is right-censored to ~24 yr ("no fire
+  since 2001" ≠ never-burned), and MCD64A1 coverage drops out above ~70°N (fire
+  features NaN there, ~11% of points, routed natively by XGBoost).
 - **Uncertainty as a product** — pair the susceptibility surface with the
   area-of-applicability / dissimilarity mask (an explicit extrapolation-reliability
   layer), not just a point estimate. → `/analyze-system`

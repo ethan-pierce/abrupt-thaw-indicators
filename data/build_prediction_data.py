@@ -1,12 +1,13 @@
 """Build a datacube of predictors over interior and Arctic Alaska.
 
 Same two-track sourcing as build_feature_table.py (no custom GEE assets, see
-TASKS T0): public-catalog + re-derived GEE layers (curvature, max fire
-temperature) come from ``gee_features.py``, and the LOCAL features (ALFRESCO
-flammability + vegetation mode, NLCD land cover, and the Daymet SWE +
-SWE/precip/temp trends materialized by ``build_daymet_rasters.py``) are
-nearest-sampled from local rasters at the datacube's own cell centres via
-``local_rasters.py``. No ``ASSET_ROOT`` dependency.
+TASKS T0): public-catalog + re-derived GEE layers (curvature, MERIT Hydro terrain)
+come from ``gee_features.py``, and the LOCAL features (ALFRESCO flammability +
+vegetation mode, NLCD land cover, the Daymet SWE + SWE/precip/temp trends, and the
+MODIS MCD64A1 fire history — the last two materialized by
+``build_daymet_rasters.py`` / ``build_modis_fire_rasters.py``) are nearest-sampled
+from local rasters at the datacube's own cell centres via ``local_rasters.py``.
+No ``ASSET_ROOT`` dependency.
 """
 
 import ee
@@ -284,25 +285,15 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     if 'Flammability Index' in feature_names:
         feature_arrays['Flammability Index'] = np.flipud(sample_local(local_rasters.FLAMMABILITY_TIF))
 
-    # Maximum fire temperature + Fire Detected (GEE track: FIRMS, no asset)
-    if 'Maximum Fire Temperature' in feature_names:
-        firms = load_data(gee_features.max_fire_temp(), projection, scale)
-        firms_data = extract_data_array(firms, region, 'T21', default_value)
-        feature_arrays['Maximum Fire Temperature'] = np.flipud(firms_data)
-
-    if 'Fire Detected' in feature_names:
-        # Train/serve parity with clean_feature_table.py (A1): Fire Detected = 1 where
-        # FIRMS reported a maximum fire temperature (T21 present), 0 where the pixel is
-        # masked (genuine "no fire") — the datacube analogue of
-        # `notna(Maximum Fire Temperature)`. Reproject first, then take the mask so the
-        # indicator is evaluated on the model's 4 km grid, matching the footprint that
-        # the Maximum Fire Temperature layer treats as valid-vs-missing. Use 0 as the
-        # fill so unobserved pixels read as "no fire", never -9999.
-        firms_binary = load_data(
-            gee_features.max_fire_temp(), projection, scale
-        ).select('T21').mask().gt(0)
-        fire_detected_data = extract_data_array(firms_binary, region, 'T21', default_value=0)
-        feature_arrays['Fire Detected'] = np.flipud(fire_detected_data)
+    # Fire history (LOCAL track: MODIS MCD64A1 materialized raster,
+    # build_modis_fire_rasters.py, T36). Replaces the FIRMS max-fire-temp / Fire
+    # Detected pair (reverted). Like Daymet, deep temporal reductions that can't be
+    # sampled live on GEE without hanging (T30), so nearest-sampled at cell centres
+    # from the ~500 m raster (resampled to the 1 km serve grid here). Bands per
+    # local_rasters.MODIS_FIRE_BANDS.
+    for _feat, _band in local_rasters.MODIS_FIRE_BANDS.items():
+        if _feat in feature_names:
+            feature_arrays[_feat] = np.flipud(sample_local(local_rasters.MODIS_FIRE_TIF, _band))
 
     # SWE + SWE/precip/temp trends (LOCAL track: Daymet V4 materialized raster,
     # build_daymet_rasters.py). Deep temporal reductions can't be sampled live on

@@ -115,16 +115,21 @@ column-changing wiring, then the dry-run gate before the overnight run.
   `reduceResolution(mean)` on the native-pinned log. Smoke gate (`smoke_feature_build.py`,
   probes added) PASSES: both features finite at all sample points.
 
-- [ ] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4]
-  **Drop** continuous `Maximum Fire Temperature` (peak brightness of one detection, not
-  regime) and binary `Fire Detected` (near-constant at 1 km → interior-vs-tundra
-  geography) — this **reverts the completed T4/T18**. **Keep** Flammability Index
-  (long-term modeled regime proxy). **Add** MODIS `MCD64A1`-derived **time-since-last-fire**
-  + **burn-count**, materialized to a local raster via the `build_daymet_rasters.py`
-  pattern, kept **near native ~500 m** (datacube resamples to 1 km later). *Depends:* — *Done
-  when:* both paths carry Flammability + time-since-fire + burn-count and no FIRMS
-  `T21`/`Fire Detected` columns; the **24-yr right-censoring** caveat ("no fire since
-  2000" ≠ never-burned) is documented.
+- [x] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4] ✓ 2026-07-14
+  **Dropped** `Maximum Fire Temperature` (FIRMS `T21`, peak brightness of one detection)
+  and `Fire Detected` (near-constant at 1 km) — reverting T4/T18. **Kept** Flammability
+  Index. **Added** MODIS `MCD64A1` **Time Since Last Fire** + **Burn Count** via new
+  `gee_features` constructors, materialized to a local ~500 m raster
+  (`build_modis_fire_rasters.py`, the `build_daymet_rasters.py` pattern; datacube
+  resamples to 1 km) and read by both tracks through `local_rasters.MODIS_FIRE_BANDS`.
+  `clean_feature_table.py`/`diagnostics/_data.py` no longer derive `Fire Detected` or
+  fill the old temp column; `smoke_feature_build.py` probes the new raster (conditional,
+  like Daymet). Both features **right-censored** to the ~24-yr record (`FIRE_RECORD`
+  2001–2024; "no fire since 2001" ≠ never-burned) and an **>70°N QA coverage gap**
+  (fire features NaN for ~11% of points, all Arctic-coast) documented in
+  `gee_features.py` / PIPELINE / SCOPE / README. Live-GEE verified: burned→age+count,
+  unburned land→censored 24/0, off-coverage→NaN. Raster materialization + full build
+  run overnight (T39).
 
 - [ ] **T39 — Build robustness + pre-build GEE dry-run.** [FABLE A2§7]
   *Depends:* T32, T33, T34, T36 (needs the final column set). *Done when:* **(1)** the

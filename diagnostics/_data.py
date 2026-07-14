@@ -43,8 +43,9 @@ def _clean_with_coords():
     feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)
     feats = feats.drop(['ThawType'] + DROP_TEXT, axis=1)
 
-    feats['Maximum Fire Temperature'] = np.where(
-        np.isnan(feats['Maximum Fire Temperature']), 0.0, feats['Maximum Fire Temperature'])
+    # T36: fire is now the MODIS MCD64A1 history pair (Time Since Last Fire, Burn
+    # Count), continuous columns that pass through untouched — no fill, matching
+    # clean_feature_table.py (the retired FIRMS Maximum Fire Temperature fill is gone).
 
     for col, labels in [('Land Cover', LAND_COVER_LABELS), ('Vegetation Mode', VEGETATION_MODE_LABELS)]:
         for cat in feats[col].unique():

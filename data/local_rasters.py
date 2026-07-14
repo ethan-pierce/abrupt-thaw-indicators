@@ -80,6 +80,17 @@ DAYMET_BANDS = {            # feature name -> 1-indexed band in DAYMET_TIF
     'Trend in temperature': 4,
 }
 
+# MODIS MCD64A1 fire history (Time Since Last Fire + Burn Count) materialized to
+# one 2-band local ~500 m raster by ``build_modis_fire_rasters.py`` (T36). Deep
+# temporal reductions that hang when point-sampled live on GEE (like Daymet,
+# T30), so computed once and read from disk here. Right-censored to the record
+# (see gee_features.FIRE_RECORD). The datacube resamples the ~500 m raster to 1 km.
+MODIS_FIRE_TIF = DATA / 'modis_fire' / 'mcd64a1_fire_history_500m_3338.tif'
+MODIS_FIRE_BANDS = {        # feature name -> 1-indexed band in MODIS_FIRE_TIF
+    'Time Since Last Fire': 1,
+    'Burn Count': 2,
+}
+
 _SENTINEL = -1e30  # ALFRESCO/Obu use large-negative float nodata
 
 

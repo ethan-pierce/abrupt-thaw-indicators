@@ -19,24 +19,23 @@ enough to catch wiring/keying faults — it is not full-column coverage.
 Tracks covered:
   * GEE inline   : 3DEP elevation/slope/aspect, mean curvature (500 m & 2 km),
                    3 WorldClim bioclim bands, one SoilGrids band per property.
-  * GEE reduce   : FIRMS max fire temp via ee_sampling.add_feature_reduceregions @ 4 km.
   * LOCAL        : NLCD land cover, ALFRESCO vegetation mode + flammability.
   * Daymet (SWE/trends): CONDITIONAL — validated straight off the materialized
                    raster (build_daymet_rasters.OUT_TIF, 4 bands) once it exists.
-                   Reported as PENDING (soft-skip) until the other agent's
-                   migration produces it; never fails the gate while pending.
+                   Reported as PENDING (soft-skip) until the raster is built;
+                   never fails the gate while pending.
+  * MODIS fire (T36): CONDITIONAL — Time Since Last Fire + Burn Count validated
+                   off the materialized raster (build_modis_fire_rasters.OUT_TIF,
+                   2 bands) once it exists; PENDING soft-skip until then.
 
 Pass / fail
 -----------
-Exit 0 iff every non-pending probed feature either returns >=1 finite value at the
-sample points, or is an EXPECTED-SPARSE feature (see SPARSE) whose probe call
-succeeded but is legitimately all-NaN at the small sample (e.g. FIRMS max fire
-temp, masked wherever no fire was ever detected). A probe that RAISES, or an
-unexpected all-NaN in a non-sparse feature (a real wiring fault) -> exit 1.
-Daymet PENDING is a soft skip (does not fail); once the raster exists it becomes
-a hard probe like the rest.
+Exit 0 iff every non-pending probed feature returns >=1 finite value at the
+sample points. A probe that RAISES, or an unexpected all-NaN in a probed feature
+(a real wiring fault) -> exit 1. Daymet / MODIS-fire PENDING is a soft skip (does
+not fail); once each raster exists its bands become hard probes like the rest.
 
-Run (only after the Daymet migration lands):
+Run (after the Daymet + MODIS-fire rasters are materialized):
     poetry run python data/smoke_feature_build.py [N]
 """
 
@@ -53,8 +52,8 @@ sys.path.insert(0, str(REPO / 'data'))
 from settings import DATA, EE_PROJECT
 import gee_features as gf
 import local_rasters
-import ee_sampling
 import build_daymet_rasters
+import build_modis_fire_rasters
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 12
 
@@ -78,11 +77,11 @@ pending = []   # soft-skipped feature names (Daymet, until migration lands)
 errored = []   # features whose probe call raised (a real fault)
 
 # Expected-sparse features: legitimately all-NaN at a small point sample because
-# they are masked over most of Alaska. FIRMS max fire temp is masked wherever no
-# fire was ever detected (~5% of ThawDB points ever burned), so 0 finite at N~12
-# is the likely outcome and must NOT fail the gate — provided the probe SUCCEEDED
-# (a raised probe is still a real fault and fails regardless).
-SPARSE = {'Maximum Fire Temperature'}
+# they are masked over most of Alaska. None currently — the MODIS fire-history
+# features (T36) that replaced the sparse FIRMS layer are finite everywhere the
+# product has coverage (Burn Count = 0, Time Since Last Fire capped, off no-fire
+# pixels), so all-NaN there IS a wiring fault. Kept as a set for the report logic.
+SPARSE = set()
 
 
 def add_feature_gee(image, reducer, scale, name, band, crs='EPSG:4326'):
@@ -146,14 +145,6 @@ for asset, band, name in (
     img = ee.Image(f'projects/soilgrids-isric/{asset}')
     probe(lambda i=img, b=band, n=name: add_feature_gee(i, ee.Reducer.mean(), 250, n, b), name)
 
-# ---- GEE reduce: FIRMS via ee_sampling @ 4 km ----------------------------
-print('GEE reduceRegions — FIRMS max fire temp @ 4 km:')
-probe(lambda: ee_sampling.add_feature_reduceregions(
-    sub, lons, lats, gf.max_fire_temp(), ee.Reducer.mean(), 4000,
-    'Maximum Fire Temperature', 'T21') or results.__setitem__(
-    'Maximum Fire Temperature', sub['Maximum Fire Temperature'].to_numpy()),
-    'Maximum Fire Temperature')
-
 # ---- LOCAL track ---------------------------------------------------------
 print('LOCAL — rasterio point sampling:')
 probe(lambda: results.__setitem__('Land Cover',
@@ -177,6 +168,20 @@ else:
     pending = ['Mean Annual SWE', 'Trend in SWE', 'Trend in precipitation', 'Trend in temperature']
     print(f'  PENDING (soft-skip): {daymet_tif} not built yet — Daymet migration not landed.')
     for p in pending:
+        print(f'    - {p}')
+
+# ---- MODIS fire history: CONDITIONAL on the materialized raster (T36) -----
+print('MODIS MCD64A1 fire history — materialized raster (conditional):')
+fire_tif = build_modis_fire_rasters.OUT_TIF
+if fire_tif.exists():
+    for _feat, _band in local_rasters.MODIS_FIRE_BANDS.items():
+        probe(lambda p=fire_tif, i=_band, l=_feat: results.__setitem__(
+            l, local_rasters.sample_points(p, lons, lats, band=i)), _feat)
+else:
+    _fire_pending = list(local_rasters.MODIS_FIRE_BANDS.keys())
+    pending += _fire_pending
+    print(f'  PENDING (soft-skip): {fire_tif} not built yet — MODIS fire raster not built.')
+    for p in _fire_pending:
         print(f'    - {p}')
 
 # --------------------------------------------------------------------------

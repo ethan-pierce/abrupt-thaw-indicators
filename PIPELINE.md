@@ -47,19 +47,22 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > expression reproduce a paraboloid's analytic `−2a` apex curvature exactly in NumPy
 > (and are sign-robust to `convolve`'s flip convention), and on real 3DEP over Alaska
 > it returns finite, physically plausible values (steep terrain ≫ flats; 2 km smoother
-> than 500 m) via both the point and datacube (`sampleRectangle`) paths. FIRMS keying
-> was validated separately (T30 parity smoke). SWE + SWE/precip/temp trends were
-> migrated (2026-07-13) from live GEE point-sampling — which hangs on the deep
-> temporal reduction — to a materialized local Daymet raster
-> (`build_daymet_rasters.py`; `computePixels` tiled download, EPSG:3338 1 km),
-> now sampled by both tracks via `local_rasters`.
+> than 500 m) via both the point and datacube (`sampleRectangle`) paths. SWE +
+> SWE/precip/temp trends were migrated (2026-07-13) from live GEE point-sampling —
+> which hangs on the deep temporal reduction — to a materialized local Daymet
+> raster (`build_daymet_rasters.py`; `computePixels` tiled download, EPSG:3338 1 km),
+> now sampled by both tracks via `local_rasters`. The fire representation was
+> reworked (T36): the FIRMS `Maximum Fire Temperature` / `Fire Detected` pair
+> (T4/T18) is **dropped** for a MODIS MCD64A1 fire *history* — `Time Since Last
+> Fire` + `Burn Count` — likewise materialized to a local ~500 m raster
+> (`build_modis_fire_rasters.py`), right-censored to the ~24-yr record.
 
 | Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |
 | Mean curvature (500 m, 2 km) | GEE | USGS **3DEP 10 m** (`USGS/3DEP/10m`) | mean curvature via TAGEE algorithm (needs Python/ee port of TAGEE); 500 m vs 2 km = DEM smoothing window (reconstructed) |
 | Mean Annual SWE | LOCAL | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`), materialized to `data/daymet/daymet_v4_reductions_1km_3338.tif` by `build_daymet_rasters.py` — *resolved 2026-07-13* | per-year mean of daily SWE → temporal mean over 1991–2020; EPSG:3338 1 km, nearest sample; materialized because live GEE point-sampling of the deep reduction hangs (T30) |
 | Trend in SWE / precip / temp | LOCAL | **Daymet V4** (`swe` / `prcp` / `tmax`), same materialized raster (`build_daymet_rasters.py`) — *resolved 2026-07-13* | per-pixel `ee.Reducer.linearFit()` slope over 1991–2020 (`scale` band): precip = annual sum, temp/SWE = annual mean; EPSG:3338 1 km, nearest sample |
-| Maximum Fire Temperature | GEE | NASA **FIRMS** (band `T21`, MODIS ~4 µm brightness temp, K) | temporal max of `T21`; also drives `Fire Detected` (A1) |
+| Time Since Last Fire, Burn Count | LOCAL | NASA/USGS **MODIS MCD64A1** (`MODIS/061/MCD64A1`, band `BurnDate`), materialized to `data/modis_fire/mcd64a1_fire_history_500m_3338.tif` by `build_modis_fire_rasters.py` (T36) | fire *history* over 2001–2024: years since most recent burn (capped at record length) + burn-count; EPSG:3338 ~500 m, nearest sample, datacube resamples to 1 km. **Right-censored** ("no fire since 2001" ≠ never-burned); NaN above ~70°N where MCD64A1 QA coverage drops out |
 | Flammability Index | LOCAL | UAF **SNAP ALFRESCO** historical, CRU TS4.0 1900–1999 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | continuous 0–~0.02, EPSG:3338 1 km, nodata −9999; bilinear/nearest sample |
 | Vegetation Mode | LOCAL | UAF **SNAP ALFRESCO** historical mode statistic, 1950–2008 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | **categorical** veg-type codes 0–8, EPSG:3338 1 km; **nearest** sample (never mean) |
 | Land cover | LOCAL | **NLCD 2016 Alaska** ERDAS `.img`+`.ige` in `data/NLCD2016/` (user-provided) — *resolved 2026-07-13* | categorical NLCD codes, WGS84-Albers 30 m; windowed/nearest sample (8.4 B px — don't load whole array) |
@@ -91,8 +94,9 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 1. **`data/build_feature_table.py`** *(GEE; needs `ee.Authenticate()`, project `abrupt-thaw-indicators` via `settings.EE_PROJECT`)*
    reads the v2.0.0 database + all §1 feature sources → **`data/features_dirty.csv`**.
 2. **`data/clean_feature_table.py`** reads `features_dirty.csv` → **`data/features_clean.csv`**.
-   *(new)* derives the `Fire Detected` indicator (A1); carries `Latitude`/`Longitude`
-   as non-model columns (B6); dedup subset excludes coords (A3).
+   Fire is now the MODIS MCD64A1 history pair (passes through untouched, T36 — no
+   fill/derive); carries `Latitude`/`Longitude` as non-model columns (B6); dedup
+   subset excludes coords (A3).
 3. **`models/train_xgboost.py`** reads `features_clean.csv` → **`models/model.json`** +
    **run manifest** + evaluation figures. *(new)* nested spatial CV over an equal-area
    (EPSG:3338) km-grid block-size sweep, 1 km buffer (B4/B5); selects on pooled-OOF

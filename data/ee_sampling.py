@@ -6,9 +6,13 @@ Background (TASKS T30)
 ``reduceRegion`` over a FeatureCollection of points and trusts that
 ``computeFeatures`` returns rows in input order. That is fine for flat catalog
 rasters (cheap random access), but degrades catastrophically for an image built
-on a deep temporal reduction (e.g. FIRMS ``.max()`` over ~9,000 images): mapping
-the reduction over 19,540 scattered points re-evaluates it at every point with
-no tile sharing, and hangs (>26 min at full N, killed).
+on a deep temporal reduction (e.g. a multi-hundred/thousand-image temporal max or
+trend): mapping the reduction over 19,540 scattered points re-evaluates it at
+every point with no tile sharing, and hangs (>26 min at full N, killed). Such
+deep reductions (Daymet SWE/trends, MODIS MCD64A1 fire history) are now instead
+materialized once to LOCAL rasters (build_daymet_rasters.py /
+build_modis_fire_rasters.py); this module remains for any that still need live
+GEE point sampling.
 
 This module is the fallback used ONLY for features that cannot be loaded the old
 way (see TASKS T30). The core idea is the one the datacube path already proves

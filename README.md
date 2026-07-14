@@ -233,11 +233,12 @@ End-to-end methods pass; settled decisions below. Sections C–H still in progre
 Item #9 is subsumed by B6 (canonical config + one operative model).
 
 *A. Data cleaning (`build_feature_table.py` / `clean_feature_table.py`)*
-- **A1 — Fire encoding.** Replace the `Maximum Fire Temperature` NaN→`0.0` fill with:
-  (a) a binary **`Fire Detected`** indicator derived from NaN-ness; (b) the continuous
-  value left as real Kelvin or NaN (XGBoost routes natively; cold-end/median impute for
-  the linear baseline only). Rationale: NaN = genuine "no fire" (FIRMS `T21`), and `0 K`
-  is physically absurd and poisons the linear baseline (D12).
+- **A1 — Fire encoding. → SUPERSEDED by T36.** The `Fire Detected` + real-or-NaN
+  `Maximum Fire Temperature` scheme was later dropped entirely: FIRMS `T21` is peak
+  intensity of one detection (not a regime) and the binary indicator is near-constant
+  at 1 km. Fire is now a MODIS MCD64A1 **history** — `Time Since Last Fire` +
+  `Burn Count` (right-censored to the ~24-yr record) — plus the retained ALFRESCO
+  flammability. See TASKS T36 / `gee_features.py`.
 - **A2 — Soil NaN: no change.** Leave pass-through for XGBoost's native routing
   (median-impute for the baseline only). *No* soil-missing indicator — it would fragment
   the lake signal already carried by Land Cover (Open Water) = 42% of points. Measured:
@@ -412,9 +413,10 @@ SHAP rankings) is provisional until after retrain #2.
 
 ### Open questions (carry forward)
 
-- **Fire representation adequacy** — fire is present (not missing), but is
-  instantaneous max-fire-temp / flammability the right encoding, or is fire
-  *history* / time-since-fire needed? → `/analyze-system` (see `SCOPE.md`).
+- **Fire representation adequacy — RESOLVED (T36).** Settled on fire *history*:
+  dropped FIRMS max-fire-temp / `Fire Detected`, added MODIS MCD64A1
+  `Time Since Last Fire` + `Burn Count` (right-censored ~24 yr; NaN above ~70°N).
+  See `SCOPE.md`.
 - **DB v2.0.0 schema compatibility — RESOLVED (item 5).** v2.0.0 CSV supplied and
   diffed against v1.0.0-alpha: identical columns/order/encoding and `ThawType`
   categories; no code adaptation needed.

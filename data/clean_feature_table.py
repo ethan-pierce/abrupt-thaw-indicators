@@ -10,10 +10,10 @@ from settings import DATA
 
 feats = pd.read_csv(DATA / 'features_dirty.csv')
 feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Gradual = 1 (minority class)
-# Fire encoding (A1): NaN Maximum Fire Temperature = genuine "no fire" (FIRMS T21),
-# so derive a binary indicator from NaN-ness and leave the continuous Kelvin value
-# real-or-NaN (XGBoost routes NaN natively; 0 K would be physically absurd).
-feats['Fire Detected'] = feats['Maximum Fire Temperature'].notna().astype(int)
+# Fire (T36): the FIRMS Maximum Fire Temperature / Fire Detected pair is replaced
+# upstream by the MODIS MCD64A1 fire-history features (Time Since Last Fire, Burn
+# Count). Those pass through here untouched as continuous columns — nothing to
+# derive or fill (XGBoost routes any NaN natively).
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
 feats = feats.drop('DOI', axis = 1)
@@ -26,7 +26,7 @@ feats = feats.drop('ImageryDates', axis = 1)
 feats = feats.drop('ImageryResolution_meters', axis = 1)
 
 label = ['Class']
-fillna = []  # A1: Maximum Fire Temperature no longer NaN-filled; see Fire Detected above
+fillna = []  # no NaN-filling: XGBoost routes missing values natively (T36 dropped the last filled column)
 categorical = ['Land Cover', 'Vegetation Mode']
 land_cover_labels = {
     0: 'NaN',

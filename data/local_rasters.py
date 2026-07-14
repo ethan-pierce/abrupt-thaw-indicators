@@ -13,11 +13,14 @@ sources with **zero custom uploaded assets**, split into two tracks:
   * GEE track   -> ``gee_features.py`` (inline computation on public catalog data)
   * LOCAL track -> this module (rasterio point-sampling of downloaded rasters)
 
-The LOCAL track covers the three features whose upstreams are not in the GEE
-catalog: ALFRESCO flammability + vegetation mode and NLCD 2016 land cover. Source
-rasters live under ``data/`` (git-ignored; regenerate via ``fetch_alfresco.py``
-or, for NLCD, user-provided) and are documented in
-``PIPELINE.md`` -> "Features - formerly custom assets".
+The LOCAL track samples downloaded source rasters at point/grid coordinates:
+ALFRESCO flammability + vegetation mode, NLCD 2016 land cover, and the Daymet V4
+SWE + SWE/precip/temp trends. The first three have no GEE-catalog upstream; the
+Daymet layer does, but its deep temporal reductions hang when sampled live at
+scattered points (T30), so it is materialized once to a local raster by
+``build_daymet_rasters.py``. Source rasters live under ``data/`` (git-ignored;
+regenerate via ``fetch_alfresco.py``, ``build_daymet_rasters.py``, or — for NLCD
+— user-provided) and are documented in ``PIPELINE.md`` -> "Features".
 
 Sampling semantics
 ------------------
@@ -51,6 +54,18 @@ VEGMODE_TIF = (DATA / 'alfresco' /
 NLCD_IMG = DATA / 'NLCD2016' / 'NLCD_2016_Land_Cover_AK_20200724.img'
 OBU_TIF = (DATA / 'Obu2019' /
            'UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif')
+
+# Daymet V4 reductions (Mean Annual SWE + SWE/precip/temp trends) materialized to
+# one 4-band local raster by ``build_daymet_rasters.py``. These are deep temporal
+# reductions that hang when point-sampled live on GEE (T30), so they are computed
+# once and read from disk here like the other LOCAL rasters.
+DAYMET_TIF = DATA / 'daymet' / 'daymet_v4_reductions_1km_3338.tif'
+DAYMET_BANDS = {            # feature name -> 1-indexed band in DAYMET_TIF
+    'Mean Annual SWE': 1,
+    'Trend in SWE': 2,
+    'Trend in precipitation': 3,
+    'Trend in temperature': 4,
+}
 
 _SENTINEL = -1e30  # ALFRESCO/Obu use large-negative float nodata
 

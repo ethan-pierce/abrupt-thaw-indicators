@@ -57,8 +57,10 @@ import sys
 import ee
 import geemap
 import numpy as np
+import pandas as pd
 import rasterio
 from rasterio.transform import from_origin
+from rasterio.warp import transform as warp_transform
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -72,8 +74,13 @@ CRS = 'EPSG:3338'          # Alaska Albers, matches the other LOCAL rasters
 SCALE = 1000               # Daymet V4 native resolution (m)
 NODATA = -9999.0           # masked (no-Daymet) pixels; local_rasters maps -> NaN
 TILE = 256                 # initial tile size (px); subdivided on size/memory error
+MARGIN = 5000              # m of padding around the covered extent (edge points)
 OUT_TIF = DATA / 'daymet' / 'daymet_v4_reductions_1km_3338.tif'
 ROI_GEOJSON = DATA / 'roi.geojson'
+# The feature table samples this raster at every ThawDB point, so the grid must
+# cover the training points, not just the datacube ROI (some points lie south of
+# the interior/Arctic ROI). Extent = union(ROI bbox, ThawDB point bbox) + MARGIN.
+THAWDB_CSV = DATA / 'Alaska_Permafrost_Thaw_Database_v2.0.0.csv'
 
 # (band name, gee_features constructor, source band it emits) in output order.
 BANDS = [
@@ -115,14 +122,20 @@ def _classify(err: Exception) -> str:
 
 def _grid(roi: ee.Geometry):
     """Pixel grid (x0, y0, W, H) in CRS units: 1 km cells snapped to a 1 km
-    origin, covering the ROI's bounding box."""
+    origin, covering union(datacube ROI, ThawDB points) + MARGIN."""
     ring = roi.bounds(maxError=1, proj=ee.Projection(CRS)).coordinates().getInfo()[0]
     xs = [c[0] for c in ring]
     ys = [c[1] for c in ring]
-    x0 = math.floor(min(xs) / SCALE) * SCALE
-    y0 = math.ceil(max(ys) / SCALE) * SCALE
-    w = int(math.ceil((max(xs) - x0) / SCALE))
-    h = int(math.ceil((y0 - min(ys)) / SCALE))
+    # Fold in the ThawDB points (projected to CRS) so no training point is off-grid.
+    pts = pd.read_csv(THAWDB_CSV, sep=',', encoding='latin1')
+    px, py = warp_transform('EPSG:4326', CRS,
+                            pts['Longitude'].tolist(), pts['Latitude'].tolist())
+    xmin, xmax = min(min(xs), *px) - MARGIN, max(max(xs), *px) + MARGIN
+    ymin, ymax = min(min(ys), *py) - MARGIN, max(max(ys), *py) + MARGIN
+    x0 = math.floor(xmin / SCALE) * SCALE
+    y0 = math.ceil(ymax / SCALE) * SCALE
+    w = int(math.ceil((xmax - x0) / SCALE))
+    h = int(math.ceil((y0 - ymin) / SCALE))
     return x0, y0, w, h
 
 

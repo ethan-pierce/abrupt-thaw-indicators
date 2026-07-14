@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA, MODELS
 import gee_features
 import local_rasters
+import ee_sampling
 
 data = DATA
 
@@ -40,7 +41,13 @@ with open(data / 'roi.geojson', 'r') as f:
     roi_json = json.load(f)
 ee_roi = geemap.geojson_to_ee(roi_json)
 
-SCALE = 4000
+# Prediction-surface resolution (decision 2026-07-14): upscaled from 4 km to
+# 1 km. 4 km was an efficiency choice, in tension with abrupt thaw being a
+# fine-scale (10s-100s m) process; 1 km resolves terrain/land-cover heterogeneity
+# far better, matches the native scale of the coarsest still-meaningful features
+# (WorldClim/Daymet), and is comparable to the Obu mask's resolution, at ~16x the
+# 4 km cell count (~975k cells over the ROI) — tractable as a single file.
+SCALE = 1000
 
 def load_data(image: ee.Image, projection, scale: float) -> ee.Image:
     """Load and rasterize a dataset."""
@@ -127,6 +134,25 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel(), band=band)
         return flat.reshape(lon2d.shape)
 
+    def sample_native(image, band, scale_native, reducer=None):
+        """Native-scale cell-centre point-sample of a GEE image (TASKS T37).
+
+        Terrain derivatives (slope/aspect/curvature) are recomputed on a
+        pyramid-aggregated DEM when reprojected to 1 km, collapsing the signal
+        (slope -> ~0.28x native at 4 km; see diagnostics/probe_native_serve.py),
+        so they CANNOT be served by load_data(...).reproject. Instead we read the
+        native pixel at each 1 km cell centre via a chunked reduceRegions at the
+        image's native scale — the identical construction build_feature_table.py
+        uses per training point, so train and serve agree at native scale by
+        construction. Returns native (unflipped) orientation like sample_local;
+        the caller flips to match the rest of the stack.
+        """
+        reducer = ee.Reducer.mean() if reducer is None else reducer
+        flat = ee_sampling.sample_points_reduceregions_chunked(
+            lon2d.ravel(), lat2d.ravel(), image, reducer, scale_native, band,
+            crs='EPSG:4326')
+        return flat.reshape(lon2d.shape)
+
     def assert_local_orientation(sample, layer_name):
         """T31 orientation guard for LOCAL categorical layers.
 
@@ -158,28 +184,44 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
             f"{mirror:.3f}) — check for a reintroduced double np.flipud (T31)."
         )
 
+    # --- Terrain (T37): native cell-centre point-sampling, NOT reproject ---
+    # A 1 km reproject pyramid-aggregates the native derivative (slope/aspect at
+    # 10 m, curv-500 m at 250 m), so those are point-sampled at native scale via
+    # sample_native. Curv-2 km's native analysis grid IS 1 km, so a reproject
+    # recovers it exactly (probe_native_serve: corr 1.000) and is kept — no need
+    # to point-sample ~1e6 cells for it.
     if 'Elevation' in feature_names:
-        feature_arrays['Elevation'] = extract_data_array(elevation, region, 'elevation', default_value)
+        feature_arrays['Elevation'] = np.flipud(sample_native(elevation_image, 'elevation', 10))
 
+    # Slope is needed both as a feature and for the T32 flats mask; sample once.
+    _need_slope = ('Slope' in feature_names
+                   or any(n in feature_names for n in ('Northness', 'Eastness')))
+    slope_deg = np.flipud(sample_native(ee.Terrain.slope(elevation_image), 'slope', 10)) if _need_slope else None
     if 'Slope' in feature_names:
-        slope = load_data(ee.Terrain.slope(elevation_image), projection, scale)
-        slope_data = extract_data_array(slope, region, 'slope', default_value)
-        # Flip vertically: Earth Engine returns data with first row = northernmost,
-        # but we want first row = southernmost for consistency
-        feature_arrays['Slope'] = np.flipud(slope_data)
+        feature_arrays['Slope'] = slope_deg
 
-    if 'Aspect' in feature_names:
-        aspect = load_data(ee.Terrain.aspect(elevation_image), projection, scale)
-        aspect_data = extract_data_array(aspect, region, 'aspect', default_value)
-        feature_arrays['Aspect'] = np.flipud(aspect_data)
-    
-    # Load curvature features (GEE track: TAGEE-family port, no custom asset)
+    # T32: Aspect -> northness/eastness, flats (slope < 1 deg) neutralized to 0.
+    if any(n in feature_names for n in ('Northness', 'Eastness')):
+        aspect_deg = np.flipud(sample_native(ee.Terrain.aspect(elevation_image), 'aspect', 10))
+        asp_rad = np.deg2rad(aspect_deg)
+        flat = slope_deg < 1.0  # NaN slope -> False (aspect kept / stays NaN)
+        if 'Northness' in feature_names:
+            north = np.cos(asp_rad)
+            north[flat] = 0.0
+            feature_arrays['Northness'] = north
+        if 'Eastness' in feature_names:
+            east = np.sin(asp_rad)
+            east[flat] = 0.0
+            feature_arrays['Eastness'] = east
+
+    # Curvature (GEE track: TAGEE-family port, no custom asset).
     if 'Mean curvature (500 m)' in feature_names:
-        curve500 = load_data(gee_features.mean_curvature(500).select('MeanCurvature'), projection, scale)
-        curve500_data = extract_data_array(curve500, region, 'MeanCurvature', default_value)
-        feature_arrays['Mean curvature (500 m)'] = np.flipud(curve500_data)
+        # Native analysis grid 250 m -> point-sample at native scale (T37).
+        feature_arrays['Mean curvature (500 m)'] = np.flipud(
+            sample_native(gee_features.mean_curvature(500).select('MeanCurvature'), 'MeanCurvature', 250))
 
     if 'Mean curvature (2 km)' in feature_names:
+        # Native analysis grid 1000 m == 1 km serve grid -> reproject is exact.
         curve2k = load_data(gee_features.mean_curvature(2000).select('MeanCurvature'), projection, scale)
         curve2k_data = extract_data_array(curve2k, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (2 km)'] = np.flipud(curve2k_data)

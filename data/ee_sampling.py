@@ -139,6 +139,39 @@ def sample_points_reduceregions(lons, lats, image: ee.Image, reducer: ee.Reducer
     return out
 
 
+def sample_points_reduceregions_chunked(lons, lats, image: ee.Image,
+                                        reducer: ee.Reducer, scale: float, band: str,
+                                        crs: str = 'EPSG:4326',
+                                        chunk: int = 20000) -> np.ndarray:
+    """Chunked ``reduceRegions`` for a CHEAP raster sampled at very many points.
+
+    Used to serve native-scale terrain at the datacube's ~1e6 grid cell centres
+    (TASKS T37): a 1 km reproject would pyramid-aggregate 10 m slope/aspect
+    (probe_native_serve), so the datacube must read the native pixel at each cell
+    centre — the same construction the point path uses per training point. A
+    single ``reduceRegions`` over ~1e6 client-built points is too large a request,
+    so points are split into contiguous chunks. Because the datacube grid is
+    raster-ordered, consecutive chunks are spatially compact strips, so each
+    ``reduceRegions`` still covers only a bounded footprint.
+
+    NOT for deep temporal reductions — for those a single call is mandatory (see
+    the module docstring); chunking one re-triggers the whole reduction per chunk.
+    Invalid/off-grid coords (``|lon|>180`` or ``|lat|>90``, e.g. the -9999 off-ROI
+    fill) sample to ``NaN``, matching ``local_rasters.sample_points``.
+    """
+    lons = np.asarray(lons, dtype=float)
+    lats = np.asarray(lats, dtype=float)
+    out = np.full(lons.shape, np.nan, dtype=float)
+    ok = (np.isfinite(lons) & np.isfinite(lats)
+          & (np.abs(lons) <= 180) & (np.abs(lats) <= 90))
+    idx = np.flatnonzero(ok)
+    for start in range(0, idx.size, chunk):
+        sl = idx[start:start + chunk]
+        out[sl] = sample_points_reduceregions(
+            lons[sl], lats[sl], image, reducer, scale, band, crs)
+    return out
+
+
 def add_feature_reduceregions(df, lons, lats, image: ee.Image, reducer: ee.Reducer,
                               scale: float, name: str, band: str,
                               crs: str = 'EPSG:4326') -> None:

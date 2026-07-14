@@ -62,7 +62,7 @@ abrupt-thaw-indicators/
 │   ├── clean_feature_table.py         # Clean/encode the feature table               ->  features_clean.csv
 │   ├── features_dirty.csv             # Raw extracted feature table (build output)
 │   ├── features_clean.csv             # Cleaned feature table (input to training/interpretation)
-│   ├── build_prediction_data.py       # Build statewide datacube over roi.geojson (4 km)          -> prediction_data.nc
+│   ├── build_prediction_data.py       # Build statewide datacube over roi.geojson (1 km)          -> prediction_data.nc
 │   ├── roi.geojson                    # Main statewide region of interest
 │   └── *.nc                           # Prediction datacubes & outputs (gitignored)
 │
@@ -134,7 +134,7 @@ This creates SHAP plots to understand which features are most important for pred
    ```bash
    python data/build_prediction_data.py
    ```
-   This rasterizes all model features over the region of interest (`data/roi.geojson`, ~4 km) and writes `data/prediction_data.nc`.
+   This rasterizes all model features over the region of interest (`data/roi.geojson`, 1 km; terrain served natively per T37) and writes `data/prediction_data.nc`.
 
 2. **Generate maps**:
    ```bash
@@ -218,7 +218,7 @@ Legend: 🔴 blocking · 🟡 needed for a headline claim · ⚪ nice-to-have.
 8. ✅ **Archive the training-lands path entirely.** `build_prediction_data_traininglands.py`,
    `predict_traininglands.py`, and the `*_traininglands.png` / `*_traininglands.nc`
    outputs were built for a past PM update, not the manuscript. **Done 2026-07-13**
-   (moved to `archive/`; see TASKS.md T26). Headline map = the statewide 4 km
+   (moved to `archive/`; see TASKS.md T26). Headline map = the statewide 1 km
    **continuous probability** surface (`predict.py`); the discrete classification map is secondary.
 
 **Correctness — fix before results are trusted (after retrain)**
@@ -317,7 +317,7 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
 *G. Prediction / mapping (`predict.py`)*
 - **G17 — Domain mask = Obu 2019 permafrost probability (soft).** Mask/weight the
   statewide surface by Obu PerProb (`data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/`),
-  resampled to the 4 km Albers grid — threshold-with-sensitivity or carry P(permafrost)
+  resampled to the 1 km Albers grid — threshold-with-sensitivity or carry P(permafrost)
   as a confidence layer. Replaces the feature-validity-only keep at `predict.py:94-96`
   and supersedes the in-repo Brown 1997 map (`arctic-permafrost-map/`, kept only if a
   categorical cross-check is wanted). Verify the A2 soil-NaN train/serve parity here.

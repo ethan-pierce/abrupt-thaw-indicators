@@ -99,7 +99,19 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    AUC-PR (C8); `scale_pos_weight=1` (C9); logistic + dummy baseline diagnostics (D12);
    persists CV config + seeds (B6).
 4. **`data/build_prediction_data.py`** *(GEE)* reads `roi.geojson` + §1 sources →
-   **`data/prediction_data.nc`** (statewide 4 km datacube, feature-name-driven).
+   **`data/prediction_data.nc`** (statewide **1 km** datacube, feature-name-driven).
+   *(new — resolution 2026-07-14)* Upscaled from 4 km to 1 km (~975 k cells over
+   the ROI): 4 km was an efficiency choice in tension with abrupt thaw being a
+   fine-scale process. **Terrain is served natively (T37):** a coarse `reproject`
+   pyramid-aggregates the native derivative (the T37 probe measured slope
+   collapsing to ~0.28× native at 4 km), so `sample_native` point-samples
+   elevation/slope/aspect/curv-500 m at each 1 km cell centre via a chunked
+   `reduceRegions` at the source's native scale — the identical construction the
+   point path uses, so train and serve agree at native scale by construction.
+   Curv-2 km and the 1 km bioclim layers are served by `reproject` (their native
+   grid already ≈1 km — exact). SoilGrids (250 m) stays on `reproject(1 km)` (mild
+   aggregation, verified by the T23 parity gate). Aspect is served as
+   northness/eastness (T32).
 5. **`models/predict.py`** reads `prediction_data.nc`, `model.json`, Obu PerProb →
    **continuous log-evidence susceptibility surface** + **AOA mask**. *(new)* emits the
    log-evidence index (E13), Obu-masked (G17), with the AOA reliability layer (G18);
@@ -120,7 +132,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
   config + seeds, Obu/Brown product versions, selected hyperparameters). *(H20.1)*
 - **Performance**: AUC-PR (positive = Gradual) vs. block-size curve with across-fold
   spread + prevalence floor; AUC-ROC secondary; baseline diagnostics. *(no accuracy)*
-- **Continuous log-evidence abrupt-thaw susceptibility surface** (statewide 4 km,
+- **Continuous log-evidence abrupt-thaw susceptibility surface** (statewide 1 km,
   masked by Obu permafrost domain) — the single headline map.
 - **Area-of-Applicability / dissimilarity mask** — extrapolation-reliability layer.
 - **Pooled out-of-fold SHAP** — importance ranking, beeswarm, dependence plots.

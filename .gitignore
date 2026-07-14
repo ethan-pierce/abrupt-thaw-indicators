@@ -1,8 +1,8 @@
 data/*.nc
 data/*.tif
-data/__pycache__/*.pyc
-models/__pycache__/*.pyc
-__pycache__/*.pyc
+# Compiled Python (any directory)
+__pycache__/
+*.pyc
 data/Obu2019
 # ALFRESCO historical rasters — regenerate with data/fetch_alfresco.py
 data/alfresco/*.tif

@@ -20,6 +20,13 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 | 19 bioclimatic variables | **WorldClim v1** BIO | `WORLDCLIM/V1/BIO` | mean @ 1 km |
 | SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | mean @ 250 m |
 
+> **WorldClim V1 is kept deliberately — do not "upgrade" to V2.1.** V1 supplies the
+> climatological *level* (stable ~1960–90 normal); Daymet supplies the recent *trend*
+> — different windows by design, not an inconsistency. V2.1 is not on the first-party
+> GEE catalog (only a community `sat-io` asset or a 19-band local download), so a swap
+> would either reintroduce third-party-asset fragility or add a large local file for a
+> marginal gain. Decision 2026-07-14 (FABLE A3§6).
+
 ### Features — formerly custom assets, now re-derived (no custom GEE assets)
 
 > **Migration note (rebuild complete 2026-07-13):** access to the original
@@ -97,8 +104,12 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    **continuous log-evidence susceptibility surface** + **AOA mask**. *(new)* emits the
    log-evidence index (E13), Obu-masked (G17), with the AOA reliability layer (G18);
    **no discrete classification** (G19).
-6. **`models/shap_values.py`** reads `features_clean.csv`, `model.json`, CV config →
-   **pooled out-of-fold SHAP** outputs (F14/F15).
+6. **`models/shap_values.py`** reads `features_clean.csv` + CV config and **refits
+   per-fold** → **pooled out-of-fold SHAP** outputs (F14/F15). The all-data `model.json`
+   is deliberately **not** used here (OOF SHAP requires per-fold refits), so the
+   *explained* model is **not the same fit** as the *mapped* model (`predict.py` maps
+   all-data `model.json`) — both are correct, but Headline A (map) and Headline C (SHAP)
+   do not come from one fit.
 
 *Archived:* the training-lands path (`build_prediction_data_traininglands.py`,
 `predict_traininglands.py`, `*_traininglands.*`) — README to-do #8.

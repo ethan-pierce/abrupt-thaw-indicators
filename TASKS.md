@@ -1,230 +1,215 @@
-# TASKS — methods-cleanup implementation
+# TASKS — methods-cleanup + feature rebuild
 
-Atomic, dependency-ordered task list for the methods-cleanup rewrite. Rationale
-for each lives in `README.md` → "Methods cleanup (grill-with-docs 2026-07-09/10)"
-(cited as [A1]…[H20]); target pipeline in `PIPELINE.md`. An agent takes the next
-box whose *Depends* are all checked. Line numbers are current-code anchors — verify
-before editing.
+Atomic, dependency-ordered task list, sorted relative to the **feature rebuild**
+(the ~12 h `build_feature_table.py` point run + the `build_prediction_data.py`
+datacube):
 
-**PRIORITY OVERRIDE:** T30 (below) supersedes the normal dependency ordering — it is
-the top priority and must be resolved before any other task is taken. (T0 is done.)
+- **BLOCKING** — changes the *columns or values* the build emits, or is a
+  correctness fix in a build script, or is a cheap pre-build probe whose result
+  decides how the build is wired. Do these (or run the probe) **before** the
+  overnight run; retrofitting after a multi-hour build is expensive.
+- **DEFERRED** — operates on `features_clean.csv` and downstream (cleaning, CV,
+  training, mapping, SHAP, docs). Runs **after** the rebuild.
 
-## PRIORITY — do before any other task
+New tasks **T31–T44** come from reconciling the FABLE.md agent recommendations
+(grill-with-docs, 2026-07-14; decisions cross-referenced to FABLE agent/section).
+Rationale for the original T1–T29 lives in `README.md` → "Methods cleanup"; target
+pipeline in `PIPELINE.md`. An agent takes the next unchecked box whose *Depends* are
+all met. Line numbers are current-code anchors — **verify before editing.**
 
-- [ ] **T30 — Heavy inline-GEE features hang at full-N point sampling.**
-  [ee-project-access-lost] *Depends:* T0 *Done when:* Maximum Fire Temperature,
-  Mean Annual SWE, and Trend in SWE/precip/temperature each resolve over all 19,540
-  points in `build_feature_table.py` to completion with correct values in minutes
-  (not tens of minutes), without the `try/except` swallowing a timeout; parity with
-  the datacube path preserved; no custom asset reintroduced.
+**Class encoding unchanged** (`0 = Abrupt`, `1 = Non-abrupt`). The "Gradual" →
+"Non-abrupt" change (2026-07-14, FABLE A2§2) is **glossary/label language only** —
+the `0/1` encoding and `np.where(ThawType == 'Abrupt', 0, 1)` ground truth are
+untouched. See CLAUDE.md glossary + SCOPE.md.
 
-  **Problem:** T0 replaced precomputed assets with on-the-fly GEE computations
-  (`data/gee_features.py`). Sampling a deep temporal reduction at 19,540 points via
-  the legacy `add_feature` pattern (`points.map(reduceRegion)` + one
-  `computeFeatures`) degrades catastrophically. FIRMS max (`ImageCollection('FIRMS')
-  .select('T21').max()`, ~9,000 images): datacube single-`sampleRectangle` path
-  **completes in 219 s**, but the point path at full N **hung >26 min with no error**
-  (killed). SWE + the 3 trends are the same shape of risk but were **not** reached in
-  testing — verify them too. Everything else from T0 is verified PASS at full scale.
+---
 
-  **Candidate fixes (unchosen):** chunk points into batches; use
-  `reduceRegions`/`sampleRegions` (correct band handling — single-mean → `mean`);
-  or compute once over Alaska (datacube-style, which works) and sample points from
-  the materialized array. Code: `data/gee_features.py`, `data/build_feature_table.py`
-  (`add_feature`), `data/build_prediction_data.py` (working datacube path).
+## BLOCKING — before / part of the feature rebuild
 
-- [x] **T0 — Re-establish the GEE project & custom assets.** [ee-project-access-lost]
-  Access to the `ee-abrupt-thaw` project was lost (2026-07-10); its 13 custom feature
-  assets had **no local source copies**. Resolved by rebuilding the feature side with
-  **zero custom assets** (two tracks). *Depends:* — *Done when:* the feature build
-  resolves every feature with **no custom GEE asset** and no `ASSET_ROOT` dependency,
-  from public GEE catalog data + local rasters. **✓ 2026-07-13.**
+Ordered: pre-build probes first (their results shape the build), then the
+column-changing wiring, then the dry-run gate before the overnight run.
 
-  > **DONE (2026-07-13).** Feature sourcing fully rebuilt with zero custom assets. New
-  > modules `data/gee_features.py` (GEE track: TAGEE-family mean curvature from 3DEP;
-  > SWE + SWE/precip/temp trends from Daymet V4 `linearFit`; max fire temp from FIRMS)
-  > and `data/local_rasters.py` (LOCAL track: nearest point/grid sampling of
-  > `data/{alfresco,NLCD2016,snap}` + Obu). `build_feature_table.py` and
-  > `build_prediction_data.py` both restructured onto the two tracks; `ASSET_ROOT`
-  > **removed from `settings.py`** and from all code (`plot_input_data.py` too). LOCAL
-  > track validated offline over all 19,540 ThawDB points (97–100% coverage, plausible
-  > ranges). **Not yet executed against GEE** — the GEE track (curvature/Daymet/FIRMS)
-  > is import/compile-verified but its first real run is the ~12h feature build, deferred
-  > under dev-mode; validate the TAGEE curvature port on GEE before trusting those two
-  > columns. Full sourcing map: `PIPELINE.md`. Context: memory [[ee-project-access-lost]].
-  1. [x] Create/choose the new EE project; set `EE_PROJECT` in `settings.py`. **Done
-     2026-07-13:** new project `abrupt-thaw-indicators` (EE API enabled).
-  2. [x] Test-read each old asset — **Done 2026-07-13: all 13 FAILED** (old project
-     inaccessible — `earthengine.assets.list` denied), so no shared-ACL shortcut.
-  3. [x] Readable assets → keep/copy. N/A — none readable.
-  4. [x] **Done 2026-07-13.** Restructured `build_feature_table.py` into two tracks:
-     **(GEE)** `gee_features.py` — curvature (3DEP + TAGEE-family `ee` port, Zevenbergen-
-     Thorne mean curvature at cell size = window/2), Mean Annual SWE + SWE/precip/temp
-     trends (Daymet V4 + `linearFit`), Maximum Fire Temperature (FIRMS `T21`);
-     **(LOCAL)** `local_rasters.py` — nearest point-sampling of `data/{snap,alfresco,
-     NLCD2016}`, reprojecting each point to the raster CRS (nearest for all: matches the
-     original point `reduceRegion(mean)` = covering pixel, and is required for the
-     categorical veg-mode/NLCD layers). Reconstructed params documented in each module's
-     docstring; still to copy into the methods table (T29 remainder).
-  5. [x] **Done 2026-07-13.** Obu2019 domain mask for T20: the **local** PerProb GeoTIFF
-     (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`) samples cleanly with
-     rasterio (0–1, 99.7% coverage over training points) — no asset upload. Exposed as
-     `local_rasters.OBU_TIF` + `sample_points` for T20 to consume.
-  6. [x] **Done 2026-07-13.** Verified: no live `ASSET_ROOT` reference remains in any
-     `.py` (grep clean; `ASSET_ROOT` deleted from `settings.py`); both build scripts and
-     `plot_input_data.py` `py_compile` clean and resolve every feature from public
-     catalog loads + local rasters.
+- [ ] **T37 — Terrain train/serve scale: probe first, don't coarsen blind.** [FABLE A1§1 / A2]
+  The point path samples slope/curvature at native scale (`build_feature_table.py:104`,
+  `reduceRegion(mean, scale=10)`); the datacube extracts at `SCALE=4000`
+  (`build_prediction_data.py:134`). Whether this is a *severe* or *mild* mismatch
+  hinges on EE `reproject` semantics (recompute-at-4 km vs. resample-a-10 m-value),
+  which is unknown. *Depends:* — *Done when:* a quick GEE probe (~200 points, native-mean
+  vs. 4 km-reproject for slope + both curvature scales) settles recompute-vs-resample;
+  **if** divergence is material, the coarsen-vs-matching-columns fix is decided and
+  applied to both paths **before** the full build; if mild, documented and left. Aspect
+  is already reprojection-safe via T32. *(The per-feature parity confirmation is the
+  DEFERRED T23.)*
 
-## Stage 0 — CV foundation (`models/spatial_cv.py`) — do first
+- [ ] **T35 — Systematic feature-transform audit.** [user-requested; generalizes A1§2]
+  For every feature decide whether it needs a transform, in three buckets: **(1)
+  non-monotonic-for-correctness** (circular → cos/sin; signed quantities); **(2)
+  must-precede-4 km-reprojection-averaging** (heavy-tailed → `log` *before* the mean —
+  the datacube averages, a non-tree op); **(3)** linear-baseline (T13) / SHAP-readability
+  only. *Depends:* — *Done when:* the audit is recorded and every bucket-(1)/(2) transform
+  is baked into **both** build paths. **Owns the sand+silt+clay closure** (exact
+  compositional dependence, sum ≈ 100%): drop one component or use isometric log-ratios.
+  T32 (aspect) and T34 (`log upa`) are already-decided instances. Note: pure monotonic
+  transforms are **no-ops for the XGBoost fit/ranking** — payoff is buckets (1) and (2).
 
-- [x] **T1 — Add equal-area km-grid block method.** [B5b] Add an Alaska Albers
-  (EPSG:3338) grid option to `assign_blocks`: reproject lat/lon → metres, floor to
-  cells of a given **edge length in km**. Keep the buffer on haversine. Extend
-  `_selftest`. *Depends:* — *Done when:* `assign_blocks(..., method='albers_grid',
-  cell_km=k)` returns stable ids and `_selftest` passes; check a projection lib
-  (`pyproj`) is available or add it.
-- [x] **T2 — Nested-fold helper.** [B4] Add a helper that yields nested folds: outer
-  `buffered_block_folds` over all points; for each outer fold, inner
-  `buffered_block_folds` over the outer-train subset. *Depends:* T1 *Done when:* a
-  self-test confirms inner folds never touch the outer test blocks.
-- [x] **T3 — Per-fold minority reporting.** [B5b] Have the fold machinery expose the
-  Gradual (class-1) count per fold. *Depends:* T1 *Done when:* counts are
-  returned/logged for each fold at each block size.
+- [ ] **T31 — Fix the datacube categorical double-flip.** [FABLE A3§1] *(datacube path only)*
+  Land Cover and Vegetation Mode are `np.flipud`-ed **twice** (`build_prediction_data.py:245`+`:251`
+  and `:266`+`:272`) while every other layer flips once — so those two categoricals are
+  vertically mirrored against the rest of the stack. Introduced by the T0 LOCAL migration
+  (the inner flip is GEE-era, correct then; the outer flip was added for `sample_local`,
+  the inner left in). *Depends:* — *Done when:* the inner `np.flipud` at `:251` and `:272`
+  is removed (single outer flip, matching Flammability/Daymet), **and** an orientation
+  guard asserts the categorical layers' non-NaN footprint coincides with a continuous
+  LOCAL layer's so it can't silently regress before the next render.
 
-## Stage 1 — Data cleaning (`data/clean_feature_table.py`)
+- [ ] **T32 — Aspect → northness/eastness.** [FABLE A1§2] Both paths. Replace raw `Aspect`
+  (degrees, circular; `build_feature_table.py:110-111`, `build_prediction_data.py:140-143`)
+  with `northness = cos(aspect)`, `eastness = sin(aspect)`. On flats (**slope < 1°**) set
+  both to `0` (no preferred direction — keeps the row's other terrain info). Drop raw
+  `Aspect` from the model set entirely. *Depends:* — *Done when:* both paths emit
+  northness/eastness, flats are neutralized, and no raw `Aspect` column remains.
 
-- [x] **T4 — Fire encoding.** [A1] Remove `Maximum Fire Temperature` from the
-  `fillna` list (drop the `→0.0` fill, ~line 66). Add a binary `Fire Detected`
-  column = `notna(Maximum Fire Temperature)`. Leave the continuous value real-or-NaN.
-  *Depends:* — *Done when:* `features_clean.csv` has `Fire Detected` ∈ {0,1} and the
-  temp column retains NaNs.
-- [x] **T5 — Dedup excludes coordinates.** [A3/B6] Change `drop_duplicates()`
-  (~line 109) to `drop_duplicates(subset=<all feature cols except Latitude/Longitude>)`.
-  *Depends:* T6 *Done when:* dup count matches the pre-change exact-feature dedup
-  (~369 rows / 105 groups on current data) with coords retained.
-- [x] **T6 — Carry coordinates through.** [B6] Remove the unconditional lat/lon drop
-  (~line 107); keep `Latitude`/`Longitude` as columns in `features_clean.csv`.
-  *Depends:* — *Done when:* `features_clean.csv` includes both coordinate columns.
+- [ ] **T33 — Add Yedoma as a feature.** [FABLE A1§7] The excess-ice/ground-ice control
+  that mechanistically separates abrupt from non-abrupt thaw (replaces the rejected
+  Obu-as-feature — Obu stays mask-only, T20). LOCAL track. Source **in-repo**:
+  `data/IRYP_v2_yedoma_confidence_Shapefile/IRYP_v2_yedoma_confidence.shp` (IRYP v2,
+  Strauss et al.; **EPSG:3571** — reproject points, as with other local sources). Carries
+  a `confidence` class (`conf_id`), so sample either as **binary presence** (in any
+  polygon / not) or as **ordinal confidence** (0 = none → confirmed); points outside all
+  polygons = 0. *Depends:* — *Done when:* point-in-polygon (points) + rasterize-to-grid
+  (datacube) emit a Yedoma feature in both paths. *(The point-in-polygon machinery here
+  also makes Brown ground-ice `CONTENT` a cheap future add.)*
 
-## Stage 2 — Training & selection (`models/train_xgboost.py`) — largest rewrite
+- [ ] **T34 — Add hydrological terrain features from MERIT Hydro.** [FABLE A1§7]
+  GEE track, `MERIT/Hydro/v1_0_1` (official catalog — **not** the `sat-io` community
+  layer). Add `hnd` (height above nearest drainage, raw) and `log(upa)` (for the water-
+  convergence signal). *Depends:* — *Done when:* both paths emit `hnd` and `log(upa)`.
+  Document the 4 km-reprojection caveat on `log(upa)` (heavy-tailed area averaged to
+  4 km; the single worst feature for the T37 scale question — flag it there too).
 
-- [x] **T7 — Load + quarantine coords.** [B6] `X = feats.drop(['Class','Latitude',
-  'Longitude'])`, `y = feats['Class']`, `coords = feats[['Latitude','Longitude']]`;
-  `assert 'Latitude' not in X and 'Longitude' not in X`. *Depends:* T6 *Done when:*
-  the assertion is in place and passes.
-- [x] **T8 — Nested spatial CV over a block-size sweep.** [B4/B5] Replace
-  `train_test_split` + `StratifiedKFold` `GridSearchCV` with the T2 nested folds run
-  at each block size in the sweep (interpolation→extrapolation), buffer = 1 km.
-  *Depends:* T1,T2,T7 *Done when:* the trainer produces pooled-OOF predictions per
-  outer fold at each block size.
-- [x] **T9 — Selection metric.** [C8] Inner loop selects on pooled-OOF **AUC-PR**
-  (`average_precision_score`, positive = Gradual). *Depends:* T8 *Done when:* selected
-  hyperparameters maximise inner pooled-OOF AP; Brier/F1 removed from selection.
-- [x] **T10 — `scale_pos_weight = 1`.** [C9] Remove the class-ratio reweighting
-  (~line 73). *Depends:* T8 *Done when:* the estimator factory sets no imbalance
-  reweighting.
-- [x] **T11 — Grid breadth + named seeds.** [C10] Widen the grid on `max_depth`,
-  `min_child_weight`, `reg_lambda`, `learning_rate`, `n_estimators`. Replace the
-  `rng.integers()` draws with explicit `SPLIT_SEED`/`MODEL_SEED`/`CV_SEED`, and persist
-  the CV config + seeds to a file. *Depends:* T8 *Done when:* config+seeds are written
-  and rerunning reproduces identical folds.
-- [x] **T12 — Headline metrics.** [D11] Emit AUC-PR-vs-block-size curve + across-fold
-  spread + prevalence floor (~0.068). Keep AUC-ROC as secondary. **Remove all accuracy
-  reporting.** *Depends:* T8,T9 *Done when:* outputs contain the curve and no accuracy.
-- [x] **T13 — Baselines as diagnostics.** [D12] Run a dummy (prior/stratified) and a
-  penalized logistic (sklearn Pipeline: median-impute + standardize) through the same
-  nested folds. Optional depth-1 stump. *Depends:* T8 *Done when:* baseline pooled-OOF
-  AUC-PR is reported alongside XGBoost.
-- [x] **T14 — Operative model.** [B6] Refit on all data with the selected
-  hyperparameters → `models/model.json`. *Depends:* T9,T10,T11 *Done when:*
-  `model.json` is the all-data refit and loads in `predict.py`/`shap_values.py`.
-- [x] **T15 — Demote calibration.** [E13] (delete-only; calibration block removed in the T8–T12 rewrite, no monotonicity diagnostic re-added per decision 2026-07-10) Reframe the calibration block (ECE/reliability
-  curves) as a monotonicity diagnostic, not a validity claim. *Depends:* — *Done when:*
-  no calibration metric is presented as headline validity.
-- [x] **T16 — Run manifest.** [H20.1] Write beside `model.json`: git SHA,
-  `features_clean.csv` hash, CV config+seeds, Obu/Brown versions, selected
-  hyperparameters. *Depends:* T11,T14 *Done when:* the manifest file is produced each run.
-- [x] **T17 — Remove mislabeled "CV F1".** [C8] Delete the `split0..4` "CV F1" block
-  (~lines 213–230). *Depends:* T8 *Done when:* gone.
+- [ ] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4]
+  **Drop** continuous `Maximum Fire Temperature` (peak brightness of one detection, not
+  regime) and binary `Fire Detected` (near-constant at 4 km → interior-vs-tundra
+  geography) — this **reverts the completed T4/T18**. **Keep** Flammability Index
+  (long-term modeled regime proxy). **Add** MODIS `MCD64A1`-derived **time-since-last-fire**
+  + **burn-count**, materialized to a local raster via the `build_daymet_rasters.py`
+  pattern, kept **near native ~500 m** (datacube resamples to 4 km later). *Depends:* — *Done
+  when:* both paths carry Flammability + time-since-fire + burn-count and no FIRMS
+  `T21`/`Fire Detected` columns; the **24-yr right-censoring** caveat ("no fire since
+  2000" ≠ never-burned) is documented.
 
-## Stage 3 — Prediction datacube (`data/build_prediction_data.py`)
+- [ ] **T39 — Build robustness + pre-build GEE dry-run.** [FABLE A2§7]
+  *Depends:* T32, T33, T34, T36 (needs the final column set). *Done when:* **(1)** the
+  build keeps **continue-on-failure** (no hard abort — protect the overnight run) and its
+  end-of-run report loudly names every feature that raised or came back all-NaN, verified
+  to cover the new columns; **(2)** a **pre-build GEE dry-run** over a few hundred points
+  validates auth/bands/schema for the new GEE compute (MERIT + T37 probe) and reports
+  statewide **NaN fractions** for terrain/soil (the empirical half of the 3DEP/SoilGrids
+  coverage caveat, SCOPE). No `clean_feature_table.py` hardening — it is cheap to re-run
+  against the preserved `features_dirty.csv`.
 
-- [x] **T18 — Add `Fire Detected` layer.** [A1 parity] Build a `Fire Detected` grid
-  layer (from `max-fire-temp` NaN-ness) so the datacube feature set matches the model.
-  *Depends:* T4 *Done when:* the datacube contains `Fire Detected` and the
-  feature-name match in `predict.py` passes.
+---
 
-## Stage 4 — Mapping (`models/predict.py`)
+## DEFERRED — after the rebuild (operate on `features_clean.csv` / downstream)
 
-- [x] **T19 — Log-evidence output.** [E13] Emit
-  `log_evidence = logit(P_model(abrupt|x)) − logit(π_sample)` (π_sample(abrupt) ≈ 0.932)
-  as the susceptibility surface. *Depends:* T14 *Done when:* the primary raster is
-  log-evidence, `0 = neutral`.
+- [ ] **T43 — CV buffer from the empirical autocorrelation range.** [FABLE A2§3]
+  `spatial_cv.py` fixes `BUFFER_KM = 1.0`; with 97% of points within 5 km of a neighbor
+  and features up to 4 km, near-seam leakage may inflate the headline AUC-PR. *Depends:*
+  rebuild. *Done when:* `diagnostics/leakage_decay.py` measures the leakage-decay range
+  (where OOF performance stops dropping as the buffer grows), the operative buffer is set
+  to that range with **no nominal-scale floor** (let the data decide — 4 km is a
+  *resampling* grid, not native; coarsest native ≈ 1 km), and a buffer-sensitivity sweep
+  (1/2/5/10 km) is reported. *(Not the explanation for the old random-split near-perfect
+  discrimination — that predates the buffer; separate leakage question → SCOPE.)*
+
+- [ ] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
+  *Depends:* rebuild. *Done when:* a per-feature **training-column-vs-datacube-pixel
+  distribution-parity** check is documented for **every** feature (not soil-NaN only),
+  including: soil-NaN reproduction; terrain slope/curvature (confirming the T37 probe's
+  expectation); and the **land-cover/veg category-set subset check** (report any class
+  present statewide but absent from training points, and the area affected — silent
+  reference-bucket absorption). No change to one-hot construction.
+
 - [ ] **T20 — Obu domain mask.** [G17] Soft-mask/weight by Obu PerProb
-  (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`; sample via
-  `local_rasters.OBU_TIF` / `sample_points`), resampled to the 4 km Albers grid;
-  replaces the feature-validity-only keep (`predict.py:94-96`). *Depends:* T19, T0
-  *Done when:* off-permafrost pixels are masked/down-weighted.
-- [ ] **T21 — AOA mask.** [G18] Add an importance-weighted dissimilarity-to-training
-  mask with a CV-derived threshold; output as a reliability layer. *Depends:* T14,T19
+  (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`; `local_rasters.OBU_TIF` /
+  `sample_points`), resampled to the 4 km Albers grid; replaces the feature-validity keep
+  (`predict.py:94-96`). Obu is **mask-only** (not a feature — decision 2026-07-14).
+  *Depends:* T19 (done). *Done when:* off-permafrost pixels are masked/down-weighted.
+
+- [ ] **T21 — AOA mask.** [G18] Importance-weighted dissimilarity-to-training mask with a
+  CV-derived threshold, output as a reliability layer. *Depends:* T14 (done), T19 (done).
   *Done when:* an extrapolation-flag raster is produced.
+
 - [ ] **T22 — Remove discrete classification.** [G19] Delete the discrete class output
-  (`prediction_classes.nc`, classification map). *Depends:* T19 *Done when:* no discrete
+  (`prediction_classes.nc`, classification map, `DECISION_THRESHOLD`) so the deliverable is
+  the continuous log-evidence surface only. *Depends:* T19 (done). *Done when:* no discrete
   class artifact is written.
-- [ ] **T23 — Soil-NaN train/serve parity.** [A2] Verify the datacube reproduces soil
-  NaN the same way as the points (so native routing transfers). *Depends:* — *Done when:*
-  parity confirmed (documented check).
 
-## Stage 5 — Interpretation (`models/shap_values.py`)
+- [ ] **T40 — Class-label sweep "Gradual" → "Non-abrupt".** [FABLE A2§2 / glossary 2026-07-14]
+  *Depends:* — *Done when:* confusion-matrix labels, SHAP plot titles, and metric-report
+  strings say "Non-abrupt" (matching the corrected glossary). Cosmetic; encoding untouched.
 
-- [x] **T24 — Canonical plumbing.** [F14] Remove the independent `default_rng(100)`
-  re-split; load the B6 coords + persisted CV config. *Depends:* T11 *Done when:* no
-  independent split remains. **✓ 2026-07-13:** `shap_values.py` rewritten — the
-  `train_test_split` is gone; `load_inputs` applies the T7 coord quarantine and
-  `load_cv_config` reads `models/cv_config.json` (with trainer-default fallbacks for a
-  stale config missing `operative_cell_km`).
-- [x] **T25 — Pooled out-of-fold SHAP.** [F15] Per outer fold, refit with the selected
-  hyperparameters fixed, TreeSHAP on held-out points, pool across folds. *Depends:*
-  T2,T14,T24 *Done when:* SHAP outputs are computed only on held-out rows. **✓
-  2026-07-13:** `pooled_oof_shap` refits per single-level buffered block fold (operative
-  cell km, fixed hyperparameters from `selected_hparams.json`) and runs TreeSHAP on the
-  held-out points only, pooling so each point is explained out-of-fold. Margin/log-odds
-  space (`model_output='raw'`, tree_path_dependent), negated to Abrupt (class 0)
-  orientation per the T19 log-evidence scale. `model.json` intentionally unused (OOF needs
-  per-fold refits). Smoke-verified (`SHAP_SMOKE=1`) end-to-end; **authoritative run
-  deferred** until the rebuilt features + trainer run produce `selected_hparams.json` and
-  a matching `features_clean.csv` (needs T30).
+- [ ] **T41 — Grouped SHAP over emergent groups.** [FABLE A1§4 / A2§6 / A3§2]
+  *Depends:* T25 (done), rebuild + retrain. *Done when:* the authoritative SHAP story is
+  reported over **emergent** (data-driven, then semantically labeled) feature groups — the
+  way indicators are narrated (e.g. elevation + winter temp + SWE + veg type → "alpine
+  landscapes") — **not** blanket VIF paring. True redundancies handled case-by-case (the
+  closure via T35; any residual bias-proxy individually). Belongs to the results-
+  interpretation phase (SCOPE Headline C).
 
-## Stage 6 — Scope reduction & closeout
+- [ ] **T44 — Contradictory-label ceiling diagnostic.** [FABLE A3§3] *Depends:* rebuild.
+  *Done when:* the count of feature-identical / label-disagreeing groups in
+  `features_clean.csv` is reported as an irreducible-noise ceiling on separation (context
+  for the AUC-PR; pairs with the expected narrow GBM-vs-logistic margin).
 
-- [x] **T26 — Archive training-lands path.** [README #8] Move
-  `build_prediction_data_traininglands.py`, `predict_traininglands.py`, and
-  `*_traininglands.*` outputs to `archive/`. *Depends:* — *Done when:* moved.
-  **✓ 2026-07-13:** `build_prediction_data_traininglands.py` → `archive/data/`,
-  `predict_traininglands.py` → `archive/`, both `*_traininglands.png` → `archive/output/`
-  (no `.nc` outputs on disk — gitignored/never generated). No live script imports them
-  (only README/PIPELINE docs referenced them, now updated). Live tree grep-clean.
-- [x] **T27 — Retire calibrated artifacts.** [pipeline-rebuild-v2] Confirm nothing
-  regenerates `model_calibrated*`; archive the stale files. *Depends:* — *Done when:*
-  no live script references them. **✓ 2026-07-13:** verified only generator was
-  `train_xgboost_calibrated.py` itself (nothing else consumes `model_calibrated*`;
-  `predict.py`'s "calibrated" mentions are descriptive text only). Archived to `archive/`:
-  `train_xgboost_calibrated.py`, `model_calibrated.pkl`, `model_calibrated_base.json`, and
-  all `output/*_calibrated.png`. Also swept two orphaned stale curves
-  (`calibration_curve.png`, `calibration_curve_enhanced.png`) — no generator since T15.
-- [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] Re-point the
-  `diagnostics/` suite at the new invariants (coord quarantine, buffer removal, OOF
-  SHAP on held-out, baselines) and regenerate `FINDINGS.md`. *Depends:* T14,T19,T25
-  *Done when:* `FINDINGS.md` is stamped to the new pipeline.
+- [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] *Depends:* T14 (done),
+  T19 (done), T25 (done), + rebuild. *Done when:* the `diagnostics/` suite is re-pointed at
+  the new invariants (coord quarantine, empirical buffer, OOF SHAP on held-out, baselines,
+  parity gate, contradictory-label ceiling) and `FINDINGS.md` is stamped to the new pipeline.
 
-## Non-code (user / methods table)
+- [ ] **T29 (remainder) — Document reconstructed GEE-track params.** Record the curvature
+  smoothing window, Daymet year range/aggregations, and the new MERIT/MODIS choices in the
+  methods table. *Depends:* T34, T36. *Done when:* the methods table reflects the rebuilt
+  feature set. *(Acquisition half of T29 done 2026-07-13.)*
 
-- [x] **T29 — Acquire the LOCAL-track source rasters.** **Done 2026-07-13.** GEE-track
-  upstreams resolved (Daymet V4, FIRMS, 3DEP+TAGEE — public, no acquisition). SNAP
-  "projected" ×3: UAF SNAP AR5/CMIP5 771 m, 5modelAvg/RCP 8.5, change = 2090–99 − 2010–19
-  (JJA/DJF/annual) → `data/fetch_snap_projections.py` → `data/snap/`. ALFRESCO ×2:
-  historical CRU/observed runs → `data/fetch_alfresco.py` → `data/alfresco/` (flammability
-  continuous; vegetation mode categorical 0–8). NLCD-2016 Alaska: user-provided ERDAS
-  `.img`+`.ige` in `data/NLCD2016/`. All EPSG:3338/WGS84-Albers, rasterio-readable,
-  smoke-tested. *Remaining (non-blocking):* record the reconstructed GEE-track params
-  (curvature smoothing / Daymet year-range / aggregation) in the methods table.
+---
+
+## RESOLVED
+
+- **T30 — Heavy inline-GEE features hang at full-N point sampling. → MOOT (2026-07-14).**
+  The two remaining live heavy point-samples are gone: SWE + the 3 trends were migrated to
+  the materialized local Daymet raster (`build_daymet_rasters.py`, commit `5dffcbf`), and
+  `Maximum Fire Temperature` is **dropped** by T36. No live deep-temporal reduction remains
+  at points (MODIS burn-history, T36, is materialized like Daymet, not point-sampled). The
+  T39 dry-run confirms no heavy point-sample survives. Priority override lifted.
+
+---
+
+## COMPLETED (T0–T29, compact — full historical done-notes in git @ `ecb7a94`)
+
+- [x] **T0** — Re-establish GEE project & rebuild feature sourcing with **zero custom
+  assets** (two tracks: `gee_features.py`, `local_rasters.py`; `ASSET_ROOT` removed). ✓ 2026-07-13
+- [x] **T1** — Equal-area (EPSG:3338) km-grid block method in `assign_blocks`. ✓
+- [x] **T2** — Nested-fold helper (inner folds never touch outer test blocks). ✓
+- [x] **T3** — Per-fold Non-abrupt (class-1) count reporting. ✓
+- [x] **T4** — Fire encoding (`Fire Detected` binary + real-or-NaN temp). ✓ **← reverted by T36**
+- [x] **T5** — Dedup excludes coordinates. ✓
+- [x] **T6** — Carry `Latitude`/`Longitude` through as non-model columns. ✓
+- [x] **T7** — Load + quarantine coords out of `X`. ✓
+- [x] **T8** — Nested spatial CV over a block-size sweep (buffer 1 km). ✓
+- [x] **T9** — Selection on pooled-OOF AUC-PR (positive = Non-abrupt). ✓
+- [x] **T10** — `scale_pos_weight = 1` (no imbalance reweighting). ✓
+- [x] **T11** — Grid breadth + named seeds; CV config persisted. ✓
+- [x] **T12** — Headline AUC-PR-vs-block-size curve; accuracy removed. ✓
+- [x] **T13** — Dummy + penalized-logistic baselines through the same folds. ✓
+- [x] **T14** — Operative all-data refit → `models/model.json`. ✓
+- [x] **T15** — Calibration demoted (block removed in the T8–T12 rewrite). ✓
+- [x] **T16** — Run manifest (git SHA, data hash, seeds, hparams, product versions). ✓
+- [x] **T17** — Removed mislabeled "CV F1" block. ✓
+- [x] **T18** — `Fire Detected` datacube layer. ✓ **← reverted by T36**
+- [x] **T19** — Log-evidence output (`logit(P) − logit(π_sample)`, 0 = neutral). ✓
+- [x] **T24** — SHAP canonical plumbing (no independent re-split; loads CV config). ✓ 2026-07-13
+- [x] **T25** — Pooled out-of-fold SHAP (per-fold refits; `model.json` intentionally unused). ✓ 2026-07-13
+- [x] **T26** — Archived training-lands path. ✓ 2026-07-13
+- [x] **T27** — Retired calibrated artifacts. ✓ 2026-07-13
+- [x] **T29** — Acquired LOCAL-track source rasters (SNAP/ALFRESCO/NLCD; SNAP projections retired). ✓ 2026-07-13

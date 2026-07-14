@@ -34,9 +34,15 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > sampling of downloaded source rasters under `data/` (rasterio). Exact original
 > derivation parameters are unrecoverable (build code was lost with the project), so
 > re-derived layers use **documented, reconstructed** choices (fine for the v2.0.0
-> rebuild — no byte-match to the lost assets is required). ⚠ The GEE track has not yet
-> been executed against Earth Engine (its first run is the ~12h feature build); validate
-> the TAGEE curvature port on GEE before trusting the two curvature columns.
+> rebuild — no byte-match to the lost assets is required). The GEE track's re-derived
+> layers were pre-flight validated on Earth Engine before the first full build
+> (T30, 2026-07-13): the **curvature port is verified** — its ZT kernels + mean-curvature
+> expression reproduce a paraboloid's analytic `−2a` apex curvature exactly in NumPy
+> (and are sign-robust to `convolve`'s flip convention), and on real 3DEP over Alaska
+> it returns finite, physically plausible values (steep terrain ≫ flats; 2 km smoother
+> than 500 m) via both the point and datacube (`sampleRectangle`) paths. FIRMS keying
+> was validated separately (T30 parity smoke). SWE/precip/temp are being migrated to a
+> materialized local Daymet raster (see `build_daymet_rasters.py`).
 
 | Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |
@@ -47,18 +53,22 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 | Flammability Index | LOCAL | UAF **SNAP ALFRESCO** historical, CRU TS4.0 1900–1999 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | continuous 0–~0.02, EPSG:3338 1 km, nodata −9999; bilinear/nearest sample |
 | Vegetation Mode | LOCAL | UAF **SNAP ALFRESCO** historical mode statistic, 1950–2008 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | **categorical** veg-type codes 0–8, EPSG:3338 1 km; **nearest** sample (never mean) |
 | Land cover | LOCAL | **NLCD 2016 Alaska** ERDAS `.img`+`.ige` in `data/NLCD2016/` (user-provided) — *resolved 2026-07-13* | categorical NLCD codes, WGS84-Albers 30 m; windowed/nearest sample (8.4 B px — don't load whole array) |
-| Projected summer/winter temp change, precip change | LOCAL | **UAF SNAP** AR5/CMIP5 771 m decadal summaries, 5modelAvg / RCP 8.5 (`data/fetch_snap_projections.py`) — *resolved 2026-07-13* | change = 2090–99 minus 2010–19; summer=JJA, winter=DJF, precip=annual total; EPSG:3338 → rasterio sample at points |
 
-> **All LOCAL-track sources resolved (2026-07-13).** SNAP ×3 → UAF SNAP AR5/CMIP5
-> 771 m decadal summaries (5modelAvg, RCP 8.5), change = 2090–99 minus 2010–19,
-> summer=JJA / winter=DJF / precip=annual (`data/fetch_snap_projections.py`;
-> smoke-tested: Fairbanks +3.9 °C summer, +6.5 °C winter, +125 mm precip — winter>summer
-> Arctic-amplification sanity check). ALFRESCO ×2 → historical CRU/observed runs
+> **All LOCAL-track sources resolved (2026-07-13).** ALFRESCO ×2 → historical CRU/observed runs
 > (`data/fetch_alfresco.py`). NLCD → user-provided ERDAS `.img` in `data/NLCD2016/`.
 > All are EPSG:3338 or WGS84-Albers, ready for rasterio point-sampling; raster
 > binaries are git-ignored and regenerable from the fetch scripts. **Remaining for
 > T29:** just documenting the reconstructed GEE-track choices (curvature smoothing
 > window, Daymet year range, annual aggregations) in the methods table.
+>
+> **SNAP projected-climate features removed (2026-07-13).** The three
+> `Projected summer/winter temp change` + `Projected precipitation change` layers
+> (UAF SNAP AR5/CMIP5, 2090s − 2010s) were dropped: a future-scenario projection
+> cannot causally drive a presently-observed thaw label (it acts only as a spatial
+> proxy), and recasting it as a current-period trend would merely duplicate the
+> observed Daymet trend already in the model. Temperature/precipitation are now
+> sourced as WorldClim baseline level + Daymet observed trend only.
+> `data/fetch_snap_projections.py` retired.
 
 ### Masks (prediction domain / reliability)
 - **Permafrost domain** — Obu et al. 2019 permafrost probability (PerProb 5.0),

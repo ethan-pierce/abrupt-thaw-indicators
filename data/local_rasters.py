@@ -13,11 +13,10 @@ sources with **zero custom uploaded assets**, split into two tracks:
   * GEE track   -> ``gee_features.py`` (inline computation on public catalog data)
   * LOCAL track -> this module (rasterio point-sampling of downloaded rasters)
 
-The LOCAL track covers the four features whose upstreams are not in the GEE
-catalog: ALFRESCO flammability + vegetation mode, NLCD 2016 land cover, and the
-SNAP AR5/CMIP5 projected climate-change layers. Source rasters live under
-``data/`` (git-ignored; regenerate via ``fetch_alfresco.py`` /
-``fetch_snap_projections.py`` or, for NLCD, user-provided) and are documented in
+The LOCAL track covers the three features whose upstreams are not in the GEE
+catalog: ALFRESCO flammability + vegetation mode and NLCD 2016 land cover. Source
+rasters live under ``data/`` (git-ignored; regenerate via ``fetch_alfresco.py``
+or, for NLCD, user-provided) and are documented in
 ``PIPELINE.md`` -> "Features - formerly custom assets".
 
 Sampling semantics
@@ -28,7 +27,7 @@ Python analogue is **nearest-neighbour** sampling of the covering pixel, which i
 also the only correct choice for the categorical layers (land cover, vegetation
 mode). We therefore use nearest for every LOCAL feature and document it in the
 methods table. Points are reprojected from WGS84 lon/lat into each raster's own
-CRS before sampling (CRSs differ: ALFRESCO/SNAP EPSG:3338, NLCD WGS84-Albers,
+CRS before sampling (CRSs differ: ALFRESCO EPSG:3338, NLCD WGS84-Albers,
 Obu EPSG:3995). Nodata and floating sentinels resolve to ``NaN`` so XGBoost's
 native missing-value routing applies (matching the points/datacube contract).
 """
@@ -53,24 +52,7 @@ NLCD_IMG = DATA / 'NLCD2016' / 'NLCD_2016_Land_Cover_AK_20200724.img'
 OBU_TIF = (DATA / 'Obu2019' /
            'UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif')
 
-# SNAP AR5/CMIP5 decadal summaries: the "Projected ... change" features are the
-# end-century minus early-century difference of the matching decade (see
-# fetch_snap_projections.py for the reconstruction decisions).
-_SNAP = DATA / 'snap'
-SNAP_SUMMER = {  # JJA mean air temperature (degrees C)
-    2010: _SNAP / 'tas_decadal_mean_JJA_mean_c_5modelAvg_rcp85_2010_2019.tif',
-    2090: _SNAP / 'tas_decadal_mean_JJA_mean_c_5modelAvg_rcp85_2090_2099.tif',
-}
-SNAP_WINTER = {  # DJF mean air temperature (degrees C)
-    2010: _SNAP / 'tas_decadal_mean_DJF_mean_c_5modelAvg_rcp85_2010_2019.tif',
-    2090: _SNAP / 'tas_decadal_mean_DJF_mean_c_5modelAvg_rcp85_2090_2099.tif',
-}
-SNAP_PRECIP = {  # annual total precipitation (mm)
-    2010: _SNAP / 'pr_decadal_mean_annual_total_mm_5modelAvg_rcp85_2010_2019.tif',
-    2090: _SNAP / 'pr_decadal_mean_annual_total_mm_5modelAvg_rcp85_2090_2099.tif',
-}
-
-_SENTINEL = -1e30  # ALFRESCO/SNAP/Obu use large-negative float nodata
+_SENTINEL = -1e30  # ALFRESCO/Obu use large-negative float nodata
 
 
 def sample_points(path, lons, lats, band: int = 1) -> np.ndarray:
@@ -107,16 +89,6 @@ def sample_points(path, lons, lats, band: int = 1) -> np.ndarray:
     return out
 
 
-def sample_snap_change(kind: str, lons, lats) -> np.ndarray:
-    """Projected change (2090_2099 minus 2010_2019) for ``kind`` in
-    {'summer', 'winter', 'precip'} at the given WGS84 points. NaN where either
-    decade is missing at a point."""
-    layers = {'summer': SNAP_SUMMER, 'winter': SNAP_WINTER, 'precip': SNAP_PRECIP}[kind]
-    early = sample_points(layers[2010], lons, lats)
-    late = sample_points(layers[2090], lons, lats)
-    return late - early
-
-
 if __name__ == '__main__':
     # Smoke test: sample every LOCAL raster at a few known Alaska sites.
     sites = {'Fairbanks': (-147.72, 64.84),
@@ -128,5 +100,3 @@ if __name__ == '__main__':
     print('Vegetation   :', dict(zip(sites, sample_points(VEGMODE_TIF, lons, lats))))
     print('Land cover    :', dict(zip(sites, sample_points(NLCD_IMG, lons, lats))))
     print('Obu PerProb  :', dict(zip(sites, np.round(sample_points(OBU_TIF, lons, lats), 3))))
-    for kind in ('summer', 'winter', 'precip'):
-        print(f'Proj. {kind:6s}:', dict(zip(sites, np.round(sample_snap_change(kind, lons, lats), 2))))

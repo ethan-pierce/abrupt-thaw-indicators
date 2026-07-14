@@ -41,14 +41,17 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > (and are sign-robust to `convolve`'s flip convention), and on real 3DEP over Alaska
 > it returns finite, physically plausible values (steep terrain ≫ flats; 2 km smoother
 > than 500 m) via both the point and datacube (`sampleRectangle`) paths. FIRMS keying
-> was validated separately (T30 parity smoke). SWE/precip/temp are being migrated to a
-> materialized local Daymet raster (see `build_daymet_rasters.py`).
+> was validated separately (T30 parity smoke). SWE + SWE/precip/temp trends were
+> migrated (2026-07-13) from live GEE point-sampling — which hangs on the deep
+> temporal reduction — to a materialized local Daymet raster
+> (`build_daymet_rasters.py`; `computePixels` tiled download, EPSG:3338 1 km),
+> now sampled by both tracks via `local_rasters`.
 
 | Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |
 | Mean curvature (500 m, 2 km) | GEE | USGS **3DEP 10 m** (`USGS/3DEP/10m`) | mean curvature via TAGEE algorithm (needs Python/ee port of TAGEE); 500 m vs 2 km = DEM smoothing window (reconstructed) |
-| Mean Annual SWE | GEE | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`) | annual→temporal mean; confirm year range + annual aggregation |
-| Trend in SWE / precip / temp | GEE | **Daymet V4** (`swe` / `prcp` / `tmax`) | per-pixel `ee.Reducer.linearFit()` slope (`scale` band); precip = annual sum, temp/SWE = annual mean |
+| Mean Annual SWE | LOCAL | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`), materialized to `data/daymet/daymet_v4_reductions_1km_3338.tif` by `build_daymet_rasters.py` — *resolved 2026-07-13* | per-year mean of daily SWE → temporal mean over 1991–2020; EPSG:3338 1 km, nearest sample; materialized because live GEE point-sampling of the deep reduction hangs (T30) |
+| Trend in SWE / precip / temp | LOCAL | **Daymet V4** (`swe` / `prcp` / `tmax`), same materialized raster (`build_daymet_rasters.py`) — *resolved 2026-07-13* | per-pixel `ee.Reducer.linearFit()` slope over 1991–2020 (`scale` band): precip = annual sum, temp/SWE = annual mean; EPSG:3338 1 km, nearest sample |
 | Maximum Fire Temperature | GEE | NASA **FIRMS** (band `T21`, MODIS ~4 µm brightness temp, K) | temporal max of `T21`; also drives `Fire Detected` (A1) |
 | Flammability Index | LOCAL | UAF **SNAP ALFRESCO** historical, CRU TS4.0 1900–1999 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | continuous 0–~0.02, EPSG:3338 1 km, nodata −9999; bilinear/nearest sample |
 | Vegetation Mode | LOCAL | UAF **SNAP ALFRESCO** historical mode statistic, 1950–2008 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | **categorical** veg-type codes 0–8, EPSG:3338 1 km; **nearest** sample (never mean) |

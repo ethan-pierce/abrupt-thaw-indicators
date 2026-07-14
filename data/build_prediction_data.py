@@ -225,7 +225,32 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         curve2k = load_data(gee_features.mean_curvature(2000).select('MeanCurvature'), projection, scale)
         curve2k_data = extract_data_array(curve2k, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (2 km)'] = np.flipud(curve2k_data)
-    
+
+    # --- Hydrological terrain (T34): MERIT Hydro v1.0.1, native ~90 m ---
+    # hnd is served NATIVELY, like the 3DEP terrain (T37): a stored height, so a
+    # 1 km reproject would average the ~120 native pixels under each cell and blur
+    # the valley/slope contrast. Point-sampling at MERIT_SCALE via sample_native is
+    # the identical construction the point path uses, so parity is exact.
+    if 'Height Above Nearest Drainage' in feature_names:
+        feature_arrays['Height Above Nearest Drainage'] = np.flipud(
+            sample_native(gee_features.height_above_drainage(), 'hnd', gee_features.MERIT_SCALE))
+
+    # log(upa), by contrast, IS heavy-tailed and finer than the 1 km grid, so it is
+    # reproject-averaged to 1 km (T34/T35 bucket 2) — but the average MUST act on
+    # the log, not raw area. A plain load_data(...).reproject of the .log() image
+    # silently averages raw upa first (log(mean(upa)); verified), so aggregate
+    # explicitly with reduceResolution(mean) on the native-pinned log image
+    # (gee_features.log_upstream_area). ~120 native pixels per 1 km cell is well
+    # under EE's reduceResolution limit (unlike the 10 m curvature, gee_features).
+    if 'Log Upstream Area' in feature_names:
+        log_upa_1km = (gee_features.log_upstream_area()
+                       .reproject('EPSG:4326', scale=gee_features.MERIT_SCALE)  # pin native
+                       .reduceResolution(ee.Reducer.mean(), maxPixels=1024)     # mean OF the log
+                       .reproject(projection, scale=scale)                      # onto serve grid
+                       .clip(ee_roi))
+        log_upa_data = extract_data_array(log_upa_1km, region, 'log_upa', default_value)
+        feature_arrays['Log Upstream Area'] = np.flipud(log_upa_data)
+
     # Load bioclimatic variables
     bioclim = ee.Image('WORLDCLIM/V1/BIO')
     bioclim_vars = {
@@ -286,6 +311,15 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     for _feat, _band in local_rasters.DAYMET_BANDS.items():
         if _feat in feature_names:
             feature_arrays[_feat] = np.flipud(sample_local(local_rasters.DAYMET_TIF, _band))
+
+    # Yedoma (IRYP v2, T33): binary confirmed-presence, point-in-polygon at the
+    # same cell centres the build_feature_table.py point path uses per training
+    # point (identical sample_yedoma call), so train/serve parity is exact by
+    # construction. NaN off-ROI (from the -9999 lon/lat fill), like the LOCAL
+    # rasters; flipped once to match the rest of the stack.
+    if 'Yedoma' in feature_names:
+        yedoma_flat = local_rasters.sample_yedoma(lon2d.ravel(), lat2d.ravel())
+        feature_arrays['Yedoma'] = np.flipud(yedoma_flat.reshape(lon2d.shape))
 
     # Load categorical features (Land Cover and Vegetation Mode) - one-hot encoded
     land_cover_labels = {

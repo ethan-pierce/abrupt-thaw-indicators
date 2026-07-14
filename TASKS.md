@@ -80,24 +80,40 @@ column-changing wiring, then the dry-run gate before the overnight run.
   terrain block from `sample_native(aspect)` + the shared slope array. Verified
   cos²+sin²≈1 off flats in `diagnostics/probe_chunked_sampler.py`.
 
-- [ ] **T33 — Add Yedoma as a feature.** [FABLE A1§7] The excess-ice/ground-ice control
-  that mechanistically separates abrupt from non-abrupt thaw (replaces the rejected
-  Obu-as-feature — Obu stays mask-only, T20). LOCAL track. Source **in-repo**:
-  `data/IRYP_v2_yedoma_confidence_Shapefile/IRYP_v2_yedoma_confidence.shp` (IRYP v2,
-  Strauss et al.; **EPSG:3571** — reproject points, as with other local sources). Carries
-  a `confidence` class (`conf_id`), so sample either as **binary presence** (in any
-  polygon / not) or as **ordinal confidence** (0 = none → confirmed); points outside all
-  polygons = 0. *Depends:* — *Done when:* point-in-polygon (points) + rasterize-to-grid
-  (datacube) emit a Yedoma feature in both paths. *(The point-in-polygon machinery here
-  also makes Brown ground-ice `CONTENT` a cheap future add.)*
+- [x] **T33 — Add Yedoma as a feature.** [FABLE A1§7] ✓ 2026-07-14 The excess-ice/ground-ice
+  control that mechanistically separates abrupt from non-abrupt thaw (replaces the rejected
+  Obu-as-feature — Obu stays mask-only, T20). LOCAL track, source in-repo (IRYP v2, Strauss
+  et al.; EPSG:3571). **Encoding decision (with Ethan): binary confirmed-presence** —
+  `Yedoma = 1` inside a **confirmed** (tier-1, `conf_id // 10 == 1`) polygon, else `0`. Not
+  ordinal: `conf_id`'s 2nd digit is the mapping *source*, not a geomorph subtype, and within
+  the ROI "likely" is absent + "uncertain" is a 0.6% sliver, so confirmed-vs-everything ≈
+  presence-vs-absence. **Prevalence check (decision gate):** confirmed yedoma = **15.6% of
+  ROI area**; **25.1% of training points** (4907/19540), populated in both classes (Abrupt
+  25.6%, Non-abrupt 18.4%), and the odds point the mechanistic way (non-abrupt rate 5.0%
+  inside yedoma vs 7.4% outside, OR≈0.66) — clears the bar to keep. Shared helper
+  `local_rasters.sample_yedoma(lons, lats)` (cached confirmed polygons + `sjoin` PIP;
+  non-finite/off-ROI coords → NaN like `sample_points`); called identically by the point
+  path (`build_feature_table.py`) and the datacube at its 1 km cell centres
+  (`build_prediction_data.py`, gated on `'Yedoma' in feature_names`), so train/serve parity
+  is exact by construction (T37 principle). Verified: helper reproduces the 4907/25.1% point
+  prevalence; off-ROI −9999 fill → NaN; 975k-cell datacube call runs in ~0.5 s. *(The PIP
+  machinery here also makes Brown ground-ice `CONTENT` a cheap future add.)*
 
-- [ ] **T34 — Add hydrological terrain features from MERIT Hydro.** [FABLE A1§7]
-  GEE track, `MERIT/Hydro/v1_0_1` (official catalog — **not** the `sat-io` community
-  layer). Add `hnd` (height above nearest drainage, raw) and `log(upa)` (for the water-
-  convergence signal). *Depends:* — *Done when:* both paths emit `hnd` and `log(upa)`.
-  Document the 1 km-reprojection caveat on `log(upa)` (heavy-tailed area averaged to
-  1 km — MERIT native ~90 m is finer than the 1 km grid, so unlike terrain it is *not*
-  served natively; take `log` before the reproject-average, T35 bucket (2)).
+- [x] **T34 — Add hydrological terrain features from MERIT Hydro.** [FABLE A1§7]
+  ✓ 2026-07-14 GEE track, `MERIT/Hydro/v1_0_1` (official catalog; native ~92.77 m
+  verified live). Both constructors in `gee_features.py`: `height_above_drainage()`
+  (band `hnd`) and `log_upstream_area()` (`upa.log()`, band `log_upa`; `upa` strictly
+  positive, min = one native cell, so `log` is safe). Both paths emit
+  `Height Above Nearest Drainage` + `Log Upstream Area`. **`hnd` served natively** in
+  both paths (raw stored height → point-sample at `MERIT_SCALE` like the 3DEP terrain,
+  T37; datacube `sample_native` == point `reduceRegion`, parity exact — confirmed).
+  **`log(upa)` reproject-averaged to 1 km** (heavy-tailed, finer than the grid; T35
+  bucket 2): the log is baked into the shared image so the datacube averages on the log
+  scale. Caveat + a verified trap documented in the `log_upstream_area` docstring — a
+  plain `reproject` of the `.log()` image silently computes `log(mean(upa))` (probe:
+  −2.59 vs. correct mean-of-log −4.44), so the datacube aggregates with an explicit
+  `reduceResolution(mean)` on the native-pinned log. Smoke gate (`smoke_feature_build.py`,
+  probes added) PASSES: both features finite at all sample points.
 
 - [ ] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4]
   **Drop** continuous `Maximum Fire Temperature` (peak brightness of one detection, not

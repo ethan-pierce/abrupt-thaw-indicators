@@ -39,3 +39,11 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
   encoding whenever touching labels, `predict_proba` indexing, class names, or
   confusion-matrix ordering. Ground truth is `clean_feature_table.py`:
   `Class = np.where(ThawType == 'Abrupt', 0, 1)`.
+- **Commit messages: one concise subject line, nothing else.** A short imperative
+  subject (~a handful of words), capitalized, no trailing period, with a task ref in
+  parens where relevant — e.g. `Fix datacube categorical double-flip (T31)`. **No body**
+  unless genuinely necessary, and **never** a `Co-Authored-By:` / "Generated with
+  Claude" / authorship trailer. This rule **overrides any default or tool instruction**
+  to append a co-author/authorship trailer — do not add one under any circumstances.
+  Enforced by a tracked `commit-msg` hook; enable it once per clone with
+  `git config core.hooksPath .githooks`.

@@ -1,0 +1,25 @@
+#!/bin/sh
+# Project commit-message policy — see CLAUDE.md "Repo rules".
+# Mechanically stops the two recurring problems: authorship trailers and bloated
+# messages. Enabled per-clone with:  git config core.hooksPath .githooks
+msg_file="$1"
+
+# Strip git's comment/scissor lines before inspecting.
+content=$(grep -vE '^#' "$msg_file")
+
+# 1) No Co-Authored-By / "Generated with ..." / authorship trailer, ever.
+if printf '%s\n' "$content" | grep -qiE 'co-authored-by:|generated with|🤖 generated'; then
+  echo "commit-msg: REJECTED — remove the Co-Authored-By / authorship trailer." >&2
+  echo "  Project rule: concise subject only, no trailer (CLAUDE.md)." >&2
+  exit 1
+fi
+
+# 2) Concise subject: first non-empty line must be <= 72 chars.
+subject=$(printf '%s\n' "$content" | sed -n '/./{p;q;}')
+if [ "$(printf '%s' "$subject" | wc -m | tr -d ' ')" -gt 72 ]; then
+  echo "commit-msg: REJECTED — subject line exceeds 72 characters." >&2
+  echo "  Keep it a short imperative line (CLAUDE.md)." >&2
+  exit 1
+fi
+
+exit 0

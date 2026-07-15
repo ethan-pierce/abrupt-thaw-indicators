@@ -283,10 +283,21 @@ column-changing wiring, then the dry-run gate before the overnight run.
   CV-derived threshold, output as a reliability layer. *Depends:* T14 (done), T19 (done).
   *Done when:* an extrapolation-flag raster is produced.
 
-- [ ] **T22 — Remove discrete classification.** [G19] Delete the discrete class output
-  (`prediction_classes.nc`, classification map, `DECISION_THRESHOLD`) so the deliverable is
-  the continuous log-evidence surface only. *Depends:* T19 (done). *Done when:* no discrete
-  class artifact is written.
+- [x] **T22 — Remove discrete classification.** [G19] ✓ 2026-07-15 Stripped the discrete
+  class path from `predict.py`: removed `DECISION_THRESHOLD` (config + print + attr), the
+  `predictions = (probabilities < threshold)` binarization, `predictions_2d` + its mask, the
+  two abrupt/non-abrupt count prints, the `'prediction'` variable + `prediction_description`
+  attr from `output_ds`, the `prediction_classes.nc` write, and the classification-map figure
+  (`prediction_classification_map.png`). Deliverable is now the continuous log-evidence
+  surface (`susceptibility.nc` + map) with probability kept as an explicit *diagnostic*
+  (`predictions.nc`, `prediction_probabilities.nc`, probability map) — the discrete class is
+  the only thing gone, per G19. Also `git rm`'d the stale tracked `data/prediction_classes.nc`
+  (old-cube orphan) and updated the README's three stale "classification map" deliverable
+  mentions (line 12, tree, run note, To-Do #8). Archived training-lands path left untouched
+  (T26). Verified: `py_compile` clean, no dangling refs (`predictions_2d`/`pred_ds`/
+  `map_output_path2`/`DECISION` all gone). *Depends:* T19 (done). *Done when:* no discrete
+  class artifact is written. *(End-to-end run deferred to the rebuilt cube — predict.py's next
+  natural run under T20/T23; running now would clobber real `data/` mid-rebuild.)*
 
 - [x] **T40 — Class-label sweep "Gradual" → "Non-abrupt".** [FABLE A2§2 / glossary 2026-07-14]
   ✓ 2026-07-15 Swept every "Gradual" class-1 label across **our** code + methods docs to

@@ -76,8 +76,12 @@ column-changing wiring, then the dry-run gate before the overnight run.
   (`upstream_area`, raw), `build_feature_table.py` (rename → `Upstream Area`),
   `build_prediction_data.py` (`upa`+soil via `sample_native`), `smoke_feature_build.py`
   (probe renamed). Note: pure monotonic transforms are **no-ops for the XGBoost fit/ranking**.
-  *Out of scope, flagged:* the three `Projected … change` features appear absent from the
-  datacube build (a presence gap, not a transform); per-feature parity confirmation is T23.
+  *Adjacent fix (done):* the three `Projected … change` features (SNAP, removed 2026-07-13)
+  still lingered as columns in the stale `features_dirty.csv`→`features_clean.csv`, so a
+  retrain would have embedded 3 phantom features the datacube never builds → `predict.py`
+  would crash at `dataset_feature_names.index(name)`. Enforced the removal defensively at the
+  cleaning layer (`clean_feature_table.py` + `diagnostics/_data.py`), regenerated the clean
+  table (70→67 cols). *Still open:* per-feature parity confirmation is the deferred T23.
 
 - [x] **T31 — Fix the datacube categorical double-flip.** [FABLE A3§1] *(datacube path only)*
   ✓ 2026-07-14 Land Cover and Vegetation Mode were `np.flipud`-ed **twice** while every

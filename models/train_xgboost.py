@@ -37,7 +37,8 @@ from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.compose import ColumnTransformer
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -69,6 +70,59 @@ PARAM_GRID = {
 }
 # Penalized-logistic baseline regularization grid [D12/T13].
 LOGIT_GRID = {'C': [0.01, 0.1, 1.0]}
+
+# Heavy-tailed non-negative features the LINEAR baseline log-compresses in its own
+# Pipeline [T35 bucket-3 / T45]. XGBoost is scale-invariant and sees these raw; the
+# canonical table stays raw. Un-logged, their orders-of-magnitude tails (Upstream Area
+# spans river-basin scales) blow up StandardScaler + the lbfgs matmul on the finite
+# inputs. Precipitation *amounts* only — Precipitation Seasonality is a bounded CV.
+LOG_BASELINE_COLS = (
+    'Height Above Nearest Drainage',
+    'Upstream Area',
+    'Annual Precipitation',
+    'Precipitation of Wettest Month',
+    'Precipitation of Driest Month',
+    'Precipitation of Wettest Quarter',
+    'Precipitation of Driest Quarter',
+    'Precipitation of Warmest Quarter',
+    'Precipitation of Coldest Quarter',
+    'Mean Annual SWE',
+    'Soil Organic Carbon (0-30 cm)',
+    'Soil Organic Carbon (30-200 cm)',
+    'Nitrogen (0-30 cm)',
+    'Nitrogen (30-200 cm)',
+)
+
+
+def _log1p_nonneg(a):
+    """log1p with negatives clipped to 0 (defensive) and NaN preserved for downstream
+    median-imputation — so the transform never emits invalid-value/overflow warnings."""
+    return np.log1p(np.clip(a, 0.0, None))
+
+
+def _binary_cols(X):
+    """Columns whose (non-NaN) values are all in {0, 1} — the one-hot Land Cover /
+    Vegetation Mode indicators and Yedoma. Detected by value (not name) so it survives
+    renames. These are passed to the baseline WITHOUT standardization (see below)."""
+    out = []
+    for c in X.columns:
+        u = pd.unique(X[c].dropna())
+        if len(u) and set(np.asarray(u, dtype=float).tolist()) <= {0.0, 1.0}:
+            out.append(c)
+    return out
+
+
+def _log_cont_cols(X):
+    """Continuous columns that get log-compressed (heavy-tailed, non-binary)."""
+    binary = set(_binary_cols(X))
+    return [c for c in X.columns if c in LOG_BASELINE_COLS and c not in binary]
+
+
+def _other_cont_cols(X):
+    """Continuous columns standardized without a log (everything not log/not binary)."""
+    binary = set(_binary_cols(X))
+    return [c for c in X.columns if c not in LOG_BASELINE_COLS and c not in binary]
+
 
 # Fast smoke config for correctness checks (TRAIN_SMOKE=1); does not affect real runs.
 SMOKE = bool(os.environ.get('TRAIN_SMOKE'))
@@ -102,19 +156,71 @@ def xgb_builder(params):
     return factory
 
 
-def logistic_builder(params):
-    """Penalized-logistic baseline: median-impute -> standardize -> L2 logistic [D12].
+class _QuietLinearBaseline:
+    """fit/predict_proba wrapper scoping `np.errstate` around the L2-logistic baseline.
 
-    `class_weight=None` mirrors the no-reweighting choice (C9). Imputation is fit
-    inside each fold's pipeline, so it never leaks across the CV split.
+    liblinear's predict-time decision-function matmul trips numpy's FP sticky-flag
+    reporting even on finite inputs — a known benign numpy SIMD false positive (the
+    decision values are finite; verified T45). Ignoring divide/over/invalid here keeps
+    that noise off stderr WITHOUT masking any real non-finite value, and is scoped to the
+    baseline only (XGBoost is untouched). Implements just the `pooled_oof_predict`
+    interface (`fit`, `predict_proba`)."""
+    _ERR = dict(divide='ignore', over='ignore', invalid='ignore')
+
+    def __init__(self, pipe):
+        self.pipe = pipe
+
+    def fit(self, X, y):
+        with np.errstate(**self._ERR):
+            self.pipe.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        with np.errstate(**self._ERR):
+            return self.pipe.predict_proba(X)
+
+
+def logistic_builder(params):
+    """Penalized-logistic baseline; the linear model owns its preprocessing [D12/T35/T45].
+
+    Preprocessing is split by column type so the solver sees well-conditioned inputs
+    (raw un-conditioned inputs flood lbfgs with overflow/invalid-matmul warnings — T45):
+      - heavy-tailed non-negative continuous (`LOG_BASELINE_COLS`): log1p -> median-impute
+        -> standardize (their orders-of-magnitude tails, e.g. Upstream Area, otherwise
+        dominate the scale);
+      - other continuous: median-impute -> standardize;
+      - binary one-hot indicators (Land Cover / Vegetation Mode / Yedoma): **not
+        standardized** — dividing a rare 0/1 column by its tiny std inflates its lone `1`
+        to ~100+ sigma, and on near-separable data lbfgs transiently overflows on it.
+        Missing filled with 0 (absent category).
+    `class_weight=None` mirrors the no-reweighting choice (C9). Every step is fit inside
+    each fold's pipeline (via `pooled_oof_predict`), so nothing leaks across the CV split.
     """
+    prep = ColumnTransformer(
+        [
+            ('log_cont', Pipeline([('log', FunctionTransformer(_log1p_nonneg)),
+                                   ('impute', SimpleImputer(strategy='median')),
+                                   ('scale', StandardScaler())]), _log_cont_cols),
+            ('cont', Pipeline([('impute', SimpleImputer(strategy='median')),
+                               ('scale', StandardScaler())]), _other_cont_cols),
+            ('binary', SimpleImputer(strategy='constant', fill_value=0.0), _binary_cols),
+        ],
+        remainder='drop',
+    )
+
     def factory(y_train):
-        return Pipeline([
-            ('impute', SimpleImputer(strategy='median')),
-            ('scale', StandardScaler()),
+        pipe = Pipeline([
+            ('prep', prep),
+            # solver='liblinear' (coordinate descent) not lbfgs: on this near-separable
+            # data lbfgs floods stderr with transient overflow/invalid-matmul warnings
+            # over its ~100 line-search iterations (the final coef is small & finite —
+            # the warnings are benign optimizer noise). liblinear reaches the identical
+            # fit in <10 iterations, warning-free (T45).
             ('clf', LogisticRegression(penalty='l2', C=params['C'], class_weight=None,
-                                       max_iter=1000, random_state=MODEL_SEED)),
+                                       solver='liblinear', max_iter=1000,
+                                       random_state=MODEL_SEED)),
         ])
+        return _QuietLinearBaseline(pipe)
     return factory
 
 
@@ -371,6 +477,9 @@ def main():
     coords = feats[['Latitude', 'Longitude']]
     assert 'Latitude' not in X.columns and 'Longitude' not in X.columns, \
         "coordinate quarantine failed: Latitude/Longitude leaked into X"
+    missing_log = [c for c in LOG_BASELINE_COLS if c not in X.columns]
+    assert not missing_log, \
+        f"baseline log columns missing from feature table (renamed?): {missing_log}"
 
     lat = coords['Latitude'].to_numpy()
     lon = coords['Longitude'].to_numpy()

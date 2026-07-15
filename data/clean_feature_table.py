@@ -25,6 +25,18 @@ feats = feats.drop('Imagery', axis = 1)
 feats = feats.drop('ImageryDates', axis = 1)
 feats = feats.drop('ImageryResolution_meters', axis = 1)
 
+# SNAP projected-climate features removed 2026-07-13 (see PIPELINE.md): a 2090s
+# future-scenario projection cannot causally drive a presently-observed thaw label
+# (only a spatial proxy), and recast as a current-period trend it would duplicate
+# the Daymet observed trend already in the model. `fetch_snap_projections.py` was
+# retired and build_feature_table.py no longer samples them, so a fresh dirty table
+# won't contain these — but drop them defensively here so a stale dirty table can't
+# reintroduce phantom features the datacube (build_prediction_data.py) never builds.
+for _snap in ['Projected summer temperature change', 'Projected winter temperature change',
+              'Projected precipitation change']:
+    if _snap in feats.columns:
+        feats = feats.drop(_snap, axis = 1)
+
 label = ['Class']
 fillna = []  # no NaN-filling: XGBoost routes missing values natively (T36 dropped the last filled column)
 categorical = ['Land Cover', 'Vegetation Mode']

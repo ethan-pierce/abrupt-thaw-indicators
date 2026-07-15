@@ -87,7 +87,9 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > proxy), and recasting it as a current-period trend would merely duplicate the
 > observed Daymet trend already in the model. Temperature/precipitation are now
 > sourced as WorldClim baseline level + Daymet observed trend only.
-> `data/fetch_snap_projections.py` retired.
+> `data/fetch_snap_projections.py` retired. `clean_feature_table.py` (and the diagnostics
+> mirror) now drop these columns defensively, so a stale dirty table can't reintroduce
+> phantom features the datacube never builds (which would crash `predict.py`).
 
 ### Masks (prediction domain / reliability)
 - **Permafrost domain** — Obu et al. 2019 permafrost probability (PerProb 5.0),

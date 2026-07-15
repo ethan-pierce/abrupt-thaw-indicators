@@ -43,6 +43,13 @@ def _clean_with_coords():
     feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)
     feats = feats.drop(['ThawType'] + DROP_TEXT, axis=1)
 
+    # SNAP projected-climate features removed 2026-07-13 (see PIPELINE.md); drop
+    # defensively so a stale dirty table can't reintroduce them, matching clean_feature_table.py.
+    for _snap in ['Projected summer temperature change', 'Projected winter temperature change',
+                  'Projected precipitation change']:
+        if _snap in feats.columns:
+            feats = feats.drop(_snap, axis=1)
+
     # T36: fire is now the MODIS MCD64A1 history pair (Time Since Last Fire, Burn
     # Count), continuous columns that pass through untouched — no fill, matching
     # clean_feature_table.py (the retired FIRMS Maximum Fire Temperature fill is gone).

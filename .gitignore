@@ -18,3 +18,6 @@ data/modis_fire/*.tif
 data/NLCD2016
 # IRYP v2 yedoma confidence shapefile (T33) — large in-repo source download
 data/IRYP_v2_yedoma_confidence_Shapefile
+
+# Non-authoritative SHAP-group smoke outputs
+output/_smoke/

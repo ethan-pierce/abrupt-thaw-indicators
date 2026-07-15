@@ -1,0 +1,347 @@
+"""Grouped (emergent-family) SHAP for the operative thaw-mode model (TASKS T41).
+
+Purpose (a): a de-cluttered, geoscientist-legible indicator-FAMILY importance ranking, so
+SHAP credit is not split across the ~70 partly-redundant feature columns. Families emerge
+data-drivenly from feature-space redundancy, then their SHAP is recombined by additivity.
+Family *interpretation* is post-hoc (SCOPE Headline C); this is NOT the mechanism-vs-lake-
+proxy analysis (deferred separately).
+
+Design (grill 2026-07-15; see memory t41-grouped-shap-design):
+- Grouping basis: FEATURE-space (Spearman on feature values), not SHAP-space -- a tree
+  scatters credit erratically across near-duplicate columns, so SHAP-space can fail to
+  group them; feature-space groups by shared information regardless of how the model split
+  the credit (25/44 continuous cols have a |Spearman|>0.8 partner here).
+- Distance: 1 - |Spearman| (absolute) -- anti-correlated columns are still redundant
+  (fire pair rho=-1.00; thermal continentality spans +-0.94); signed distance would
+  fragment them.
+- Linkage: complete -- a cut at distance t means every within-family pair has |rho| >= 1-t;
+  also the linkage that best resists |rho|-induced chaining.
+- Cut: the natural GAP in the merge-height sequence (auto-detected, emergent -- not a round
+  number), where tightly-redundant families stop merging and only weak relations remain.
+- Categoricals: collapse one-hots to their SOURCE (Land Cover, Vegetation Mode) by summing
+  member SHAP; a lone binary (Yedoma) stays standalone. A one-hot family IS one variable,
+  so this is definitional redundancy -- the same "recombine split credit" logic.
+- Grouped contribution per point = SUM of signed member SHAP (exact additivity). Grouped
+  global importance = mean over points of |sum|. Abrupt-oriented (positive => toward Abrupt),
+  inherited from pooled_oof_shap.
+
+Reuses the canonical OOF-SHAP machinery from shap_values.py (per-fold refit + held-out
+TreeSHAP), so grouping is the only thing added. Run after the operative model / feature set
+is final (post-T23 lock). SHAP_GROUPS_SMOKE=1 subsamples for a fast correctness check.
+"""
+
+import os
+import json
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')  # headless: save figures, never block on plt.show()
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
+from scipy.spatial.distance import squareform
+
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from settings import DATA, MODELS, OUTPUT
+# Reuse the canonical inputs + OOF-SHAP machinery (no re-implementation, exact parity).
+from shap_values import (load_inputs, load_cv_config, load_selected_hparams,
+                         pooled_oof_shap, SMOKE_HPARAMS)
+
+# Fast smoke config for correctness checks (SHAP_GROUPS_SMOKE=1); no effect on real runs.
+SMOKE = bool(os.environ.get('SHAP_GROUPS_SMOKE'))
+SMOKE_N = 1500
+SMOKE_SPLITS = 3
+
+# Gap-cut search band, in distance = 1 - |Spearman| (i.e. |rho| in [0.40, 0.85]). The
+# largest gap between consecutive merge heights INSIDE this band is the emergent cut; the
+# band guards against trivial gaps near the root (all-merged) or in the noise floor.
+GAP_BAND = (0.15, 0.60)
+
+# One-hot families collapsed to their categorical source (definitional redundancy). Any
+# remaining lone binary column (e.g. Yedoma) becomes its own standalone family.
+CATEGORICAL_PREFIXES = ('Land Cover', 'Vegetation Mode')
+
+
+# --------------------------------------------------------------------------
+# emergent families (feature-space clustering + categorical collapse)
+# --------------------------------------------------------------------------
+def split_columns(X):
+    """Partition columns into continuous vs one-hot (values subset of {0,1})."""
+    onehot = [c for c in X.columns if set(pd.unique(X[c].dropna())) <= {0, 1}]
+    cont = [c for c in X.columns if c not in onehot]
+    return cont, onehot
+
+
+def continuous_linkage(X, cont):
+    """Complete-linkage tree over continuous columns, distance = 1 - |Spearman|.
+
+    A constant/degenerate column (Spearman NaN, e.g. a rare feature in a smoke subsample) is
+    treated as unrelated (|rho| -> 0, distance -> 1) so the linkage never sees a NaN.
+    """
+    S = np.nan_to_num(X[cont].corr(method='spearman').abs().values, nan=0.0)
+    D = 1.0 - S
+    np.fill_diagonal(D, 0.0)
+    D = (D + D.T) / 2.0  # enforce exact symmetry for squareform
+    return linkage(squareform(D, checks=False), method='complete')
+
+
+def choose_gap_threshold(Z, band=GAP_BAND):
+    """Cut at the midpoint of the largest gap between consecutive merge heights in `band`.
+
+    Emergent, data-driven: the merge sequence has a natural discontinuity where tightly-
+    redundant families stop forming and only weakly-related columns remain. Returns
+    (threshold, gap_size, lo_height, hi_height).
+    """
+    h = np.sort(Z[:, 2])
+    lo, hi = band
+    hb = h[(h >= lo) & (h <= hi)]
+    if len(hb) < 2:
+        return (lo + hi) / 2.0, 0.0, lo, hi  # degenerate: fall back to band midpoint
+    gaps = np.diff(hb)
+    k = int(np.argmax(gaps))
+    lo_h, hi_h = float(hb[k]), float(hb[k + 1])
+    return (lo_h + hi_h) / 2.0, float(gaps[k]), lo_h, hi_h
+
+
+def build_families(X, threshold=None):
+    """Emergent continuous families (complete-linkage gap cut) + collapsed categoricals.
+
+    Returns (families, meta): `families` maps a provisional key -> [member columns]
+    (continuous keys are `cont_<id>`, renamed to legible labels after importance is known);
+    `meta` carries the linkage, chosen threshold/gap, and the signed correlation for
+    within-family diagnostics.
+    """
+    cont, onehot = split_columns(X)
+    Z = continuous_linkage(X, cont)
+    if threshold is None:
+        threshold, gap, lo_h, hi_h = choose_gap_threshold(Z)
+    else:
+        gap = lo_h = hi_h = None
+    labels = fcluster(Z, t=threshold, criterion='distance')
+
+    families = {}
+    for cl in sorted(set(labels)):
+        families[f"cont_{cl}"] = [cont[i] for i in range(len(cont)) if labels[i] == cl]
+
+    # Categoricals collapsed to source; any leftover lone binary stands alone.
+    claimed = set()
+    for prefix in CATEGORICAL_PREFIXES:
+        members = [c for c in onehot if c.startswith(prefix)]
+        if members:
+            families[prefix] = members
+            claimed.update(members)
+    for c in onehot:
+        if c not in claimed:
+            families[c] = [c]
+
+    meta = {'threshold': threshold, 'gap': gap, 'gap_lo': lo_h, 'gap_hi': hi_h,
+            'linkage': Z, 'continuous': cont, 'onehot': onehot,
+            'signed_corr': X[cont].corr(method='spearman')}
+    return families, meta
+
+
+# --------------------------------------------------------------------------
+# grouped SHAP (exact additivity)
+# --------------------------------------------------------------------------
+def grouped_shap_matrix(expl, families):
+    """Sum signed member SHAP per family -> (names, (n_points, n_families)).
+
+    Additivity of SHAP makes a family's per-point contribution to the margin EXACTLY the sum
+    of its members' SHAP. Values are already Abrupt-oriented (positive => toward Abrupt).
+    """
+    cols = list(expl.feature_names)
+    idx = {c: i for i, c in enumerate(cols)}
+    names = list(families.keys())
+    G = np.zeros((expl.values.shape[0], len(names)))
+    for j, name in enumerate(names):
+        member_idx = [idx[c] for c in families[name] if c in idx]
+        G[:, j] = expl.values[:, member_idx].sum(axis=1)
+    return names, G
+
+
+def display_label(key, members, expl):
+    """Legible provisional label for a family (renamed by hand at manuscript time).
+
+    Singletons / categoricals keep their own name; a multi-member continuous family is
+    tagged by its highest-individual-importance member + "(+k)".
+    """
+    if key in ('Land Cover', 'Vegetation Mode'):
+        return f"{key} ({len(members)} classes)"
+    if len(members) == 1:
+        return members[0]
+    cols = list(expl.feature_names)
+    idx = {c: i for i, c in enumerate(cols)}
+    imp = {m: np.mean(np.abs(expl.values[:, idx[m]])) for m in members if m in idx}
+    top = max(imp, key=imp.get)
+    return f"{top} (+{len(members) - 1})"
+
+
+def within_family_min_abs_rho(members, signed_corr):
+    """Smallest |Spearman| among continuous family members (None if not applicable)."""
+    present = [m for m in members if m in signed_corr.columns]
+    if len(present) < 2:
+        return None
+    sub = signed_corr.loc[present, present].values
+    off = sub[np.triu_indices(len(present), 1)]
+    return float(np.abs(off).min())
+
+
+# --------------------------------------------------------------------------
+# figures + report
+# --------------------------------------------------------------------------
+def plot_dendrogram(meta, out_dir):
+    """Emergent continuous-family dendrogram with the gap-cut line drawn."""
+    Z, cont, t = meta['linkage'], meta['continuous'], meta['threshold']
+    fig, ax = plt.subplots(figsize=(12, max(6, 0.22 * len(cont))))
+    dendrogram(Z, labels=cont, orientation='right', color_threshold=t,
+               leaf_font_size=7, ax=ax)
+    ax.axvline(t, color='k', ls='--', lw=1)
+    rho = 1 - t
+    ax.set_xlabel(f"distance = 1 - |Spearman|   (cut at {t:.3f} -> within-family |rho| >= {rho:.2f})")
+    ax.set_title("Emergent feature families (complete linkage, |Spearman| distance)")
+    plt.tight_layout()
+    plt.savefig(out_dir / 'shap_family_dendrogram.png', dpi=300)
+    plt.close()
+
+
+def plot_grouped_importance(order, labels, importance, out_dir):
+    """Horizontal bar of grouped mean|sum SHAP|, families ranked (top at the top)."""
+    fig, ax = plt.subplots(figsize=(10, max(5, 0.35 * len(order))))
+    y = np.arange(len(order))[::-1]
+    ax.barh(y, importance[order], color='#4477aa')
+    ax.set_yticks(y)
+    ax.set_yticklabels([labels[i] for i in order], fontsize=8)
+    ax.set_xlabel("Grouped importance:  mean over points of | sum of member SHAP |  (margin)")
+    ax.set_title("Indicator-family SHAP importance (Abrupt-oriented)")
+    plt.tight_layout()
+    plt.savefig(out_dir / 'shap_grouped_importance.png', dpi=300)
+    plt.close()
+
+
+def plot_grouped_contribution_box(order, labels, G, out_dir):
+    """Per-family box of signed grouped SHAP (direction + spread); 0 = neutral."""
+    top = order[:min(20, len(order))]
+    data = [G[:, i] for i in top][::-1]
+    fig, ax = plt.subplots(figsize=(10, max(5, 0.4 * len(top))))
+    ax.boxplot(data, vert=False, showfliers=False, whis=(5, 95))
+    ax.set_yticklabels([labels[i] for i in top][::-1], fontsize=8)
+    ax.axvline(0, color='k', lw=1)
+    ax.set_xlabel("Grouped SHAP (margin): >0 favours Abrupt, <0 favours Non-abrupt")
+    ax.set_title("Per-family contribution distribution (top 20 by importance)")
+    plt.tight_layout()
+    plt.savefig(out_dir / 'shap_grouped_contribution_box.png', dpi=300)
+    plt.close()
+
+
+def write_families_json(order, keys, labels, families, importance, meta, n_points, out_dir):
+    """Machine-readable record: memberships, importances, within-family min|rho|, cut."""
+    total = float(importance.sum())
+    rec = {
+        'method': {
+            'grouping_basis': 'feature-space Spearman (values)',
+            'distance': '1 - |Spearman|',
+            'linkage': 'complete',
+            'cut_threshold': meta['threshold'],
+            'cut_rho_floor': 1 - meta['threshold'],
+            'gap_size': meta['gap'],
+            'gap_between_heights': [meta['gap_lo'], meta['gap_hi']],
+            'categorical_collapse': list(CATEGORICAL_PREFIXES) + ['(lone binaries standalone)'],
+            'importance_metric': 'mean over points of |sum of signed member SHAP| (margin, Abrupt-oriented)',
+            'n_points_scored': int(n_points),
+            'smoke': SMOKE,
+        },
+        'families': [
+            {
+                'rank': r + 1,
+                'label': labels[i],
+                'members': families[keys[i]],
+                'n_members': len(families[keys[i]]),
+                'importance': float(importance[i]),
+                'importance_frac': float(importance[i] / total) if total else None,
+                'within_family_min_abs_spearman': within_family_min_abs_rho(
+                    families[keys[i]], meta['signed_corr']),
+            }
+            for r, i in enumerate(order)
+        ],
+    }
+    (out_dir / 'shap_families.json').write_text(json.dumps(rec, indent=2))
+
+
+# --------------------------------------------------------------------------
+# main
+# --------------------------------------------------------------------------
+def main():
+    cfg = load_cv_config(MODELS / 'cv_config.json')
+
+    hp_path = MODELS / 'selected_hparams.json'
+    if hp_path.exists():
+        hparams = load_selected_hparams(hp_path)
+    elif SMOKE:
+        print("[smoke] selected_hparams.json absent; using SMOKE_HPARAMS")
+        hparams = SMOKE_HPARAMS
+    else:
+        raise FileNotFoundError(
+            f"{hp_path} not found -- run models/train_xgboost.py first so the operative "
+            "hyperparameters are recorded (OOF SHAP refits each fold with them).")
+
+    X, y, lat, lon = load_inputs(DATA / 'features_clean.csv')
+
+    n_splits = cfg['n_splits_outer']
+    if SMOKE:
+        rng = np.random.default_rng(cfg['seeds']['CV_SEED'])
+        sel = rng.choice(len(y), size=min(SMOKE_N, len(y)), replace=False)
+        X, y, lat, lon = X.iloc[sel].reset_index(drop=True), y[sel], lat[sel], lon[sel]
+        n_splits = SMOKE_SPLITS
+        print(f"[smoke] subsampled to {len(y)} points, {n_splits} folds")
+
+    print(f"Grouped OOF SHAP: {len(y)} points | {X.shape[1]} features | "
+          f"operative cell {cfg['operative_cell_km']} km | buffer {cfg['buffer_km']} km | "
+          f"{n_splits} folds | hyperparameters {hparams}")
+
+    expl, scored = pooled_oof_shap(
+        X, y, lat, lon,
+        cell_km=cfg['operative_cell_km'], buffer_km=cfg['buffer_km'],
+        n_splits=n_splits, seed=cfg['seeds']['CV_SEED'], hparams=hparams,
+    )
+
+    # Families are defined on the SAME scored feature matrix the SHAP was computed on.
+    X_scored = X[scored].reset_index(drop=True)
+    families, meta = build_families(X_scored)
+    print(f"Cut at dist {meta['threshold']:.3f} (|rho| >= {1 - meta['threshold']:.2f}); "
+          f"largest gap {meta['gap']:.3f} between heights "
+          f"[{meta['gap_lo']:.3f}, {meta['gap_hi']:.3f}] -> {len(families)} families")
+
+    keys, G = grouped_shap_matrix(expl, families)
+    labels = [display_label(k, families[k], expl) for k in keys]
+    importance = np.mean(np.abs(G), axis=0)
+    order = list(np.argsort(importance)[::-1])
+
+    # Smoke results are non-authoritative (subsampled): keep them out of the real output/
+    # so they can never be mistaken for the deliverable.
+    out_dir = OUTPUT / '_smoke' if SMOKE else OUTPUT
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plot_dendrogram(meta, out_dir)
+    plot_grouped_importance(order, labels, importance, out_dir)
+    plot_grouped_contribution_box(order, labels, G, out_dir)
+    write_families_json(order, keys, labels, families, importance, meta,
+                        expl.values.shape[0], out_dir)
+
+    print("\nTop indicator families by grouped SHAP importance:")
+    total = importance.sum()
+    for r, i in enumerate(order[:15]):
+        frac = importance[i] / total * 100 if total else 0.0
+        rho = within_family_min_abs_rho(families[keys[i]], meta['signed_corr'])
+        rho_s = f", min|rho|={rho:.2f}" if rho is not None else ""
+        print(f"  {r + 1:>2}. {labels[i]:<42} {importance[i]:.4f} ({frac:4.1f}%) "
+              f"[{len(families[keys[i]])} feat{rho_s}]")
+    print(f"\nWrote family figures + shap_families.json to {out_dir} "
+          f"({int(scored.sum())} points explained out-of-fold)")
+    print("NOTE: family labels are provisional (auto-tagged by top member); rename by hand "
+          "at manuscript time. Two curation calls deferred to the operational run (see "
+          "memory t41-grouped-shap-design).")
+
+
+if __name__ == '__main__':
+    main()

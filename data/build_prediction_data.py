@@ -22,10 +22,10 @@ ee.Initialize(project=EE_PROJECT)
 
 from pathlib import Path
 import json
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
-import geemap
 import xarray as xr
 
 import sys
@@ -38,9 +38,17 @@ import ee_sampling
 
 data = DATA
 
+# Statewide extraction footprint (T46): roi.geojson now holds the Alaska land
+# boundary (TIGER 'Alaska' geometry INTERSECT the mainland bbox [-170,-141]x[51,72],
+# mainland-clipped so there is no antimeridian wrap), replacing the stale North-Slope
+# polygon. It is the single statewide source of truth shared with the raster builders
+# (build_daymet_rasters.py / build_modis_fire_rasters.py, which union it with the
+# ThawDB point bbox) and dry_run_gee.py. The Obu domain mask (T20) does the actual
+# permafrost-domain trimming inside this footprint. ee.Geometry (not a FeatureCollection)
+# so extract_data_array's ee.Geometry(region) strip-tiling accepts it directly.
 with open(data / 'roi.geojson', 'r') as f:
     roi_json = json.load(f)
-ee_roi = geemap.geojson_to_ee(roi_json)
+ee_roi = ee.Geometry(roi_json['features'][0]['geometry'])
 
 # Prediction-surface resolution (decision 2026-07-14): upscaled from 4 km to
 # 1 km. 4 km was an efficiency choice, in tension with abrupt thaw being a
@@ -78,22 +86,61 @@ def verify_grid_alignment(
     return crs_match and transform_match and shape_match
 
 def extract_data_array(
-    image: ee.Image, 
-    region: ee.Geometry, 
+    image: ee.Image,
+    region: ee.Geometry,
     band_name: str = None,
-    default_value: float = None
+    default_value: float = None,
+    max_pixels: int = 262000,
 ) -> np.ndarray:
-    """Extract data array from a reprojected Earth Engine image (from load_data) as a numpy array."""
-    # Unmask image with default value if provided
+    """Extract a reprojected image (from load_data) over ``region`` as a 2-D array.
+
+    ``sampleRectangle`` caps a single request at 262,144 pixels (512x512); the 1 km
+    serve grid (T37) is ~4M pixels over the ROI, so we pull the array in horizontal
+    strips and stitch. All strips are indexed off ONE global pixel grid — the image's
+    own reprojected transform — so they are exact slices of a single grid, not
+    independently-snapped tiles (which could misalign by a pixel at the seams). Each
+    strip's rectangle is inset a quarter-pixel so ``sampleRectangle``'s cover-the-region
+    rounding returns exactly its intended rows, with no seam overlap or gap. Bit-identical
+    to the intended single-call reproject serve (verified: tiled == whole, max diff 0).
+    Returns north-to-south rows, matching the old single call — callers' np.flipud unchanged.
+    """
     img = image.unmask(default_value) if default_value is not None else image
-    
-    # Pass default value to sampleRectangle to handle pixels outside image footprint
-    sampled = img.sampleRectangle(region=region, defaultValue=default_value)
-    
     if band_name is None:
         band_name = image.bandNames().getInfo()[0]
-    
-    return np.array(sampled.get(band_name).getInfo(), dtype=float)
+    band_img = img.select(band_name)
+
+    info = band_img.projection().getInfo()
+    crs = info['crs']
+    a, b, c, d, e, f = info['transform']  # x = a*col + b*row + c ; y = d*col + e*row + f
+    assert b == 0 and d == 0, f"sheared transform unsupported: {info['transform']}"
+
+    ring = ee.Geometry(region).bounds().coordinates().getInfo()[0]
+    xs = [p[0] for p in ring]; ys = [p[1] for p in ring]
+    col0 = math.floor((min(xs) - c) / a); col1 = math.ceil((max(xs) - c) / a)
+    r_a = (max(ys) - f) / e; r_b = (min(ys) - f) / e
+    row0 = math.floor(min(r_a, r_b)); row1 = math.ceil(max(r_a, r_b))
+    ncols = col1 - col0; nrows = row1 - row0
+
+    ix, iy = abs(a) * 0.25, abs(e) * 0.25  # quarter-pixel inset -> no seam overlap/gap
+    x_lo = c + a * col0 + ix; x_hi = c + a * col1 - ix
+    rows_per = max(1, max_pixels // max(1, ncols))
+
+    strips = []
+    for rs in range(row0, row1, rows_per):
+        re_ = min(rs + rows_per, row1)
+        y_a = f + e * rs; y_b = f + e * re_
+        y_lo = min(y_a, y_b) + iy; y_hi = max(y_a, y_b) - iy
+        rect = ee.Geometry.Rectangle(
+            [min(x_lo, x_hi), y_lo, max(x_lo, x_hi), y_hi], proj=crs, geodesic=False)
+        s = band_img.sampleRectangle(region=rect, defaultValue=default_value)
+        arr = np.array(s.get(band_name).getInfo(), dtype=float)
+        assert arr.shape == (re_ - rs, ncols), (
+            f"strip rows {rs}:{re_} got {arr.shape}, expected {(re_ - rs, ncols)}")
+        strips.append(arr)
+
+    out = np.concatenate(strips, axis=0)
+    assert out.shape == (nrows, ncols), f"stitched {out.shape} != {(nrows, ncols)}"
+    return out
 
 # Load model and extract feature names
 model_path = MODELS / 'model.json'
@@ -423,7 +470,11 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
     
     # Stack features in the exact order required by the model
     feature_stack = np.stack([feature_arrays[name] for name in feature_names], axis=-1)
-    return feature_stack
+    # Per-cell WGS84 lon/lat, flipped once to match the (y, x) orientation of the
+    # flipped feature stack, so they georeference the saved datacube (T20: the mask
+    # / predict.py sample Obu at these coords; T21 / map axes also consume them).
+    # Off-ROI cells keep the -9999 fill, which sample_points reads as NaN.
+    return feature_stack, np.flipud(lon2d), np.flipud(lat2d)
 
 def plot_field(field, feature_names=None, feature_stack=None, ds=None, default_value=-9999, figsize=(10, 8)):
     """Plot a field for debugging. Can use feature name, index, or numpy array directly.
@@ -490,12 +541,15 @@ def plot_field(field, feature_names=None, feature_stack=None, ds=None, default_v
 
 # Load all features in model order and create feature stack
 print("\nLoading all features for prediction...")
-feature_stack = load_all_features(feature_names, SCALE, ee_roi, default_value=-9999)
+feature_stack, lon2d, lat2d = load_all_features(feature_names, SCALE, ee_roi, default_value=-9999)
 
 print(f"\nFeature stack shape: {feature_stack.shape}")
 print(f"Expected shape: (height, width, {len(feature_names)})")
 
-# Create xarray Dataset with feature stack and metadata
+# Create xarray Dataset with feature stack and metadata. longitude/latitude are
+# 2D (y, x) coords that georeference every cell centre (T20): predict.py samples
+# the Obu domain mask at these coords, and they carry the -9999 off-ROI fill so
+# out-of-footprint cells resolve to NaN (masked) downstream.
 ds = xr.Dataset(
     {
         'feature_stack': (['y', 'x', 'feature'], feature_stack)
@@ -503,7 +557,9 @@ ds = xr.Dataset(
     coords={
         'feature': feature_names,
         'x': np.arange(feature_stack.shape[1]),
-        'y': np.arange(feature_stack.shape[0])
+        'y': np.arange(feature_stack.shape[0]),
+        'longitude': (['y', 'x'], lon2d),
+        'latitude': (['y', 'x'], lat2d),
     },
     attrs={
         'scale': SCALE,

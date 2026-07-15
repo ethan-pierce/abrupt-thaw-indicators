@@ -1,0 +1,229 @@
+ThawType
+Abrupt        18213
+Non-abrupt     1327
+Name: count, dtype: int64
+/Users/f007s79/Library/Caches/pypoetry/virtualenvs/abrupt-thaw-indicators-4O-us156-py3.13/lib/python3.13/site-packages/ee/deprecation.py:215: DeprecationWarning: 
+
+Attention required for USGS/3DEP/10m! You are using a deprecated asset.
+To make sure your code keeps working, please update it.
+This dataset has been superseded by USGS/3DEP/10m_collection
+
+Learn more: https://developers.google.com/earth-engine/datasets/catalog/USGS_3DEP_10m
+
+  warnings.warn(warning, category=DeprecationWarning)
+Added Elevation
+Added Slope
+Added Aspect
+Added Mean curvature (500 m)
+Added Mean curvature (2 km)
+Added Height Above Nearest Drainage
+Added Upstream Area
+Added Annual Mean Temperature
+Added Mean Diurnal Range
+Added Isothermality
+Added Temperature Seasonality
+Added Max Temperature of Warmest Month
+Added Min Temperature of Coldest Month
+Added Temperature Annual Range
+Added Mean Temperature of Wettest Quarter
+Added Mean Temperature of Driest Quarter
+Added Mean Temperature of Warmest Quarter
+Added Mean Temperature of Coldest Quarter
+Added Annual Precipitation
+Added Precipitation of Wettest Month
+Added Precipitation of Driest Month
+Added Precipitation Seasonality
+Added Precipitation of Wettest Quarter
+Added Precipitation of Driest Quarter
+Added Precipitation of Warmest Quarter
+Added Precipitation of Coldest Quarter
+Added Soil Organic Carbon (0-5 cm)
+Added Soil Organic Carbon (5-15 cm)
+Added Soil Organic Carbon (15-30 cm)
+Added Soil Organic Carbon (30-60 cm)
+Added Soil Organic Carbon (60-100 cm)
+Added Soil Organic Carbon (100-200 cm)
+Added Nitrogen (0-5 cm)
+Added Nitrogen (5-15 cm)
+Added Nitrogen (15-30 cm)
+Added Nitrogen (30-60 cm)
+Added Nitrogen (60-100 cm)
+Added Nitrogen (100-200 cm)
+Added Clay (0-5 cm)
+Added Clay (5-15 cm)
+Added Clay (15-30 cm)
+Added Clay (30-60 cm)
+Added Clay (60-100 cm)
+Added Clay (100-200 cm)
+Added Sand (0-5 cm)
+Added Sand (5-15 cm)
+Added Sand (15-30 cm)
+Added Sand (30-60 cm)
+Added Sand (60-100 cm)
+Added Sand (100-200 cm)
+Added Silt (0-5 cm)
+Added Silt (5-15 cm)
+Added Silt (15-30 cm)
+Added Silt (30-60 cm)
+Added Silt (60-100 cm)
+Added Silt (100-200 cm)
+Added Bulk Density (0-5 cm)
+Added Bulk Density (5-15 cm)
+Added Bulk Density (15-30 cm)
+Added Bulk Density (30-60 cm)
+Added Bulk Density (60-100 cm)
+Added Bulk Density (100-200 cm)
+Added Land Cover
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:323: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add('Vegetation Mode', lambda: thawdb.__setitem__(
+Added Vegetation Mode
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:327: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add('Flammability Index', lambda: thawdb.__setitem__(
+Added Flammability Index
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:335: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Mean Annual SWE
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:335: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Trend in SWE
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:335: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Trend in precipitation
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:335: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Trend in temperature
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:344: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Time Since Last Fire
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:344: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
+Added Burn Count
+/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/build_feature_table.py:350: FutureWarning: ChainedAssignmentError: behaviour will change in pandas 3.0!
+You are setting values through chained assignment. Currently this works in certain cases, but when using Copy-on-Write (which will become the default behaviour in pandas 3.0) this will never work to update the original DataFrame or Series, because the intermediate object on which we are setting values will behave as a copy.
+A typical example is when you are setting values in a column of a DataFrame, like:
+
+df["col"][row_indexer] = value
+
+Use `df.loc[row_indexer, "col"] = values` instead, to perform the assignment in a single step and ensure this keeps updating the original `df`.
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+  try_add('Yedoma', lambda: thawdb.__setitem__('Yedoma', local_rasters.sample_yedoma(lons, lats)))
+Added Yedoma
+Encoded aspect -> Northness/Eastness (flats < 1 deg neutralized); dropped raw Aspect (T32)
+
+======================================================================
+[T30/T39] Feature import report
+======================================================================
+All features imported with at least some valid values.
+======================================================================
+
+Index(['Authors', 'DOI', 'DataSourceType', 'FeatureName', 'Latitude',
+       'Longitude', 'FeatureType', 'FeatureCategory', 'ThawType', 'Imagery',
+       'ImageryDates', 'ImageryResolution_meters', 'Class', 'Elevation',
+       'Slope', 'Mean curvature (500 m)', 'Mean curvature (2 km)',
+       'Height Above Nearest Drainage', 'Upstream Area',
+       'Annual Mean Temperature', 'Mean Diurnal Range', 'Isothermality',
+       'Temperature Seasonality', 'Max Temperature of Warmest Month',
+       'Min Temperature of Coldest Month', 'Temperature Annual Range',
+       'Mean Temperature of Wettest Quarter',
+       'Mean Temperature of Driest Quarter',
+       'Mean Temperature of Warmest Quarter',
+       'Mean Temperature of Coldest Quarter', 'Annual Precipitation',
+       'Precipitation of Wettest Month', 'Precipitation of Driest Month',
+       'Precipitation Seasonality', 'Precipitation of Wettest Quarter',
+       'Precipitation of Driest Quarter', 'Precipitation of Warmest Quarter',
+       'Precipitation of Coldest Quarter', 'Soil Organic Carbon (0-5 cm)',
+       'Soil Organic Carbon (5-15 cm)', 'Soil Organic Carbon (15-30 cm)',
+       'Soil Organic Carbon (30-60 cm)', 'Soil Organic Carbon (60-100 cm)',
+       'Soil Organic Carbon (100-200 cm)', 'Nitrogen (0-5 cm)',
+       'Nitrogen (5-15 cm)', 'Nitrogen (15-30 cm)', 'Nitrogen (30-60 cm)',
+       'Nitrogen (60-100 cm)', 'Nitrogen (100-200 cm)', 'Clay (0-5 cm)',
+       'Clay (5-15 cm)', 'Clay (15-30 cm)', 'Clay (30-60 cm)',
+       'Clay (60-100 cm)', 'Clay (100-200 cm)', 'Sand (0-5 cm)',
+       'Sand (5-15 cm)', 'Sand (15-30 cm)', 'Sand (30-60 cm)',
+       'Sand (60-100 cm)', 'Sand (100-200 cm)', 'Silt (0-5 cm)',
+       'Silt (5-15 cm)', 'Silt (15-30 cm)', 'Silt (30-60 cm)',
+       'Silt (60-100 cm)', 'Silt (100-200 cm)', 'Bulk Density (0-5 cm)',
+       'Bulk Density (5-15 cm)', 'Bulk Density (15-30 cm)',
+       'Bulk Density (30-60 cm)', 'Bulk Density (60-100 cm)',
+       'Bulk Density (100-200 cm)', 'Land Cover', 'Vegetation Mode',
+       'Flammability Index', 'Mean Annual SWE', 'Trend in SWE',
+       'Trend in precipitation', 'Trend in temperature',
+       'Time Since Last Fire', 'Burn Count', 'Yedoma', 'Northness',
+       'Eastness'],
+      dtype='object')
+(19540, 86)
+wrote /Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/features_dirty.csv

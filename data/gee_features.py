@@ -173,23 +173,24 @@ def height_above_drainage() -> ee.Image:
     return ee.Image(_MERIT_HYDRO).select('hnd')
 
 
-def log_upstream_area() -> ee.Image:
-    """Natural log of MERIT Hydro **upstream drainage area** (``upa``, km^2) — the
-    water-convergence signal. Band ``'log_upa'``.
+def upstream_area() -> ee.Image:
+    """MERIT Hydro **upstream drainage area** (``upa``, km^2), raw — the
+    water-convergence signal. Band ``'upa'``.
 
     ``upa`` is strictly positive (minimum = one native cell, ~0.0037 km^2) and
-    heavy-tailed across many orders of magnitude, so the log is applied **here**,
-    before any aggregation. The order matters for the datacube (T34 / T35 bucket
-    2): MERIT's ~90 m native grid is finer than the 1 km serve grid, so — unlike
-    the natively-served terrain — ``log(upa)`` IS reproject-averaged to 1 km, and
-    that average must act on the **log**. A plain ``reproject`` of this image would
-    silently average raw ``upa`` first and then log it (``log(mean(upa))``,
-    dominated by the few largest channels — empirically verified), so the datacube
-    aggregates it with an explicit ``reduceResolution(mean)`` on the native-pinned
-    log; the point path samples this same image at native scale (no aggregation),
-    so both paths share one definition.
+    heavy-tailed across many orders of magnitude. It is nonetheless served **raw
+    and natively** in both paths (like ``hnd`` and the 3DEP terrain, T37): MERIT's
+    ~90 m native grid is finer than the 1 km serve grid, so rather than
+    reproject-average (a non-tree op that would need the mean taken on the log to
+    avoid ``log(mean(upa))`` bias — T35), both paths point-sample the native pixel
+    at ``MERIT_SCALE``, so they agree by construction and no averaging occurs.
+
+    No log is applied here (T35): a monotonic transform is a no-op for the XGBoost
+    fit, and the canonical feature set is kept raw/physical. The live linear
+    baseline (T13) logs this feature within its own preprocessing scope, where a
+    heavy tail actually matters.
     """
-    return ee.Image(_MERIT_HYDRO).select('upa').log().rename('log_upa')
+    return ee.Image(_MERIT_HYDRO).select('upa')
 
 
 # ==========================================================================

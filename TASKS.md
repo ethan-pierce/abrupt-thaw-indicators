@@ -47,18 +47,37 @@ column-changing wiring, then the dry-run gate before the overnight run.
   Validated: `diagnostics/probe_chunked_sampler.py` (chunked == single-call, max
   diff 0; off-grid → NaN). *(Per-feature parity confirmation is the DEFERRED T23.)*
 
-- [ ] **T35 — Systematic feature-transform audit.** [user-requested; generalizes A1§2]
-  For every feature decide whether it needs a transform, in three buckets: **(1)
-  non-monotonic-for-correctness** (circular → cos/sin; signed quantities); **(2)
-  must-precede-reprojection-averaging** (heavy-tailed → `log` *before* the mean — the
-  datacube `reproject`-averages any feature coarser than its 1 km grid, a non-tree op;
-  post-T37 this is soil + `log(upa)`, since terrain is now served natively); **(3)**
-  linear-baseline (T13) / SHAP-readability
-  only. *Depends:* — *Done when:* the audit is recorded and every bucket-(1)/(2) transform
-  is baked into **both** build paths. **Owns the sand+silt+clay closure** (exact
-  compositional dependence, sum ≈ 100%): drop one component or use isometric log-ratios.
-  T32 (aspect) and T34 (`log upa`) are already-decided instances. Note: pure monotonic
-  transforms are **no-ops for the XGBoost fit/ranking** — payoff is buckets (1) and (2).
+- [x] **T35 — Systematic feature-transform audit.** [user-requested; generalizes A1§2]
+  ✓ 2026-07-14 **Governing principle (with Ethan):** the canonical feature set —
+  consumed by XGBoost *and* the datacube it scores — is **raw, physical, native-served,
+  no logs**. A transform a specific model needs is *that model's* preprocessing (scoped
+  to its own Pipeline), not a property of the shared data. Audit by bucket:
+  - **(1) non-monotonic-for-correctness.** `Aspect`→Northness/Eastness (T32). Sand/Silt/Clay
+    closure (sum ≈ 1000 g/kg) → **drop `Silt` canonically**, keep Sand+Clay: the
+    best-conditioned pair on this ROI (corr(Sand,Clay)=+0.31; the discarded Sand-Silt
+    axis is near-mirror at −0.945). No info lost (Silt recoverable), and it spares SHAP
+    from splitting credit across three collinear columns. Re-swept the rest — signed
+    quantities (curvature ×2, three trends, three projected changes), bounded ratios
+    (Isothermality, Precip Seasonality), right-censored `Burn Count` — all monotonic-fine
+    for a tree; nothing else qualifies.
+  - **(2) must-precede-reprojection-averaging → EMPTY.** Resolution: generalize T37 — serve
+    native wherever the native grid is finer than the 1 km serve grid, so the datacube
+    never reproject-averages a heavy-tailed feature. This **reverts T34's `log(upa)`**:
+    `upa` is now served raw/native like `hnd` (`gee_features.upstream_area()`, band `upa`,
+    feature `Upstream Area`); the `reduceResolution(mean)`-on-log block + the `log(mean)`
+    trap are deleted. SOC/Nitrogen/Bulk Density/Sand/Clay now `sample_native` at 250 m
+    (was `reproject`). No pre-average transform survives anywhere.
+  - **(3) linear-baseline (T13) / SHAP-readability → moved to T13's scope.** The live linear
+    baseline logs the heavy-tailed positives (`Upstream Area`, SOC, Nitrogen, precip vars,
+    `Mean Annual SWE`, `hnd`) + standardizes, inside its own Pipeline fit per CV fold.
+    Nothing bucket-3 touches the canonical table or datacube; SHAP uses log *axes* at plot time.
+
+  Baked into both paths: `clean_feature_table.py` (drop Silt), `gee_features.py`
+  (`upstream_area`, raw), `build_feature_table.py` (rename → `Upstream Area`),
+  `build_prediction_data.py` (`upa`+soil via `sample_native`), `smoke_feature_build.py`
+  (probe renamed). Note: pure monotonic transforms are **no-ops for the XGBoost fit/ranking**.
+  *Out of scope, flagged:* the three `Projected … change` features appear absent from the
+  datacube build (a presence gap, not a transform); per-feature parity confirmation is T23.
 
 - [x] **T31 — Fix the datacube categorical double-flip.** [FABLE A3§1] *(datacube path only)*
   ✓ 2026-07-14 Land Cover and Vegetation Mode were `np.flipud`-ed **twice** while every
@@ -101,19 +120,17 @@ column-changing wiring, then the dry-run gate before the overnight run.
 
 - [x] **T34 — Add hydrological terrain features from MERIT Hydro.** [FABLE A1§7]
   ✓ 2026-07-14 GEE track, `MERIT/Hydro/v1_0_1` (official catalog; native ~92.77 m
-  verified live). Both constructors in `gee_features.py`: `height_above_drainage()`
-  (band `hnd`) and `log_upstream_area()` (`upa.log()`, band `log_upa`; `upa` strictly
-  positive, min = one native cell, so `log` is safe). Both paths emit
-  `Height Above Nearest Drainage` + `Log Upstream Area`. **`hnd` served natively** in
-  both paths (raw stored height → point-sample at `MERIT_SCALE` like the 3DEP terrain,
-  T37; datacube `sample_native` == point `reduceRegion`, parity exact — confirmed).
-  **`log(upa)` reproject-averaged to 1 km** (heavy-tailed, finer than the grid; T35
-  bucket 2): the log is baked into the shared image so the datacube averages on the log
-  scale. Caveat + a verified trap documented in the `log_upstream_area` docstring — a
-  plain `reproject` of the `.log()` image silently computes `log(mean(upa))` (probe:
-  −2.59 vs. correct mean-of-log −4.44), so the datacube aggregates with an explicit
-  `reduceResolution(mean)` on the native-pinned log. Smoke gate (`smoke_feature_build.py`,
-  probes added) PASSES: both features finite at all sample points.
+  verified live). Two constructors in `gee_features.py`: `height_above_drainage()`
+  (band `hnd`) and `upstream_area()` (band `upa`). Both paths emit
+  `Height Above Nearest Drainage` + `Upstream Area`, both **raw and served natively**
+  (point-sample at `MERIT_SCALE` like the 3DEP terrain, T37; datacube `sample_native`
+  == point `reduceRegion`, parity exact — confirmed). **SUPERSEDED BY T35:** the original
+  design served `log(upa)` reproject-averaged to 1 km (with an explicit
+  `reduceResolution(mean)` on the native-pinned log, to avoid the verified `log(mean(upa))`
+  trap — probe −2.59 vs correct −4.44). T35 removed that entirely: `upa` is now raw/native
+  like `hnd` (no averaging → no log-order trap), and the log moved to the T13 linear
+  baseline's own scope. Smoke gate (`smoke_feature_build.py`) PASSES: both features finite
+  at all sample points.
 
 - [x] **T36 — Fix fire representation (Package B).** [FABLE A1§6 / A3§4] ✓ 2026-07-14
   **Dropped** `Maximum Fire Temperature` (FIRMS `T21`, peak brightness of one detection)

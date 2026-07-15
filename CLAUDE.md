@@ -39,6 +39,10 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
   encoding whenever touching labels, `predict_proba` indexing, class names, or
   confusion-matrix ordering. Ground truth is `clean_feature_table.py`:
   `Class = np.where(ThawType == 'Abrupt', 0, 1)`.
+- **Always show generated figures.** Whenever a script produces or updates a figure
+  (a `.png`/image, e.g. the `diagnostics/*.png` plots), open it for the user right after
+  it's written — `open <path>` on macOS — so they can see it without asking. Applies to
+  every figure generated in a turn, not just the last.
 - **Commit messages: one concise subject line, nothing else.** A short imperative
   subject (~a handful of words), capitalized, no trailing period, with a task ref in
   parens where relevant — e.g. `Fix datacube categorical double-flip (T31)`. **No body**

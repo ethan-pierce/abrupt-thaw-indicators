@@ -314,12 +314,33 @@ column-changing wiring, then the dry-run gate before the overnight run.
   (real artifacts untouched) prints "test Non-abrupt …" with the renamed keys serialized.
 
 - [ ] **T41 — Grouped SHAP over emergent groups.** [FABLE A1§4 / A2§6 / A3§2]
-  *Depends:* T25 (done), rebuild + retrain. *Done when:* the authoritative SHAP story is
-  reported over **emergent** (data-driven, then semantically labeled) feature groups — the
-  way indicators are narrated (e.g. elevation + winter temp + SWE + veg type → "alpine
-  landscapes") — **not** blanket VIF paring. True redundancies handled case-by-case (the
-  closure via T35; any residual bias-proxy individually). Belongs to the results-
-  interpretation phase (SCOPE Headline C).
+  ⏳ **Machinery built + design settled (grill 2026-07-15); authoritative run deferred.**
+  New `models/shap_groups.py` reuses the canonical `shap_values.pooled_oof_shap` (per-fold
+  refit + held-out TreeSHAP) and adds the grouping layer. **Purpose fixed as (a):** a
+  de-cluttered, geoscientist-legible indicator-**family** importance ranking so credit isn't
+  split across the ~70 partly-redundant columns — NOT an a-priori "landscape regime" claim
+  (families interpreted post-hoc), and NOT the mechanism-vs-lake-proxy question (SCOPE defers
+  that). **Settled design:** grouping basis = **feature-space** Spearman (a tree scatters
+  credit erratically across near-duplicate cols, so SHAP-space could fail to group them;
+  25/44 continuous cols have a |ρ|>0.8 partner); distance = **1−|Spearman|** (anti-correlated
+  cols are still redundant — fire pair ρ=−1.00, thermal continentality spans ±0.94); linkage
+  = **complete** (cut at t ⇒ within-family |ρ|≥1−t); cut = the **auto-detected natural gap**
+  in merge heights (emergent, ~|ρ|≈0.55 → 19 continuous families on the prototype); one-hots
+  **collapsed to source** (Land Cover, Vegetation Mode) with **Yedoma standalone** (one-hot =
+  one variable, definitional redundancy). Grouped contribution/point = **Σ signed member
+  SHAP** (exact additivity); importance = mean|Σ|, Abrupt-oriented. Outputs: dendrogram +
+  grouped-importance bar + per-family contribution box + `shap_families.json`. **Smoke-tested
+  end-to-end** (`SHAP_GROUPS_SMOKE=1` → `output/_smoke/`, gitignored, non-authoritative).
+  *Deferred to the operational run (feature set must be final — i.e. **post-T23**, since a
+  parity-driven feature drop would force a retrain and move the SHAP):* the authoritative
+  numbers + two case-by-case curation calls judged against real importances — (1) keep the
+  4-member "alpine relief" [Elevation|Slope|HND|SWE] fused or split terrain from elev/snow;
+  (2) keep `Trend in SWE` in thermal continentality or move it with the other trends. Then
+  rename the auto-tagged provisional family labels for the manuscript. Full design recorded in
+  memory `t41-grouped-shap-design`.
+  *Depends:* T25 (done), retrain (done 2026-07-15 15:05 — operative model already current),
+  **feature-set lock (T23)** for the authoritative numbers. *Done when:* the authoritative
+  grouped SHAP story is reported over the emergent families (§ above), curation resolved.
 
 - [x] **T44 — Contradictory-label ceiling diagnostic.** [FABLE A3§3] *Depends:* rebuild
   (train half — `features_clean.csv` — done). ✓ 2026-07-15 `diagnostics/contradictory_labels.py`

@@ -53,7 +53,7 @@ MODEL_SEED = 42   # XGBoost estimator randomness
 CV_SEED = 42      # block-fold shuffling (deterministic fold regeneration)
 
 BLOCK_METHOD = 'albers_grid'          # equal-area km grid [B5b]
-BUFFER_KM = 1.0                        # fixed 1 km dead zone across all sizes [B5c]
+BUFFER_KM = 0.0                        # empirical: block holdout already removes near-seam leakage [T43]
 N_OUTER = 5
 N_INNER = 5
 SWEEP_CELL_KM = [10, 25, 50, 100, 200]  # interpolation -> extrapolation [B5a]

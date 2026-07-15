@@ -180,19 +180,43 @@ column-changing wiring, then the dry-run gate before the overnight run.
 
 ## DEFERRED — after the rebuild (operate on `features_clean.csv` / downstream)
 
-- [ ] **T43 — CV buffer from the empirical autocorrelation range.** [FABLE A2§3]
-  `spatial_cv.py` fixes `BUFFER_KM = 1.0`; with 97% of points within 5 km of a neighbor
-  and features with multi-km spatial support (e.g. the 2 km curvature window), near-seam
-  leakage may inflate the headline AUC-PR. *Depends:*
-  rebuild. *Done when:* `diagnostics/leakage_decay.py` measures the leakage-decay range
-  (where OOF performance stops dropping as the buffer grows), the operative buffer is set
-  to that range with **no nominal-scale floor** (let the data decide — the 1 km serve grid
-  is a *resampling* grid, not a native floor; terrain is served at native scale), and a buffer-sensitivity sweep
-  (1/2/5/10 km) is reported. *(Not the explanation for the old random-split near-perfect
-  discrimination — that predates the buffer; separate leakage question → SCOPE.)*
+- [x] **T43 — CV buffer from the empirical autocorrelation range.** [FABLE A2§3]
+  ✓ 2026-07-15 `train_xgboost.py` (**not** `spatial_cv.py`) fixed `BUFFER_KM = 1.0` [B5c],
+  applied across all `SWEEP_CELL_KM` sizes. Two probes, both with a matched-count random-
+  removal CONTROL to separate leakage from data loss, positive = Non-abrupt, no nominal-
+  scale floor:
+  - **Random-split geometry (`diagnostics/leakage_decay.py`, figure `leakage_decay.png`):**
+    r=0 AUC-PR 0.904 (leaky ref); the leakage-specific gap is contiguous only through
+    **~2 km** (+~0.08), then dissolves into data-depletion noise — a 1 km buffer already
+    strips 63% of train points, 2 km strips 86%, so this dispersed-test geometry can't
+    yield a plateau (the pool depletes first; the naive plateau detector was fixed to
+    reject the collapsed chance floor). Diagnostic-only; wrong geometry to *size* the
+    operative buffer (which feeds block CV, not a random split).
+  - **Block-CV geometry (`diagnostics/block_cv.py`, figure `block_buffer_decay.png`):**
+    the operative geometry — `albers_grid`/`cell_km=10`/5-fold/seed-42, fixed
+    `leakage_decay` estimator (operative hparams stale pre-retrain + circular). Buffer
+    sweep 0–15 km × 1 km: block-holdout AUC-PR **0.789** at buffer 0 (vs 0.904 leaky — the
+    **block structure**, not the buffer, is what removes the ~0.115 of leaked AUC-PR), and
+    the targeted curve stays **flat** with the **targeted-vs-control gap never exceeding
+    0.018** (< 0.02) out to 15 km / 78% removed. **⇒ no near-seam leakage survives block
+    holdout; `BUFFER_KM = 0` is defensible (data-driven, no floor).**
+  **Set `BUFFER_KM = 0.0`** in `train_xgboost.py`. *(Not the explanation for the old
+  random-split near-perfect discrimination — that predates the buffer; separate leakage
+  question → SCOPE.)* Buffer-sensitivity sweep reported in both figures; the requested
+  1/2/5/10 km readout is in the block-CV table.
 
 - [ ] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
-  *Depends:* rebuild. *Done when:* a per-feature **training-column-vs-datacube-pixel
+  ⚠ **BLOCKED (2026-07-15): the serve side is still pre-rebuild.** Only the *train* side of
+  the rebuild is done — `features_clean.csv` is fresh (71 model features: Northness/Eastness,
+  Yedoma, MERIT `hnd`/`upa`, MODIS `Time Since Last Fire`/`Burn Count`, no `Silt`). The
+  datacube `data/prediction_data.nc` (and `models/model.json`) are still the **old 49-feature,
+  4 km schema** (`scale=4000`, 294×862): they carry `Aspect`, `Silt`, `Maximum Fire Temperature`,
+  `Projected precipitation change` and lack every new feature. So train and serve are on
+  **disjoint feature sets** and a per-feature parity comparison is not yet meaningful.
+  **Unblock:** re-run `data/build_prediction_data.py` (the GEE overnight run — emits the new
+  1 km datacube from the completed feature-table rebuild) and retrain (`models/train_xgboost.py`);
+  T23 runs once train and serve share the new schema.
+  *Depends:* rebuild (**datacube half still outstanding** — feature-table half done). *Done when:* a per-feature **training-column-vs-datacube-pixel
   distribution-parity** check is documented for **every** feature (not soil-NaN only),
   including: soil-NaN reproduction; **the soil 250 m→1 km `reproject`-averaging** left
   unfixed under T37 (the one remaining terrain/soil scale gap — confirm it is as mild as

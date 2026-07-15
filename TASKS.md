@@ -300,10 +300,22 @@ column-changing wiring, then the dry-run gate before the overnight run.
   closure via T35; any residual bias-proxy individually). Belongs to the results-
   interpretation phase (SCOPE Headline C).
 
-- [ ] **T44 — Contradictory-label ceiling diagnostic.** [FABLE A3§3] *Depends:* rebuild.
-  *Done when:* the count of feature-identical / label-disagreeing groups in
-  `features_clean.csv` is reported as an irreducible-noise ceiling on separation (context
-  for the AUC-PR; pairs with the expected narrow GBM-vs-logistic margin).
+- [x] **T44 — Contradictory-label ceiling diagnostic.** [FABLE A3§3] *Depends:* rebuild
+  (train half — `features_clean.csv` — done). ✓ 2026-07-15 `diagnostics/contradictory_labels.py`
+  (consumes the `_data.load` deduped model matrix): groups rows by exact feature-identity
+  (NaN==NaN, matching the pipeline dedup), flags feature-identical / label-disagreeing
+  groups. Because `clean_feature_table.py` dedups on (features, Class) jointly, each such
+  group survives as a clean 1:1 pair (one Abrupt, one Non-abrupt) — asserted. **Result: only
+  4 contradictions** (8 rows, 0.04%; **0.36% of the 1107 minority**), pair members 2–6 m
+  apart (confirms the shared-source-pixel mechanism). Ceilings: **accuracy 0.99979**,
+  **oracle AUC-PR 0.99999** (chance 0.0574). **Finding (honest negative):** exact
+  feature-identity contradictions are *negligible* — they do **not** bound separation and do
+  **not** explain the GBM's gap-to-1.0 or the narrow GBM-vs-logistic margin. That limit is
+  **soft feature-space overlap** (near-but-not-identical opposing labels), which exact-match
+  can't see. NOTE: dedup collapses same-(feature,label) multiplicity, so the deduped 1:1 view
+  is the operative ceiling for the fitted model (it trains/scores on the same table).
+  *Follow-up (offered, not built):* a near-neighbour / feature-overlap ceiling to quantify the
+  soft limit — needs a feature-distance metric decision.
 
 - [x] **T45 — Fix logistic baseline numerical blow-up on the new feature set.** [observed 2026-07-15]
   ✓ 2026-07-15 **Not a bug — the deferred T35 bucket-3 decision (the linear baseline owns

@@ -152,15 +152,29 @@ column-changing wiring, then the dry-run gate before the overnight run.
   unburned land→censored 24/0, off-coverage→NaN. Raster materialization + full build
   run overnight (T39).
 
-- [ ] **T39 — Build robustness + pre-build GEE dry-run.** [FABLE A2§7]
-  *Depends:* T32, T33, T34, T36 (needs the final column set). *Done when:* **(1)** the
-  build keeps **continue-on-failure** (no hard abort — protect the overnight run) and its
-  end-of-run report loudly names every feature that raised or came back all-NaN, verified
-  to cover the new columns; **(2)** a **pre-build GEE dry-run** over a few hundred points
-  validates auth/bands/schema for the new GEE compute (MERIT + T37 probe) and reports
-  statewide **NaN fractions** for terrain/soil (the empirical half of the 3DEP/SoilGrids
-  coverage caveat, SCOPE). No `clean_feature_table.py` hardening — it is cheap to re-run
-  against the preserved `features_dirty.csv`.
+- [x] **T39 — Build robustness + pre-build GEE dry-run.** [FABLE A2§7] ✓ 2026-07-14
+  **(1)** `build_feature_table.py` reworked for full crash-safety: every feature (BOTH
+  tracks — the LOCAL track previously had *no* guards) is added via `try_add`, so a
+  per-feature failure is recorded in `failed_features` and printed, never aborting the run;
+  the report + `features_dirty.csv` write run in a `finally` (`finalize()`), so hours of
+  work are never lost to a late failure; init is non-interactive-safe (cached token first,
+  `ee.Authenticate()` fallback only — no browser prompt hangs the overnight run). Verified:
+  end-to-end 8-point self-test (via new `FEATURE_BUILD_LIMIT`/`FEATURE_BUILD_OUT` hooks)
+  builds all 86 columns incl. T32 Northness/Eastness (raw Aspect dropped), and a negative
+  test (broken MODIS path) confirms the two fire features are named in the report while the
+  build continues and STILL writes the CSV.
+  **(2)** New `dry_run_gee.py` validates auth/bands/schema for the GEE compute (3DEP T37
+  terrain probe, MERIT hnd/upa, bioclim, one SoilGrids band per property) over 400 ROI-
+  spread points AND reports statewide NaN fractions — **terrain 0.5%, soil 11.6%** (the
+  empirical 3DEP/SoilGrids coverage caveat, SCOPE); it also existence-checks every LOCAL
+  source. Gate PASSES. `smoke_feature_build.py` gained a Yedoma probe.
+  **Prerequisite resolved:** the MODIS MCD64A1 fire raster (deferred from T36) is now
+  materialized (`build_modis_fire_rasters.py`, 3232×3140 @ 500 m, tslf 0.33–24 yr, burn 0–8).
+  **Heads-up (not fixed):** `USGS/3DEP/10m` is now a *deprecated* GEE asset (superseded by
+  `USGS/3DEP/10m_collection`); it still serves data, and both the build and the datacube use
+  `gee_features._DEM_ID`, so leaving it consistent is safe for this rebuild — a swap is a
+  separate task. No `clean_feature_table.py` hardening — cheap to re-run against
+  `features_dirty.csv`.
 
 ---
 

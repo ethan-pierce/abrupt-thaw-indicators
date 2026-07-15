@@ -8,9 +8,6 @@ import matplotlib.pyplot as plt
 import xarray as xr
 import xgboost as xgb
 
-# Configuration
-DECISION_THRESHOLD = 0.6
-
 # Paths
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -25,7 +22,6 @@ prediction_data_path = data_dir / 'prediction_data.nc'
 print("="*80)
 print("ABRUPT THAW PREDICTION")
 print("="*80)
-print(f"Decision threshold: {DECISION_THRESHOLD}")
 
 # Load model
 print(f"\nLoading model from: {model_path}")
@@ -168,10 +164,6 @@ def _logit(p, eps=1e-7):
 log_evidence = _logit(probabilities) - _logit(pi_sample)
 print(f"Sample prior pi_sample(abrupt) = {pi_sample:.4f} (logit = {_logit(pi_sample):.4f})")
 
-# Predict binary classes using custom threshold
-# When probability of abrupt (class 0) >= threshold, predict 0 (abrupt), else 1 (non-abrupt)
-predictions = (probabilities < DECISION_THRESHOLD).astype(int)
-
 print("Predictions completed")
 
 # Additional validation: ensure predictions are finite (not NaN or inf)
@@ -184,7 +176,6 @@ if n_finite_invalid > 0:
 # Reshape predictions back to spatial dimensions
 print("\nReshaping predictions to spatial dimensions...")
 probabilities_2d = probabilities.reshape(y_size, x_size)
-predictions_2d = predictions.reshape(y_size, x_size)
 log_evidence_2d = log_evidence.reshape(y_size, x_size)
 
 # Apply the domain mask to the SAVED products, not just the figures [T20]: outside
@@ -195,21 +186,17 @@ log_evidence_2d = log_evidence.reshape(y_size, x_size)
 invalid_mask = (~valid_pixels).reshape(y_size, x_size)
 log_evidence_2d = np.where(invalid_mask, np.nan, log_evidence_2d)
 probabilities_2d = np.where(invalid_mask, np.nan, probabilities_2d)
-predictions_2d = np.where(invalid_mask, np.nan, predictions_2d.astype(float))
 
 # Calculate prediction statistics (only for valid pixels with sufficient valid features and finite predictions)
 print("\nPrediction Statistics (excluding invalid data):")
 valid_probabilities = probabilities[valid_pixels]
-valid_predictions = predictions[valid_pixels]
-n_valid_predictions = len(valid_predictions)
+n_valid_predictions = len(valid_probabilities)
 
 if n_valid_predictions > 0:
     print(f"  Valid predictions: {n_valid_predictions:,} pixels")
     print(f"  Probability range: [{valid_probabilities.min():.4f}, {valid_probabilities.max():.4f}]")
     print(f"  Probability mean: {valid_probabilities.mean():.4f}")
     print(f"  Probability median: {np.median(valid_probabilities):.4f}")
-    print(f"  Abrupt thaw predictions: {(valid_predictions == 0).sum():,} ({(valid_predictions == 0).sum()/n_valid_predictions*100:.1f}%)")
-    print(f"  Non-abrupt thaw predictions: {(valid_predictions == 1).sum():,} ({(valid_predictions == 1).sum()/n_valid_predictions*100:.1f}%)")
     valid_log_evidence = log_evidence[valid_pixels]
     print(f"  Log-evidence range: [{valid_log_evidence.min():.3f}, {valid_log_evidence.max():.3f}] (0 = neutral)")
     print(f"  Log-evidence median: {np.median(valid_log_evidence):.3f}")
@@ -223,8 +210,7 @@ print("\nCreating output dataset...")
 output_ds = xr.Dataset(
     {
         'log_evidence': (['y', 'x'], log_evidence_2d),
-        'probability': (['y', 'x'], probabilities_2d),
-        'prediction': (['y', 'x'], predictions_2d)
+        'probability': (['y', 'x'], probabilities_2d)
     },
     coords={
         'x': ds.coords['x'],
@@ -242,12 +228,10 @@ output_ds = xr.Dataset(
                                      'calibrated probability and NOT a discrete class.'),
         'pi_sample_abrupt': pi_sample,
         'probability_description': 'Diagnostic only: P_model(abrupt, class 0), calibrated to the sample prior',
-        'prediction_description': 'Binary prediction: 0=Abrupt Thaw, 1=Non-abrupt Thaw',
         'domain_mask_description': ('[T20] Off-permafrost pixels are NaN: kept iff Obu PerProb '
                                     '(UiO_PEX_PERPROB_5.0) > 0 at the cell centre AND >=1 feature '
                                     'is non-NaN. Concept-validity mask (permafrost domain), '
                                     'binary -- PerProb does NOT weight the surface.'),
-        'decision_threshold': DECISION_THRESHOLD,
         'default_value': default_value,
         'scale': ds.attrs.get('scale', 'unknown')
     }
@@ -267,18 +251,11 @@ susceptibility_ds = xr.Dataset(
 susceptibility_ds.to_netcdf(susceptibility_path)
 print(f"  Susceptibility (log-evidence) saved to: {susceptibility_path}")
 
-# Also save as separate files for easier access
+# Also save the diagnostic probability surface as a separate file for easier access
 prob_output_path = data_dir / 'prediction_probabilities.nc'
-pred_output_path = data_dir / 'prediction_classes.nc'
-
 prob_ds = xr.Dataset({'probability': output_ds['probability']}, coords=output_ds.coords, attrs=output_ds.attrs)
-pred_ds = xr.Dataset({'prediction': output_ds['prediction']}, coords=output_ds.coords, attrs=output_ds.attrs)
-
 prob_ds.to_netcdf(prob_output_path)
-pred_ds.to_netcdf(pred_output_path)
-
 print(f"  Probabilities saved to: {prob_output_path}")
-print(f"  Classes saved to: {pred_output_path}")
 
 # Create map visualization
 print("\nCreating probability map...")
@@ -353,35 +330,6 @@ map_output_path = output_dir / 'prediction_probability_map.png'
 plt.savefig(map_output_path, dpi=600, bbox_inches='tight')
 print(f"Probability map saved to: {map_output_path}")
 
-# Also create a map of binary predictions
-fig2, ax2 = plt.subplots(figsize=(14, 10))
-
-masked_pred = np.where(invalid_mask, np.nan, predictions_2d)
-
-im2 = ax2.imshow(
-    np.flipud(masked_pred),
-    extent=[lon_min, lon_max, lat_min, lat_max],
-    cmap='RdYlGn',  # Red-Yellow-Green: red = abrupt (0), green = non-abrupt (1)
-    aspect='auto',
-    origin='lower',
-    interpolation='nearest',
-    vmin=0,
-    vmax=1
-)
-
-cbar2 = plt.colorbar(im2, ax=ax2, label='Thaw Type', fraction=0.046, pad=0.04, ticks=[0, 1])
-cbar2.set_ticklabels(['Abrupt', 'Non-abrupt'])  # 0=Abrupt, 1=Non-abrupt
-cbar2.set_label('Thaw Type', rotation=270, labelpad=20)
-
-ax2.set_xlabel('Longitude (°E)', fontsize=12)
-ax2.set_ylabel('Latitude (°N)', fontsize=12)
-ax2.set_title('Abrupt Thaw Classification Map', fontsize=14, fontweight='bold')
-ax2.grid(True, alpha=0.3, linestyle='--')
-
-map_output_path2 = output_dir / 'prediction_classification_map.png'
-plt.savefig(map_output_path2, dpi=300, bbox_inches='tight')
-print(f"Classification map saved to: {map_output_path2}")
-
 plt.close('all')  # Close all figures to free memory
 
 print("\n" + "="*80)
@@ -392,6 +340,4 @@ print(f"  - {susceptibility_path}  (PRIMARY: log-evidence susceptibility)")
 print(f"  - {le_map_path}  (PRIMARY map)")
 print(f"  - {output_path}")
 print(f"  - {prob_output_path}")
-print(f"  - {pred_output_path}")
 print(f"  - {map_output_path}")
-print(f"  - {map_output_path2}")

@@ -10,6 +10,8 @@ data/Obu2019
 data/alfresco/*.tif
 # Daymet V4 reductions raster — regenerate with data/build_daymet_rasters.py
 data/daymet/*.tif
+# MODIS MCD64A1 fire-history raster — regenerate with data/build_modis_fire_rasters.py
+data/modis_fire/*.tif
 # NLCD 2016 Alaska (ERDAS IMAGINE .img + .ige spill file) — large local download
 data/NLCD2016
 # IRYP v2 yedoma confidence shapefile (T33) — large in-repo source download

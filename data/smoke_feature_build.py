@@ -153,6 +153,8 @@ probe(lambda: results.__setitem__('Vegetation Mode',
       local_rasters.sample_points(local_rasters.VEGMODE_TIF, lons, lats)), 'Vegetation Mode')
 probe(lambda: results.__setitem__('Flammability Index',
       local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats)), 'Flammability Index')
+probe(lambda: results.__setitem__('Yedoma',
+      local_rasters.sample_yedoma(lons, lats)), 'Yedoma')
 
 # ---- Daymet SWE/trends: CONDITIONAL on the materialized raster -----------
 print('Daymet SWE/trends — materialized raster (conditional):')

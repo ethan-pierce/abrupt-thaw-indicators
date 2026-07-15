@@ -305,18 +305,32 @@ column-changing wiring, then the dry-run gate before the overnight run.
   `features_clean.csv` is reported as an irreducible-noise ceiling on separation (context
   for the AUC-PR; pairs with the expected narrow GBM-vs-logistic margin).
 
-- [ ] **T45 — Fix logistic baseline numerical blow-up on the new feature set.** [observed 2026-07-15]
-  On the first retrain against the rebuilt `features_clean.csv` (71 features), the T13
-  penalized-logistic baseline floods sklearn with `divide by zero` / `overflow` /
-  `invalid value encountered in matmul` warnings during its per-fold fit — the solver is
-  choking on non-finite / heavy-tailed inputs the new features introduce (soil ~11.6% NaN,
-  MODIS fire NaN for >70°N ~11% of points; plus the heavy-tailed positives the baseline is
-  supposed to log). XGBoost is unaffected (NaN-native), so `model.json` and the datacube are
-  fine — this only corrupts the **baseline comparison numbers**, making the GBM-vs-logistic
-  margin (SCOPE Headline / T44 pairing) meaningless. *Depends:* rebuild. *Done when:* the
-  linear baseline's Pipeline handles NaN (impute) and finite inputs cleanly (the T35-scoped
-  log + standardize actually applied to all heavy-tailed columns), the matmul warnings are
-  gone, and the baseline AUC-PR is a trustworthy comparison again.
+- [x] **T45 — Fix logistic baseline numerical blow-up on the new feature set.** [observed 2026-07-15]
+  ✓ 2026-07-15 **Not a bug — the deferred T35 bucket-3 decision (the linear baseline owns
+  its own preprocessing) had never been wired in.** The baseline was `median-impute →
+  standardize → lbfgs-logistic`, missing the log-compression. Root-caused in two layers:
+  - **The flood = the lbfgs *fit*.** On this near-separable data lbfgs spends ~100
+    line-search iterations, each emitting a transient overflow/invalid-`matmul` warning
+    (the *final* coef is small & finite — |coef|≤3.45 — so the warnings are benign
+    optimizer noise, not divergence). Switched the baseline solver to **`liblinear`**
+    (coordinate descent): identical fit (AUC-PR 0.889, same coef norm) in <10 iterations,
+    fit is warning-free.
+  - **Preprocessing wired per T35, split by column type** (`logistic_builder`
+    `ColumnTransformer`): heavy-tailed non-negative continuous (`LOG_BASELINE_COLS` — MERIT
+    `hnd`/`upa`, precip *amounts*, SWE, SOC, Nitrogen) get `log1p → median-impute →
+    standardize`; other continuous get `median-impute → standardize`; **binary one-hots
+    (Land Cover / Veg Mode / Yedoma, detected by value) are NOT standardized** (dividing a
+    rare 0/1 col by its tiny σ inflated its lone `1` to ~139σ). NaN handled cleanly (median
+    for continuous, constant-0 for one-hots).
+  - **Residual 3 warns/predict = a known benign numpy SIMD `matmul` false positive** (the
+    decision fn is finite, range −12…+16). Scoped an `np.errstate(divide/over/invalid=
+    'ignore')` around the baseline only via a thin `_QuietLinearBaseline` fit/predict
+    wrapper — XGBoost untouched.
+  **Verified:** end-to-end `TRAIN_SMOKE=1` run exits 0 with **zero** `RuntimeWarning`s and a
+  sensible baseline (pooled-OOF AUC-PR ~0.72 vs dummies ~0.05). `model.json` (XGBoost,
+  NaN-native) is unchanged by this — only the baseline comparison is now trustworthy.
+  *Follow-up:* a full (non-smoke) retrain will refresh the **persisted** baseline AUC-PR in
+  `run_manifest.json` / the sweep log (the last full run predates this fix).
 
 - [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] *Depends:* T14 (done),
   T19 (done), T25 (done), + rebuild. *Done when:* the `diagnostics/` suite is re-pointed at

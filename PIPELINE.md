@@ -65,10 +65,12 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 
 | Feature | Track | Source (confirmed 2026-07-13) | Re-derivation / notes |
 | --- | --- | --- | --- |
-| Mean curvature (500 m, 2 km) | GEE | USGS **3DEP 10 m** (`USGS/3DEP/10m`) | mean curvature via TAGEE algorithm (needs Python/ee port of TAGEE); 500 m vs 2 km = DEM smoothing window (reconstructed) |
-| Mean Annual SWE | LOCAL | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`), materialized to `data/daymet/daymet_v4_reductions_1km_3338.tif` by `build_daymet_rasters.py` — *resolved 2026-07-13* | per-year mean of daily SWE → temporal mean over 1991–2020; EPSG:3338 1 km, nearest sample; materialized because live GEE point-sampling of the deep reduction hangs (T30) |
-| Trend in SWE / precip / temp | LOCAL | **Daymet V4** (`swe` / `prcp` / `tmax`), same materialized raster (`build_daymet_rasters.py`) — *resolved 2026-07-13* | per-pixel `ee.Reducer.linearFit()` slope over 1991–2020 (`scale` band): precip = annual sum, temp/SWE = annual mean; EPSG:3338 1 km, nearest sample |
-| Time Since Last Fire, Burn Count | LOCAL | NASA/USGS **MODIS MCD64A1** (`MODIS/061/MCD64A1`, band `BurnDate`), materialized to `data/modis_fire/mcd64a1_fire_history_500m_3338.tif` by `build_modis_fire_rasters.py` (T36) | fire *history* over 2001–2024: years since most recent burn (capped at record length) + burn-count; EPSG:3338 ~500 m, nearest sample, datacube resamples to 1 km. **Right-censored** ("no fire since 2001" ≠ never-burned); NaN above ~70°N where MCD64A1 QA coverage drops out |
+| Mean curvature (500 m, 2 km) | GEE | USGS **3DEP 10 m** (`USGS/3DEP/10m`) | reconstructed Zevenbergen–Thorne mean curvature (1/m) in EPSG:3338. The DEM is bilinearly resampled to `d = window / 2` (250 m or 1 km), so the outer cells of the 3×3 finite-difference neighborhood span the named 500 m or 2 km smoothing window; sampled at `d` in both paths |
+| Height Above Nearest Drainage | GEE | **MERIT Hydro v1.0.1** (`MERIT/Hydro/v1_0_1`, band `hnd`) | raw height above nearest drainage (m), point-sampled at 90 m (rounded native ~92.77 m) in both paths; no 1 km averaging |
+| Upstream Area | GEE | **MERIT Hydro v1.0.1** (`MERIT/Hydro/v1_0_1`, band `upa`) | raw upstream drainage area (km²), point-sampled at 90 m in both paths; no 1 km averaging and no canonical log transform (the linear baseline applies `log1p` within its own preprocessing) |
+| Mean Annual SWE | LOCAL | **Daymet V4** (`NASA/ORNL/DAYMET_V4`, band `swe`), materialized to `data/daymet/daymet_v4_reductions_1km_3338.tif` by `build_daymet_rasters.py` — *resolved 2026-07-13* | inclusive 1991–2020 window: mean daily SWE within each calendar year, then mean across the 30 annual values; EPSG:3338 at native 1 km, nearest-sampled in both paths; materialized because live GEE point-sampling of the deep reduction hangs (T30) |
+| Trend in SWE / precipitation / temperature | LOCAL | **Daymet V4** (`NASA/ORNL/DAYMET_V4`; `swe` / `prcp` / `tmax`), same materialized raster (`build_daymet_rasters.py`) — *resolved 2026-07-13* | inclusive 1991–2020 annual series: SWE = mean daily SWE, precipitation = annual sum, temperature = mean daily maximum temperature; per-pixel OLS slope against year via `ee.Reducer.linearFit()` (`scale` band); EPSG:3338 at native 1 km, nearest-sampled in both paths |
+| Time Since Last Fire, Burn Count | LOCAL | NASA/USGS **MODIS MCD64A1** (`MODIS/061/MCD64A1`, monthly `BurnDate`), materialized to `data/modis_fire/mcd64a1_fire_history_500m_3338.tif` by `build_modis_fire_rasters.py` (T36) | inclusive 2001–2024 record: decimal years since the most recent detected burn and count of monthly composites with a detected burn; EPSG:3338 at ~500 m, nearest-sampled in both paths (the datacube samples at 1 km cell centers). **Right-censored:** no detected fire receives the 24-year ceiling and count 0, meaning "no fire since 2001," not never burned. Pixels outside the MCD64A1 QA domain are NaN (empirically ~11% of training points, concentrated above ~70°N) |
 | Flammability Index | LOCAL | UAF **SNAP ALFRESCO** historical, CRU TS4.0 1900–1999 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | continuous 0–~0.02, EPSG:3338 1 km, nodata −9999; bilinear/nearest sample |
 | Vegetation Mode | LOCAL | UAF **SNAP ALFRESCO** historical mode statistic, 1950–2008 (`data/fetch_alfresco.py`) — *resolved 2026-07-13* | **categorical** veg-type codes 0–8, EPSG:3338 1 km; **nearest** sample (never mean) |
 | Land cover | LOCAL | **NLCD 2016 Alaska** ERDAS `.img`+`.ige` in `data/NLCD2016/` (user-provided) — *resolved 2026-07-13* | categorical NLCD codes, WGS84-Albers 30 m; windowed/nearest sample (8.4 B px — don't load whole array) |
@@ -76,9 +78,10 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > **All LOCAL-track sources resolved (2026-07-13).** ALFRESCO ×2 → historical CRU/observed runs
 > (`data/fetch_alfresco.py`). NLCD → user-provided ERDAS `.img` in `data/NLCD2016/`.
 > All are EPSG:3338 or WGS84-Albers, ready for rasterio point-sampling; raster
-> binaries are git-ignored and regenerable from the fetch scripts. **Remaining for
-> T29:** just documenting the reconstructed GEE-track choices (curvature smoothing
-> window, Daymet year range, annual aggregations) in the methods table.
+> binaries are git-ignored and regenerable from the fetch scripts. The reconstructed
+> curvature, Daymet, MERIT Hydro, and MODIS choices are recorded in the methods table
+> above; they are reproducible definitions for this rebuild, not byte-matches to the
+> lost custom assets.
 >
 > **SNAP projected-climate features removed (2026-07-13).** The three
 > `Projected summer/winter temp change` + `Projected precipitation change` layers

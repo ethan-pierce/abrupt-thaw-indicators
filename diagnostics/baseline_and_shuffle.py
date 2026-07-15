@@ -1,11 +1,11 @@
-"""Move 1 (floor) + Move 2 (shuffle-label) for the abrupt/gradual classifier.
+"""Move 1 (floor) + Move 2 (shuffle-label) for the abrupt/non-abrupt classifier.
 
 Establishes the floor the reported AUC-ROC~0.99 / AUC-PR~0.9999 must clear, and
 attacks the too-good hypothesis with a shuffle-label probe. Uses the SAME random,
 class-stratified split the training pipeline uses (train_xgboost.py), so numbers
 are comparable to the author's evaluation.
 
-Positive class = 1 (Gradual, minority) to match the pipeline's predict_proba[:,1]
+Positive class = 1 (Non-abrupt, minority) to match the pipeline's predict_proba[:,1]
 and average_precision_score convention. AUC-PR chance floor = positive prevalence.
 
 Run: poetry run python diagnostics/baseline_and_shuffle.py
@@ -25,8 +25,8 @@ from _data import load
 
 SEED = 42
 X, y, lat, lon = load(verify=True)
-prevalence = y.mean()  # positive (Gradual) prevalence == AUC-PR chance floor
-print(f"n={len(y)}  features={X.shape[1]}  positive(Gradual) prevalence={prevalence:.4f}")
+prevalence = y.mean()  # positive (Non-abrupt) prevalence == AUC-PR chance floor
+print(f"n={len(y)}  features={X.shape[1]}  positive(Non-abrupt) prevalence={prevalence:.4f}")
 print(f"AUC-PR chance floor = {prevalence:.4f}   AUC-ROC chance = 0.5000\n")
 
 # --- pipeline's own split: default_rng(42).integers(0,100), stratified, 30% test
@@ -52,7 +52,7 @@ def xgb_model(spw):
 
 
 print("=" * 74)
-print("MOVE 1 - THE FLOOR (trivial + simple baselines, positive class = Gradual)")
+print("MOVE 1 - THE FLOOR (trivial + simple baselines, positive class = Non-abrupt)")
 print("=" * 74)
 # Constant / majority
 d = DummyClassifier(strategy='most_frequent').fit(Xtr, ytr)

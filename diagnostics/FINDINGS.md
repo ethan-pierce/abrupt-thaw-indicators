@@ -1,4 +1,4 @@
-# verify-ml findings — abrupt-vs-gradual thaw classifier
+# verify-ml findings — abrupt-vs-non-abrupt thaw classifier
 
 **Stamp (reproducible only against all three):**
 - Code: git `347c9cd` (working tree: `diagnostics/` untracked, no pipeline edits)
@@ -90,7 +90,7 @@ free signal. Not yet tested. → check whether NaN-ness of soil features is pred
 2. **Persist one canonical train/test/val split** (saved indices) and share it across
    train, calibrate, and SHAP.
 3. Add **logistic regression as the reported baseline** the model must beat.
-4. Headline **AUC-PR (minority=Gradual)**, not AUC-ROC or accuracy; report the chance
+4. Headline **AUC-PR (minority=Non-abrupt)**, not AUC-ROC or accuracy; report the chance
    floor (=prevalence) alongside.
 5. Audit **soil-feature missingness** and the mechanism-vs-spatial-proxy question for
    the SHAP story before Headline C is written.

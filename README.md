@@ -242,7 +242,7 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
 - **A2 — Soil NaN: no change.** Leave pass-through for XGBoost's native routing
   (median-impute for the baseline only). *No* soil-missing indicator — it would fragment
   the lake signal already carried by Land Cover (Open Water) = 42% of points. Measured:
-  soil-NaN is 19.4% Abrupt vs 3.4% Gradual (a lake-masking proxy). Lake confound
+  soil-NaN is 19.4% Abrupt vs 3.4% Non-abrupt (a lake-masking proxy). Lake confound
   consolidated onto Land Cover for the deferred interpretation phase.
 - **A3 — Keep exact `drop_duplicates`.** Measured harmless: 1.89% of rows, all
   co-located (≤174 m), all same-label. But the dedup **subset must exclude lat/lon**
@@ -257,7 +257,7 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
   scale (the full curve). How to *quote* it = deferred to the reporting phase.
 - **B5b — Equal-area km-grid blocks.** Add an Alaska Albers (EPSG:3338) km-grid block
   method to `spatial_cv.py`; sweep cell **edge length in km** (real, interpretable
-  scale). Buffer stays haversine great-circle. Report per-fold Gradual counts so
+  scale). Buffer stays haversine great-circle. Report per-fold Non-abrupt counts so
   minority sparsity at large blocks is visible.
 - **B5c — Fixed 1 km buffer** across all block sizes (tied to the ~1 km coarsest
   feature resolution; covers the 62%-within-1 km near-duplicate mass). Block size, not
@@ -271,7 +271,7 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
   (SHAP-on-OOF vs. final model = F14/F15).
 
 *C. Training & selection (`train_xgboost.py`)*
-- **C8 — Select on pooled-OOF AUC-PR** (average precision, positive = Gradual), matching
+- **C8 — Select on pooled-OOF AUC-PR** (average precision, positive = Non-abrupt), matching
   the headline; drop Brier/F1 from selection. (Settled with E13.)
 - **C9 — `scale_pos_weight = 1`** (no reweighting). The product is a likelihood-ratio
   index, not a 0.5-thresholded classifier, so reweighting buys nothing and keeps the
@@ -282,7 +282,7 @@ Item #9 is subsumed by B6 (canonical config + one operative model).
   (`SPLIT_SEED`/`MODEL_SEED`/`CV_SEED`) persisted in the B6 config (42 lineage).
 
 *D. Evaluation & baselines*
-- **D11 — Headline = AUC-PR (Gradual)** + prevalence floor (~0.068) + across-fold spread
+- **D11 — Headline = AUC-PR (Non-abrupt)** + prevalence floor (~0.068) + across-fold spread
   (from the B5 sweep). Keep AUC-ROC as a *secondary* (imbalance-insensitive; comparison
   to prior work). **Cut accuracy entirely** (meaningless at 93% prevalence).
 - **D12 — Baselines as internal diagnostics.** Dummy (prior/stratified) + penalized

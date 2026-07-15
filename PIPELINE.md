@@ -145,7 +145,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 
 - **`models/model.json`** + run manifest (git SHA, `features_clean.csv` hash, CV
   config + seeds, Obu/Brown product versions, selected hyperparameters). *(H20.1)*
-- **Performance**: AUC-PR (positive = Gradual) vs. block-size curve with across-fold
+- **Performance**: AUC-PR (positive = Non-abrupt) vs. block-size curve with across-fold
   spread + prevalence floor; AUC-ROC secondary; baseline diagnostics. *(no accuracy)*
 - **Continuous log-evidence abrupt-thaw susceptibility surface** (statewide 1 km,
   masked by Obu permafrost domain) — the single headline map.

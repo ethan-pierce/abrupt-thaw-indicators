@@ -29,7 +29,7 @@ from _data import load
 SEED = 42
 X, y, lat, lon = load(verify=True)
 yv = y.to_numpy()
-print(f"n={len(y)}  features={X.shape[1]}  positive(Gradual) prevalence={y.mean():.4f}\n")
+print(f"n={len(y)}  features={X.shape[1]}  positive(Non-abrupt) prevalence={y.mean():.4f}\n")
 
 
 def xgb_model(spw):

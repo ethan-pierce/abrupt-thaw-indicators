@@ -15,7 +15,7 @@ all-data `model.json` is deliberately not used — OOF attribution requires per-
 
 Output space: MARGIN (log-odds), `model_output='raw'` with the exact tree-path-dependent
 perturbation (no background dataset). This matches the T19 log-evidence susceptibility
-scale. The raw margin of `binary:logistic` is the log-odds of class 1 (Gradual); we
+scale. The raw margin of `binary:logistic` is the log-odds of class 1 (Non-abrupt); we
 negate so positive SHAP pushes toward Abrupt (class 0), preserving the Abrupt-oriented
 sign convention of the earlier figures.
 """
@@ -135,7 +135,7 @@ def pooled_oof_shap(X, y, lat, lon, *, cell_km, buffer_km, n_splits, seed, hpara
             continue  # degenerate fold: leave these test points unscored
         est = factory(ytr)
         est.fit(X.iloc[train_idx], ytr)
-        # Exact, background-free TreeSHAP in margin (log-odds of class 1 = Gradual).
+        # Exact, background-free TreeSHAP in margin (log-odds of class 1 = Non-abrupt).
         explainer = shap.TreeExplainer(est, model_output='raw',
                                        feature_perturbation='tree_path_dependent')
         expl = explainer(X.iloc[test_idx])

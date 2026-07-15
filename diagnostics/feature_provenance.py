@@ -1,7 +1,7 @@
 """Feature-provenance trace: does a single feature proxy the target?
 
 A depth-1 stump reaches AUC~0.85 (baseline_and_shuffle.py), so one feature nearly
-separates abrupt from gradual. This scans every feature's univariate separating
+separates abrupt from non-abrupt. This scans every feature's univariate separating
 power and flags any that behaves like a target proxy -- especially a water/lake
 indicator, since the DB is lake-dominated (abrupt ~= thermokarst lake), which
 would encode the SAMPLING DESIGN rather than a thaw mechanism (SCOPE.md, README #13).
@@ -15,7 +15,7 @@ from _data import load
 X, y, lat, lon = load(verify=True)
 yv = y.to_numpy()
 prev = y.mean()
-print(f"n={len(y)}  positive(Gradual) prevalence={prev:.4f}  (AUC-PR floor={prev:.4f})\n")
+print(f"n={len(y)}  positive(Non-abrupt) prevalence={prev:.4f}  (AUC-PR floor={prev:.4f})\n")
 
 rows = []
 for col in X.columns:

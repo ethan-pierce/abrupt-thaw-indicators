@@ -160,12 +160,12 @@ def nested_block_folds(lat, lon, blocks, n_splits_outer=5, n_splits_inner=5,
 
 
 def fold_class_counts(folds, y, positive=1):
-    """Per-fold train/test sizes and minority (positive=Gradual, class 1) counts.
+    """Per-fold train/test sizes and minority (positive=Non-abrupt, class 1) counts.
 
     Takes a materialized list of `(train_idx, test_idx)` folds (flat or the inner
     folds from `nested_block_folds`) and returns a list of dicts. Lets the caller
-    log Gradual sparsity per fold at each block size (B5b): at large blocks some
-    folds may hold few or zero Gradual points, which pooled scoring must survive.
+    log Non-abrupt sparsity per fold at each block size (B5b): at large blocks some
+    folds may hold few or zero Non-abrupt points, which pooled scoring must survive.
     """
     y = np.asarray(y)
     rows = []
@@ -255,9 +255,9 @@ def _selftest():
             assert set(bn[itr]).isdisjoint(test_blocks)
             assert set(bn[iva]).isdisjoint(test_blocks)
 
-    # fold_class_counts: totals across folds match the data; each Gradual point is
+    # fold_class_counts: totals across folds match the data; each Non-abrupt point is
     # a test-positive in exactly one fold (pooled-OOF property).
-    yc = np.array([0, 0, 1, 0, 1, 0, 0, 1])   # 3 Gradual (class 1) among 8 points
+    yc = np.array([0, 0, 1, 0, 1, 0, 0, 1])   # 3 Non-abrupt (class 1) among 8 points
     cfolds = list(buffered_block_folds(latn, lonn, bn, n_splits=2, buffer_km=0.0, seed=0))
     counts = fold_class_counts(cfolds, yc, positive=1)
     assert sum(r['test_n'] for r in counts) == len(yc)

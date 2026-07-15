@@ -288,9 +288,19 @@ column-changing wiring, then the dry-run gate before the overnight run.
   the continuous log-evidence surface only. *Depends:* T19 (done). *Done when:* no discrete
   class artifact is written.
 
-- [ ] **T40 — Class-label sweep "Gradual" → "Non-abrupt".** [FABLE A2§2 / glossary 2026-07-14]
-  *Depends:* — *Done when:* confusion-matrix labels, SHAP plot titles, and metric-report
-  strings say "Non-abrupt" (matching the corrected glossary). Cosmetic; encoding untouched.
+- [x] **T40 — Class-label sweep "Gradual" → "Non-abrupt".** [FABLE A2§2 / glossary 2026-07-14]
+  ✓ 2026-07-15 Swept every "Gradual" class-1 label across **our** code + methods docs to
+  "Non-abrupt": `train_xgboost.py` (headline plot ylabel, prevalence print, per-fold metric
+  strings, docstring — plus the internal `test_gradual`/`train_gradual` dict keys → underscore
+  form `test_non_abrupt`/`train_non_abrupt`, which also flow into `cv_sweep_results.json`),
+  `predict.py` (class-map colorbar ticklabels, prediction-count print, netCDF
+  `prediction_description`, log-evidence/cmap comments), `shap_values.py`, `spatial_cv.py`,
+  four `diagnostics/*.py`, `clean_feature_table.py` (encoding comment), and `README`/`PIPELINE`/
+  `FINDINGS`. **Left `REFERENCES.md` alone** — its "abrupt-vs-gradual thaw *mode*" usages
+  describe the external-literature concept (the glossary keeps "gradual thaw" valid as a
+  concept), not the class label. Encoding untouched (`np.where(ThawType=='Abrupt',0,1)`).
+  Verified: all files compile, no residual "gradual" in code, and a redirected-output smoke
+  (real artifacts untouched) prints "test Non-abrupt …" with the renamed keys serialized.
 
 - [ ] **T41 — Grouped SHAP over emergent groups.** [FABLE A1§4 / A2§6 / A3§2]
   *Depends:* T25 (done), rebuild + retrain. *Done when:* the authoritative SHAP story is

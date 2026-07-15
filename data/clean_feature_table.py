@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA
 
 feats = pd.read_csv(DATA / 'features_dirty.csv')
-feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Gradual = 1 (minority class)
+feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Non-abrupt = 1 (minority class)
 # Fire (T36): the FIRMS Maximum Fire Temperature / Fire Detected pair is replaced
 # upstream by the MODIS MCD64A1 fire-history features (Time Since Last Fire, Burn
 # Count). Those pass through here untouched as continuous columns — nothing to

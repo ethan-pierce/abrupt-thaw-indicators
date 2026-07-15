@@ -140,14 +140,14 @@ print(f"Masked pixels (off-domain or no data): {n_invalid:,} ({n_invalid/n_pixel
 print("\nGenerating predictions...")
 print("  This may take a while for large datasets...")
 
-# Predict probabilities (class 0 = abrupt thaw, class 1 = gradual thaw)
+# Predict probabilities (class 0 = abrupt thaw, class 1 = non-abrupt thaw)
 # Use index 0 for abrupt thaw (majority class, ~94% of training data)
 probabilities = model.predict_proba(feature_array)[:, 0]
 
 # T19 [E13]: log-evidence susceptibility index -- the PRIMARY output surface.
 #   log_evidence = logit(P_model(abrupt|x)) - logit(pi_sample(abrupt))
-# A prior-free log-likelihood-ratio for abrupt vs gradual thaw: 0 = neutral, >0 favours
-# abrupt, <0 favours gradual. This is NOT a calibrated probability and NOT a discrete
+# A prior-free log-likelihood-ratio for abrupt vs non-abrupt thaw: 0 = neutral, >0 favours
+# abrupt, <0 favours non-abrupt. This is NOT a calibrated probability and NOT a discrete
 # class -- the sample prior is a lake-/road-biased sampling artifact and the landscape
 # prior is unrecoverable, so only the prior-free evidence is defensible.
 #
@@ -169,7 +169,7 @@ log_evidence = _logit(probabilities) - _logit(pi_sample)
 print(f"Sample prior pi_sample(abrupt) = {pi_sample:.4f} (logit = {_logit(pi_sample):.4f})")
 
 # Predict binary classes using custom threshold
-# When probability of abrupt (class 0) >= threshold, predict 0 (abrupt), else 1 (gradual)
+# When probability of abrupt (class 0) >= threshold, predict 0 (abrupt), else 1 (non-abrupt)
 predictions = (probabilities < DECISION_THRESHOLD).astype(int)
 
 print("Predictions completed")
@@ -209,7 +209,7 @@ if n_valid_predictions > 0:
     print(f"  Probability mean: {valid_probabilities.mean():.4f}")
     print(f"  Probability median: {np.median(valid_probabilities):.4f}")
     print(f"  Abrupt thaw predictions: {(valid_predictions == 0).sum():,} ({(valid_predictions == 0).sum()/n_valid_predictions*100:.1f}%)")
-    print(f"  Gradual thaw predictions: {(valid_predictions == 1).sum():,} ({(valid_predictions == 1).sum()/n_valid_predictions*100:.1f}%)")
+    print(f"  Non-abrupt thaw predictions: {(valid_predictions == 1).sum():,} ({(valid_predictions == 1).sum()/n_valid_predictions*100:.1f}%)")
     valid_log_evidence = log_evidence[valid_pixels]
     print(f"  Log-evidence range: [{valid_log_evidence.min():.3f}, {valid_log_evidence.max():.3f}] (0 = neutral)")
     print(f"  Log-evidence median: {np.median(valid_log_evidence):.3f}")
@@ -242,7 +242,7 @@ output_ds = xr.Dataset(
                                      'calibrated probability and NOT a discrete class.'),
         'pi_sample_abrupt': pi_sample,
         'probability_description': 'Diagnostic only: P_model(abrupt, class 0), calibrated to the sample prior',
-        'prediction_description': 'Binary prediction: 0=Abrupt Thaw, 1=Gradual Thaw',
+        'prediction_description': 'Binary prediction: 0=Abrupt Thaw, 1=Non-abrupt Thaw',
         'domain_mask_description': ('[T20] Off-permafrost pixels are NaN: kept iff Obu PerProb '
                                     '(UiO_PEX_PERPROB_5.0) > 0 at the cell centre AND >=1 feature '
                                     'is non-NaN. Concept-validity mask (permafrost domain), '
@@ -306,7 +306,7 @@ fig0, ax0 = plt.subplots(figsize=(14, 10))
 im0 = ax0.imshow(
     np.flipud(masked_log_evidence),
     extent=[lon_min, lon_max, lat_min, lat_max],
-    cmap='RdBu_r',  # red = positive (favours abrupt), white = 0 (neutral), blue = favours gradual
+    cmap='RdBu_r',  # red = positive (favours abrupt), white = 0 (neutral), blue = favours non-abrupt
     aspect='auto',
     origin='lower',
     interpolation='nearest',
@@ -361,7 +361,7 @@ masked_pred = np.where(invalid_mask, np.nan, predictions_2d)
 im2 = ax2.imshow(
     np.flipud(masked_pred),
     extent=[lon_min, lon_max, lat_min, lat_max],
-    cmap='RdYlGn',  # Red-Yellow-Green: red = abrupt (0), green = gradual (1)
+    cmap='RdYlGn',  # Red-Yellow-Green: red = abrupt (0), green = non-abrupt (1)
     aspect='auto',
     origin='lower',
     interpolation='nearest',
@@ -370,7 +370,7 @@ im2 = ax2.imshow(
 )
 
 cbar2 = plt.colorbar(im2, ax=ax2, label='Thaw Type', fraction=0.046, pad=0.04, ticks=[0, 1])
-cbar2.set_ticklabels(['Abrupt', 'Gradual'])  # 0=Abrupt, 1=Gradual
+cbar2.set_ticklabels(['Abrupt', 'Non-abrupt'])  # 0=Abrupt, 1=Non-abrupt
 cbar2.set_label('Thaw Type', rotation=270, labelpad=20)
 
 ax2.set_xlabel('Longitude (°E)', fontsize=12)

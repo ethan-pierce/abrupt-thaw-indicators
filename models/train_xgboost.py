@@ -11,7 +11,7 @@ spatial-block CV (see `spatial_cv.py`) run across a sweep of block sizes:
 Design choices tied to the likelihood-ratio framing (E13):
   * `scale_pos_weight = 1` (no imbalance reweighting) so the divided-out prior stays
     exactly the sample prevalence.                                          [C9/T10]
-  * Selection & headline are AUC-PR (positive = Gradual, class 1); accuracy is not
+  * Selection & headline are AUC-PR (positive = Non-abrupt, class 1); accuracy is not
     reported at all (meaningless at ~93% prevalence).                       [D11/T12]
 
 This script produces the CV evidence (sweep curve + config). The single operative
@@ -294,8 +294,8 @@ def run_family(X, y, outer_folds, builder, param_grid):
         per_fold.append({
             'fold': f, 'inner_ap': inner_ap, 'fold_ap': _safe_ap(yv, oof_proba, fold_mask),
             'selected': combo,
-            'test_n': int(len(ote)), 'test_gradual': int((yv[ote] == 1).sum()),
-            'train_n': int(len(otr)), 'train_gradual': int((yv[otr] == 1).sum()),
+            'test_n': int(len(ote)), 'test_non_abrupt': int((yv[ote] == 1).sum()),
+            'train_n': int(len(otr)), 'train_non_abrupt': int((yv[otr] == 1).sum()),
         })
 
     pooled_ap = _safe_ap(yv, oof_proba, oof_scored)
@@ -456,7 +456,7 @@ def plot_sweep_curve(results, family_names, prevalence, path):
                label=f'prevalence floor ({prevalence:.3f})')
     ax.set_xscale('log')
     ax.set_xlabel('block edge length (km)  --  interpolation -> extrapolation')
-    ax.set_ylabel('AUC-PR (positive = Gradual)')
+    ax.set_ylabel('AUC-PR (positive = Non-abrupt)')
     ax.set_title('Nested spatial-CV AUC-PR vs block size')
     ax.legend()
     ax.grid(True, alpha=0.3)
@@ -483,10 +483,10 @@ def main():
 
     lat = coords['Latitude'].to_numpy()
     lon = coords['Longitude'].to_numpy()
-    prevalence = float((y == 1).mean())  # baseline AUC-PR floor (Gradual fraction)
+    prevalence = float((y == 1).mean())  # baseline AUC-PR floor (Non-abrupt fraction)
 
     print(f"Samples: {len(y)} | features: {X.shape[1]} | "
-          f"Gradual prevalence (AUC-PR floor): {prevalence:.4f}")
+          f"Non-abrupt prevalence (AUC-PR floor): {prevalence:.4f}")
     print(f"Block method: {BLOCK_METHOD} | buffer: {BUFFER_KM} km | "
           f"outer/inner folds: {N_OUTER}/{N_INNER} | seeds: "
           f"SPLIT={SPLIT_SEED} MODEL={MODEL_SEED} CV={CV_SEED}")
@@ -512,8 +512,8 @@ def main():
             f"{name}={res['families'][name]['pooled_ap']:.4f}"
             for name in family_names if name != 'xgboost'))
         for r in xg['per_fold']:
-            print(f"  xgb fold {r['fold']}: test Gradual {r['test_gradual']}/{r['test_n']}, "
-                  f"train Gradual {r['train_gradual']}/{r['train_n']}, "
+            print(f"  xgb fold {r['fold']}: test Non-abrupt {r['test_non_abrupt']}/{r['test_n']}, "
+                  f"train Non-abrupt {r['train_non_abrupt']}/{r['train_n']}, "
                   f"fold AUC-PR {r['fold_ap']:.4f}")
 
     # Headline curve + machine-readable sweep results [D11/T12/T13].

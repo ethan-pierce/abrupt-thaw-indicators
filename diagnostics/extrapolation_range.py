@@ -10,7 +10,7 @@ Anchored by two computed reference points on the same data/model:
   * interpolation (A: grid 0.5deg + 3 km buffer)  -- the map metric
 ...down toward the AUC-PR chance floor (= prevalence).
 
-Consumes models/spatial_cv.py. Positive class = 1 (Gradual). Pooled OOF AUC-PR.
+Consumes models/spatial_cv.py. Positive class = 1 (Non-abrupt). Pooled OOF AUC-PR.
 Run: poetry run python diagnostics/extrapolation_range.py
 """
 import sys
@@ -63,7 +63,7 @@ def main():
     X, y, lat, lon = load(verify=True)
     yv = y.to_numpy()
     prev = yv.mean()
-    print(f"n={len(y)}  Gradual={int((yv==1).sum())}  prevalence={prev:.4f}  "
+    print(f"n={len(y)}  Non-abrupt={int((yv==1).sum())}  prevalence={prev:.4f}  "
           f"buffer={BUFFER_KM}km  (AUC-PR floor={prev:.4f})\n")
 
     # --- reference: random split (leaky) ---
@@ -118,7 +118,7 @@ def _plot(rows, rand_ap, A_point, prev):
     ax.axhline(rand_ap, ls='--', color='tab:red', lw=1.2, label=f'random split, leaky ({rand_ap:.2f})')
     ax.axhline(prev, ls=':', color='k', lw=1, label=f'chance floor ({prev:.3f})')
     ax.set_xlabel('median extrapolation distance to nearest training point (km)')
-    ax.set_ylabel('AUC-PR (positive = Gradual)')
+    ax.set_ylabel('AUC-PR (positive = Non-abrupt)')
     ax.set_title('Extrapolation-granularity range: AUC-PR vs how far the model must reach\n'
                  '(labels = number of held-out regions)')
     ax.set_ylim(0, 1)

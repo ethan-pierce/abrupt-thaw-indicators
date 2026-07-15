@@ -320,10 +320,20 @@ column-changing wiring, then the dry-run gate before the overnight run.
   apart (confirms the shared-source-pixel mechanism). Ceilings: **accuracy 0.99979**,
   **oracle AUC-PR 0.99999** (chance 0.0574). **Finding (honest negative):** exact
   feature-identity contradictions are *negligible* — they do **not** bound separation and do
-  **not** explain the GBM's gap-to-1.0 or the narrow GBM-vs-logistic margin. That limit is
-  **soft feature-space overlap** (near-but-not-identical opposing labels), which exact-match
-  can't see. NOTE: dedup collapses same-(feature,label) multiplicity, so the deduped 1:1 view
-  is the operative ceiling for the fitted model (it trains/scores on the same table).
+  **not** explain the GBM's gap-to-1.0. The separation limit is **soft feature-space overlap**
+  (near-but-not-identical opposing labels), which exact-match can't see. NOTE: dedup collapses
+  same-(feature,label) multiplicity, so the deduped 1:1 view is the operative ceiling for the
+  fitted model (it trains/scores on the same table).
+  **UPDATE 2026-07-15 (repeated-CV, `diagnostics/repeated_cv.py`):** the "narrow GBM-vs-logistic
+  margin" this note referenced was a **single-partition + hyperparameter-selection-variance
+  artifact**, not real. The headline sweep's +0.003 @10 km used per-fold *selection* for both
+  models on one CV partition; selection there helped the linear model (best-fixed 0.785 → selected
+  ~0.81) and did **not** help the tree (fixed operative 0.852, min 0.819 across 20 reshuffles >
+  the single selected 0.815). Under fair fixed-config CV repeated over 20 block→fold reshuffles,
+  the operative-scale margin is **+0.076 ± 0.019** (≈4σ outside partition noise), holding +0.07–0.09
+  across 5–100 km and shrinking to +0.034 only at 200 km. **So separation is mostly linear BUT with
+  a real, stable ~0.07-AUC-PR non-linear/interaction component the tree captures** — refines, not
+  contradicts, the soft-overlap ceiling above.
   *Follow-up (offered, not built):* a near-neighbour / feature-overlap ceiling to quantify the
   soft limit — needs a feature-distance metric decision.
 

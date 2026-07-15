@@ -236,21 +236,15 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         feature_arrays['Height Above Nearest Drainage'] = np.flipud(
             sample_native(gee_features.height_above_drainage(), 'hnd', gee_features.MERIT_SCALE))
 
-    # log(upa), by contrast, IS heavy-tailed and finer than the 1 km grid, so it is
-    # reproject-averaged to 1 km (T34/T35 bucket 2) — but the average MUST act on
-    # the log, not raw area. A plain load_data(...).reproject of the .log() image
-    # silently averages raw upa first (log(mean(upa)); verified), so aggregate
-    # explicitly with reduceResolution(mean) on the native-pinned log image
-    # (gee_features.log_upstream_area). ~120 native pixels per 1 km cell is well
-    # under EE's reduceResolution limit (unlike the 10 m curvature, gee_features).
-    if 'Log Upstream Area' in feature_names:
-        log_upa_1km = (gee_features.log_upstream_area()
-                       .reproject('EPSG:4326', scale=gee_features.MERIT_SCALE)  # pin native
-                       .reduceResolution(ee.Reducer.mean(), maxPixels=1024)     # mean OF the log
-                       .reproject(projection, scale=scale)                      # onto serve grid
-                       .clip(ee_roi))
-        log_upa_data = extract_data_array(log_upa_1km, region, 'log_upa', default_value)
-        feature_arrays['Log Upstream Area'] = np.flipud(log_upa_data)
+    # upa is also served NATIVELY and RAW (T35): though heavy-tailed and finer than
+    # the 1 km grid, point-sampling the native pixel at MERIT_SCALE matches the
+    # point path by construction, so — like hnd — no reproject-averaging occurs and
+    # the log(mean(upa)) bias that averaging would introduce never arises. No log is
+    # baked in (a no-op for the XGBoost fit; the T13 linear baseline logs it in its
+    # own scope). This replaces the former reduceResolution(mean)-on-log path (T34).
+    if 'Upstream Area' in feature_names:
+        feature_arrays['Upstream Area'] = np.flipud(
+            sample_native(gee_features.upstream_area(), 'upa', gee_features.MERIT_SCALE))
 
     # Load bioclimatic variables
     bioclim = ee.Image('WORLDCLIM/V1/BIO')
@@ -389,7 +383,15 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         'Clay': ee.Image('projects/soilgrids-isric/clay_mean')
     }
     
-    # Load and aggregate soil variables
+    # Load and aggregate soil variables.
+    # Served NATIVELY at SoilGrids' 250 m grid (T35): each depth band is
+    # point-sampled at the 1 km cell centre via sample_native (the identical
+    # construction the point path uses at scale 250), NOT reproject-averaged. This
+    # keeps heavy-tailed SOC/Nitrogen from being pulled up by the ~16 native pixels
+    # under each 1 km cell and makes train/serve parity exact by construction. The
+    # depth-compositing below (a linear weighted mean across depths) is unchanged;
+    # only the horizontal aggregation moved from a 16-px mean to the centre pixel.
+    SOIL_SCALE = 250
     for var in soil_vars:
         for depth_range in ['0-30 cm', '30-200 cm']:
             feature_name = f'{var} ({depth_range})'
@@ -402,14 +404,13 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
                     # Weighted average: (30-60)*30 + (60-100)*40 + (100-200)*100 / 170
                     depth_bands = ['30-60 cm', '60-100 cm', '100-200 cm']
                     weights = [30, 40, 100]
-                
+
                 var_idx = soil_vars.index(var)
                 arrays = []
                 for depth, weight in zip(depth_bands, weights):
                     band = soil_depths[depth][var_idx]
-                    img = load_data(soil_images[var].select(band), projection, scale)
-                    arr = extract_data_array(img, region, band, default_value)
-                    # Flip before aggregating
+                    arr = sample_native(soil_images[var].select(band), band, SOIL_SCALE)
+                    # Flip before aggregating (sample_native returns native orientation)
                     arr_flipped = np.flipud(arr)
                     arrays.append(arr_flipped * weight)
                 

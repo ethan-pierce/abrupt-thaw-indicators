@@ -140,10 +140,10 @@ except Exception as e:
 # VARIABLES: hydrological terrain (MERIT Hydro v1.0.1, T34)
 # GEE track, MERIT/Hydro/v1_0_1 (official catalog, NOT the sat-io mirror); native
 # ~90 m. Both features are sampled at native scale here — a point sample reads one
-# native pixel, so there is no aggregation-order concern in this path. `hnd` (raw
-# height above nearest drainage) is served natively in the datacube too (like the
-# 3DEP terrain, T37); `log(upa)` samples the log-transformed image so the datacube
-# can average on the log scale (T34/T35 bucket 2). See gee_features docstrings.
+# native pixel, so there is no aggregation-order concern in this path. Both `hnd`
+# and `upa` are raw and served natively in the datacube too (like the 3DEP terrain,
+# T37), so no reproject-averaging occurs and the canonical set stays raw/physical;
+# the T13 linear baseline logs `upa` in its own scope (T35). See gee_features docstrings.
 try:
     hnd = gee_features.height_above_drainage()
     add_feature(thawdb, point_collection, hnd, ee.Reducer.mean(),
@@ -154,13 +154,13 @@ except Exception as e:
     print('Could not add MERIT Hydro height above nearest drainage:', e)
 
 try:
-    log_upa = gee_features.log_upstream_area()
-    add_feature(thawdb, point_collection, log_upa, ee.Reducer.mean(),
-                gee_features.MERIT_SCALE, 'Log Upstream Area', 'log_upa')
-    print('Added MERIT Hydro log upstream area')
+    upa = gee_features.upstream_area()
+    add_feature(thawdb, point_collection, upa, ee.Reducer.mean(),
+                gee_features.MERIT_SCALE, 'Upstream Area', 'upa')
+    print('Added MERIT Hydro upstream area')
 except Exception as e:
-    failed_features.append(('Log Upstream Area', repr(e)))
-    print('Could not add MERIT Hydro log upstream area:', e)
+    failed_features.append(('Upstream Area', repr(e)))
+    print('Could not add MERIT Hydro upstream area:', e)
 
 # VARIABLES: bioclimatic variables
 bioclim = ee.Image('WORLDCLIM/V1/BIO')

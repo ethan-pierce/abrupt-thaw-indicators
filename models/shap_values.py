@@ -53,7 +53,7 @@ DEPENDENCE_SPECS = [
     ('Slope',                  'Slope',                  'shap_dependence_plot_slope.png'),
     ('Mean curvature (500 m)', 'Mean curvature (500 m)', 'shap_dependence_plot_curvature.png'),
     ('Nitrogen (0-30 cm)',     'Nitrogen (30-200 cm)',   'shap_dependence_plot_nitrogen.png'),
-    ('Silt (0-30 cm)',         'Silt (30-200 cm)',       'shap_dependence_plot_sil.png'),
+    ('Clay (0-30 cm)',         'Clay (30-200 cm)',       'shap_dependence_plot_clay.png'),
     ('Trend in SWE',           'Trend in SWE',           'shap_dependence_plot_trend_swe.png'),
     ('Mean Annual SWE',        'Mean Annual SWE',        'shap_dependence_plot_mean_annual_swe.png'),
     ('Annual Precipitation',   'Annual Precipitation',   'shap_dependence_plot_annual_precip.png'),

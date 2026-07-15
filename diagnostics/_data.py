@@ -60,6 +60,10 @@ def _clean_with_coords():
         for d in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
             feats.drop(f'{v} ({d})', axis=1, inplace=True)
 
+    # Compositional closure: drop Silt, keep Sand + Clay, exactly as clean_feature_table.py (T35).
+    for d in ['0-30 cm', '30-200 cm']:
+        feats.drop(f'Silt ({d})', axis=1, inplace=True)
+
     for c in ['Land Cover (NaN)', 'Vegetation Mode (NaN)']:
         if c in feats.columns:
             feats.drop(c, axis=1, inplace=True)

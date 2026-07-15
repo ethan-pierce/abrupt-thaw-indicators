@@ -18,7 +18,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 | --- | --- | --- | --- |
 | Elevation, Slope, Aspect | USGS **3DEP 10 m** DEM | `USGS/3DEP/10m` | mean @ 10 m |
 | 19 bioclimatic variables | **WorldClim v1** BIO | `WORLDCLIM/V1/BIO` | mean @ 1 km |
-| SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | mean @ 250 m |
+| SOC, Nitrogen, Clay, Sand, Silt, Bulk Density (6 depths each) | **SoilGrids** (ISRIC, 250 m) | `projects/soilgrids-isric/{soc,nitrogen,clay,sand,silt,bdod}_mean` | native @ 250 m (T35) |
 
 > **WorldClim V1 is kept deliberately — do not "upgrade" to V2.1.** V1 supplies the
 > climatological *level* (stable ~1960–90 normal); Daymet supplies the recent *trend*
@@ -26,6 +26,12 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 > GEE catalog (only a community `sat-io` asset or a 19-band local download), so a swap
 > would either reintroduce third-party-asset fragility or add a large local file for a
 > marginal gain. Decision 2026-07-14 (FABLE A3§6).
+
+> **Soil texture — `Silt` is dropped in cleaning (T35).** Sand/Silt/Clay form a closed
+> composition (sum ≈ 1000 g/kg), so one component is exactly redundant. `clean_feature_table.py`
+> keeps Sand + Clay (best-conditioned pair on this ROI) and drops Silt; the datacube never
+> builds it (soil layers are gated on the model's feature list). The raw silt bands are still
+> sampled at the source above — the drop is a downstream cleaning step, not a sampling change.
 
 ### Features — formerly custom assets, now re-derived (no custom GEE assets)
 
@@ -113,9 +119,12 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    `reduceRegions` at the source's native scale — the identical construction the
    point path uses, so train and serve agree at native scale by construction.
    Curv-2 km and the 1 km bioclim layers are served by `reproject` (their native
-   grid already ≈1 km — exact). SoilGrids (250 m) stays on `reproject(1 km)` (mild
-   aggregation, verified by the T23 parity gate). Aspect is served as
-   northness/eastness (T32).
+   grid already ≈1 km — exact). **T35 generalized native serving to every source
+   finer than the 1 km grid:** SoilGrids (250 m) and MERIT `upa`/`hnd` (~90 m) are
+   now `sample_native` at their native scale (was `reproject(1 km)` for soil, and a
+   `reduceResolution(mean)`-on-log for `upa`), so the datacube never reproject-averages
+   a heavy-tailed feature — the canonical set stays raw/physical and train/serve parity
+   is exact by construction. Aspect is served as northness/eastness (T32).
 5. **`models/predict.py`** reads `prediction_data.nc`, `model.json`, Obu PerProb →
    **continuous log-evidence susceptibility surface** + **AOA mask**. *(new)* emits the
    log-evidence index (E13), Obu-masked (G17), with the AOA reliability layer (G18);

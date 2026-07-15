@@ -92,7 +92,17 @@ for variable in ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Sil
 
     for depth in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
         feats.drop(variable + ' (' + depth + ')', axis = 1, inplace = True)
-    
+
+# Compositional closure (T35): Sand + Silt + Clay sum to a constant (~1000 g/kg),
+# so one component is exactly redundant. Drop Silt, keeping Sand + Clay — the
+# best-conditioned pair on this ROI (corr(Sand,Clay)=+0.31; the discarded Sand-Silt
+# axis is near-mirror at -0.945). No information is lost (Silt = const - Sand -
+# Clay, recoverable), and it spares SHAP from splitting credit across three
+# collinear columns. Applied here canonically; the datacube never builds Silt
+# because it gates soil layers on membership in the model's feature list.
+for depth in ['0-30 cm', '30-200 cm']:
+    feats.drop('Silt (' + depth + ')', axis = 1, inplace = True)
+
 # If preparing for XGBoost, no need to drop NaN values
 # Unless using SMOTE
 # feats = feats.dropna(axis = 0, how = 'any')

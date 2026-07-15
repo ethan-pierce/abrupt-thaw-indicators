@@ -176,6 +176,28 @@ column-changing wiring, then the dry-run gate before the overnight run.
   separate task. No `clean_feature_table.py` hardening — cheap to re-run against
   `features_dirty.csv`.
 
+- [x] **T46 — Statewide extraction footprint (replaces `roi.geojson` contents).** [T20 grill 2026-07-15]
+  ✓ 2026-07-15 The datacube rebuild must target **statewide Alaska**, not the stale
+  `data/roi.geojson` (single North-Slope polygon, lat 68–71.4°N, unchanged since the datacube-
+  prototype commit; didn't even match the old cube's extent, and contradicted the statewide
+  north-star + the training span 56.9–71.4°N). **`roi.geojson` was NOT deleted** — it has **four**
+  live consumers (`build_prediction_data.py` hard-clips to it; `build_daymet_rasters.py` /
+  `build_modis_fire_rasters.py` union its bbox with the ThawDB point bbox; `dry_run_gee.py` scatters
+  QA points in it), so it defines the datacube/raster domain. The stale North-Slope contents were a
+  **landmine that hadn't gone off**: the raster builders' point-bbox union subsumed the tiny ROI
+  (→ statewide rasters already), `dry_run` makes no product, and the old cube predated the stale
+  file — only the *next* datacube rebuild would have been corrupted. **Fix:** rewrote `roi.geojson`'s
+  *contents* to the Alaska land boundary — `TIGER/2018/States` NAME='Alaska' geometry `.intersection(
+  Rectangle([-170,51,-141,72], geodesic=False), maxError=1000)`. Verified live: the raw AK geometry
+  wraps the antimeridian (−179.2°…+179.9° via the Aleutians) but the intersection collapses cleanly
+  to [-170,-141]×[52.7,71.4] (25 polygons: mainland + in-bbox islands, no wrap), contains Utqiagvik /
+  Seward Pen / Fairbanks / Anchorage, and the Obu permafrost domain sits well inside it (visual check,
+  throwaway figure). `build_prediction_data.py` reads the file and coerces to `ee.Geometry` (the
+  strip-tiling `extract_data_array` needs a Geometry, not a FeatureCollection); `predict.py`'s map
+  extent moved to the persisted per-cell lon/lat (T20), so it no longer reads the file. **One
+  statewide source of truth** for all four consumers. Old North-Slope polygon backed up in the
+  session scratchpad. *Depends:* — *Done:* build reads the statewide boundary; `predict.py` decoupled.
+
 ---
 
 ## DEFERRED — after the rebuild (operate on `features_clean.csv` / downstream)
@@ -225,11 +247,37 @@ column-changing wiring, then the dry-run gate before the overnight run.
   class present statewide but absent from training points, and the area affected — silent
   reference-bucket absorption). No change to one-hot construction.
 
-- [ ] **T20 — Obu domain mask.** [G17] Soft-mask/weight by Obu PerProb
-  (`data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif`; `local_rasters.OBU_TIF` /
-  `sample_points`), resampled to the 1 km Albers grid; replaces the feature-validity keep
-  (`predict.py:94-96`). Obu is **mask-only** (not a feature — decision 2026-07-14).
-  *Depends:* T19 (done). *Done when:* off-permafrost pixels are masked/down-weighted.
+- [ ] **T20 — Obu domain mask.** [G17; design resolved via grill 2026-07-15]
+  Replace the arbitrary "≥50% features non-NaN" keep (`predict.py:94-97`) with a permafrost-
+  domain mask from Obu PerProb (`local_rasters.OBU_TIF` / `sample_points`). **Design (with Ethan):**
+  - *Concept-validity mask, not reliability* — off-permafrost, abrupt-vs-non-abrupt thaw is
+    **undefined** (not merely uncertain); the model saw ~0 non-permafrost training points
+    (0.4% below PerProb 0.01, median 0.924) so it **cannot self-mask** — scored off-domain it
+    emits a meaningless likelihood ratio between two thaw modes that don't exist there.
+    Reliability stays a **separate** layer (T21/AOA).
+  - *Threshold `PerProb > 0`* — keep the whole permafrost domain incl. isolated. Obu assigns
+    **exactly 0** to modeled non-permafrost (9.7% of finite pixels statewide) and small
+    positives to isolated permafrost, so no epsilon is needed. Higher thresholds **rejected**:
+    PerProb is label-entangled (non-abrupt median 0.366 vs abrupt 0.935), so cutting high
+    amputates the minority class's home range and biases the map toward "all abrupt."
+  - *Hard binary mask, NO soft-weighting* — down-weighting by PerProb would systematically
+    suppress the minority (non-abrupt) class, reintroducing the bias the low threshold avoids.
+    PerProb never multiplies the surface (may be persisted as passive metadata only).
+  - *Keep rule* `keep = (PerProb > 0) AND (≥1 feature non-NaN)` — deletes the arbitrary 50%
+    gate; the minimal all-NaN guard refuses to paint a base-rate pixel from zero evidence
+    (XGBoost returns a finite base score on all-NaN input, not NaN).
+  - *Where* — the build persists per-cell **lon/lat** as datacube coords (fixes the real
+    defect: the cube is ungeoreferenced, x/y are bare indices); `predict.py` samples Obu at
+    those coords via `sample_points`. Obu stays **mask-only** (not a feature — 2026-07-14),
+    never entering the feature machinery.
+  - *Applies to the saved products* (NaN outside domain), not just the display figures — the
+    current masking is figure-only, so `susceptibility.nc` presently carries values over ocean.
+  *Depends:* T19 (done), T46 (done — statewide footprint), **rebuild** (1 km statewide datacube —
+  outstanding, per T23). **Code implemented + smoke-tested 2026-07-15** (build persists lon/lat;
+  `predict.py` samples Obu + masks saved products; verified end-to-end on a synthetic cube:
+  keep = PerProb>0 AND ≥1 feature, off-domain → NaN, zero finite values off-domain). *Done when:*
+  off-permafrost pixels are NaN in `susceptibility.nc` and the other saved products (not
+  figure-only) **on the rebuilt statewide 1 km datacube**.
 
 - [ ] **T21 — AOA mask.** [G18] Importance-weighted dissimilarity-to-training mask with a
   CV-derived threshold, output as a reliability layer. *Depends:* T14 (done), T19 (done).
@@ -256,6 +304,19 @@ column-changing wiring, then the dry-run gate before the overnight run.
   *Done when:* the count of feature-identical / label-disagreeing groups in
   `features_clean.csv` is reported as an irreducible-noise ceiling on separation (context
   for the AUC-PR; pairs with the expected narrow GBM-vs-logistic margin).
+
+- [ ] **T45 — Fix logistic baseline numerical blow-up on the new feature set.** [observed 2026-07-15]
+  On the first retrain against the rebuilt `features_clean.csv` (71 features), the T13
+  penalized-logistic baseline floods sklearn with `divide by zero` / `overflow` /
+  `invalid value encountered in matmul` warnings during its per-fold fit — the solver is
+  choking on non-finite / heavy-tailed inputs the new features introduce (soil ~11.6% NaN,
+  MODIS fire NaN for >70°N ~11% of points; plus the heavy-tailed positives the baseline is
+  supposed to log). XGBoost is unaffected (NaN-native), so `model.json` and the datacube are
+  fine — this only corrupts the **baseline comparison numbers**, making the GBM-vs-logistic
+  margin (SCOPE Headline / T44 pairing) meaningless. *Depends:* rebuild. *Done when:* the
+  linear baseline's Pipeline handles NaN (impute) and finite inputs cleanly (the T35-scoped
+  log + standardize actually applied to all heavy-tailed columns), the matmul warnings are
+  gone, and the baseline AUC-PR is a trustworthy comparison again.
 
 - [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] *Depends:* T14 (done),
   T19 (done), T25 (done), + rebuild. *Done when:* the `diagnostics/` suite is re-pointed at

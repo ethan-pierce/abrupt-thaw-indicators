@@ -15,6 +15,7 @@ DECISION_THRESHOLD = 0.6
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
+from data import local_rasters
 
 data_dir = DATA
 models_dir = MODELS
@@ -90,16 +91,50 @@ feature_array = feature_stack.reshape(n_pixels, n_features)
 print("Handling missing values...")
 feature_array = np.where(feature_array == default_value, np.nan, feature_array)
 
-# Check for pixels with valid data
-# Require at least 50% of features to be valid (not NaN) for a pixel to be considered valid
-min_valid_features_ratio = 0.5
+# --- Obu permafrost-domain mask [T20] ---------------------------------------------
+# Replaces the old arbitrary ">= 50% of features non-NaN" keep. The target concept
+# -- abrupt vs non-abrupt thaw -- is only DEFINED where permafrost exists, and the
+# model (trained almost entirely on permafrost sites: 0.4% of training points fall
+# below Obu PerProb 0.01) never saw non-permafrost negatives, so it cannot self-mask
+# and would emit a confident, meaningless log-evidence off-domain. We therefore
+# restrict the surface to the Obu permafrost domain, sampling Obu PerProb at each
+# cell's persisted lon/lat (nearest -- the identical construction the datacube's
+# LOCAL features use, so the mask lands on the same grid).
+#
+# Keep rule:  keep = (PerProb > 0) AND (>= 1 feature non-NaN)
+#   * PerProb > 0 keeps the WHOLE permafrost domain incl. isolated permafrost: Obu
+#     assigns exactly 0 to modeled non-permafrost and small positives to isolated,
+#     so no epsilon is needed. The low threshold is deliberate -- PerProb is
+#     label-entangled (non-abrupt lives in sporadic/discontinuous permafrost, median
+#     PerProb ~0.37 vs ~0.94 for abrupt), so a higher cut would amputate the minority
+#     class's home range. The mask is BINARY: PerProb never weights the surface
+#     (weighting by it would systematically suppress the minority class).
+#   * the >= 1-feature guard refuses to paint a base-rate pixel from all-NaN input
+#     (XGBoost returns a finite base score, not NaN, on an all-missing row).
+# Reliability / extrapolation is a SEPARATE concern (AOA, T21), not folded in here.
+if 'longitude' not in ds.coords or 'latitude' not in ds.coords:
+    raise SystemExit(
+        "prediction_data.nc has no longitude/latitude coords -- the Obu mask needs "
+        "per-cell coordinates. Rebuild the datacube with the current "
+        "data/build_prediction_data.py (T20/T46) before running predict.py."
+    )
+lon2d = ds['longitude'].values
+lat2d = ds['latitude'].values
+perprob = local_rasters.sample_points(
+    local_rasters.OBU_TIF, lon2d.ravel(), lat2d.ravel()
+).reshape(y_size, x_size)
+in_domain = (perprob > 0)  # NaN (ocean / off Obu-coverage) and 0 (non-permafrost) -> False
+
 n_valid_features_per_pixel = (~np.isnan(feature_array)).sum(axis=1)
-valid_pixels = (n_valid_features_per_pixel >= (n_features * min_valid_features_ratio))
+has_evidence_2d = (n_valid_features_per_pixel >= 1).reshape(y_size, x_size)
+valid_pixels = (in_domain & has_evidence_2d).reshape(n_pixels)
 n_valid = valid_pixels.sum()
 n_invalid = (~valid_pixels).sum()
 
-print(f"Valid pixels (>= {min_valid_features_ratio*100:.0f}% features valid): {n_valid:,} ({n_valid/n_pixels*100:.1f}%)")
-print(f"Invalid pixels (< {min_valid_features_ratio*100:.0f}% features valid): {n_invalid:,} ({n_invalid/n_pixels*100:.1f}%)")
+print(f"Obu permafrost domain (PerProb > 0): {int(in_domain.sum()):,} pixels "
+      f"({in_domain.sum()/n_pixels*100:.1f}%)")
+print(f"Valid pixels (in-domain AND >=1 feature): {n_valid:,} ({n_valid/n_pixels*100:.1f}%)")
+print(f"Masked pixels (off-domain or no data): {n_invalid:,} ({n_invalid/n_pixels*100:.1f}%)")
 
 # Make predictions
 print("\nGenerating predictions...")
@@ -152,6 +187,16 @@ probabilities_2d = probabilities.reshape(y_size, x_size)
 predictions_2d = predictions.reshape(y_size, x_size)
 log_evidence_2d = log_evidence.reshape(y_size, x_size)
 
+# Apply the domain mask to the SAVED products, not just the figures [T20]: outside
+# the permafrost domain (or where a pixel has no data) susceptibility is undefined,
+# so NaN it everywhere -- otherwise susceptibility.nc carries confident values over
+# the ocean. NaN is the datacube's own missing convention, so "off-domain" is
+# indistinguishable-by-design from "no data", which is the intended meaning.
+invalid_mask = (~valid_pixels).reshape(y_size, x_size)
+log_evidence_2d = np.where(invalid_mask, np.nan, log_evidence_2d)
+probabilities_2d = np.where(invalid_mask, np.nan, probabilities_2d)
+predictions_2d = np.where(invalid_mask, np.nan, predictions_2d.astype(float))
+
 # Calculate prediction statistics (only for valid pixels with sufficient valid features and finite predictions)
 print("\nPrediction Statistics (excluding invalid data):")
 valid_probabilities = probabilities[valid_pixels]
@@ -183,7 +228,9 @@ output_ds = xr.Dataset(
     },
     coords={
         'x': ds.coords['x'],
-        'y': ds.coords['y']
+        'y': ds.coords['y'],
+        'longitude': ds.coords['longitude'],
+        'latitude': ds.coords['latitude'],
     },
     attrs={
         'model_path': str(model_path),
@@ -196,6 +243,10 @@ output_ds = xr.Dataset(
         'pi_sample_abrupt': pi_sample,
         'probability_description': 'Diagnostic only: P_model(abrupt, class 0), calibrated to the sample prior',
         'prediction_description': 'Binary prediction: 0=Abrupt Thaw, 1=Gradual Thaw',
+        'domain_mask_description': ('[T20] Off-permafrost pixels are NaN: kept iff Obu PerProb '
+                                    '(UiO_PEX_PERPROB_5.0) > 0 at the cell centre AND >=1 feature '
+                                    'is non-NaN. Concept-validity mask (permafrost domain), '
+                                    'binary -- PerProb does NOT weight the surface.'),
         'decision_threshold': DECISION_THRESHOLD,
         'default_value': default_value,
         'scale': ds.attrs.get('scale', 'unknown')
@@ -232,27 +283,13 @@ print(f"  Classes saved to: {pred_output_path}")
 # Create map visualization
 print("\nCreating probability map...")
 
-# Load ROI to get geographic bounds
-roi_path = data_dir / 'roi.geojson'
-with open(roi_path, 'r') as f:
-    roi_json = json.load(f)
-
-# Extract bounds from ROI
-# Handle both Polygon and MultiPolygon geometries
-if roi_json['features'][0]['geometry']['type'] == 'Polygon':
-    coords = roi_json['features'][0]['geometry']['coordinates'][0]
-elif roi_json['features'][0]['geometry']['type'] == 'MultiPolygon':
-    # Get all coordinates from all polygons
-    coords = []
-    for polygon in roi_json['features'][0]['geometry']['coordinates']:
-        coords.extend(polygon[0])
-else:
-    coords = roi_json['features'][0]['geometry']['coordinates'][0]
-
-lons = [c[0] for c in coords]
-lats = [c[1] for c in coords]
-lon_min, lon_max = min(lons), max(lons)
-lat_min, lat_max = min(lats), max(lats)
+# Geographic bounds from the datacube's own per-cell lon/lat coords [T20/T46].
+# predict.py no longer reads roi.geojson (removed). Off-ROI cells carry a -9999 fill,
+# so take the extent from finite, in-range coordinates only.
+_ok = (np.isfinite(lon2d) & (np.abs(lon2d) <= 180)
+       & np.isfinite(lat2d) & (np.abs(lat2d) <= 90))
+lon_min, lon_max = float(lon2d[_ok].min()), float(lon2d[_ok].max())
+lat_min, lat_max = float(lat2d[_ok].min()), float(lat2d[_ok].max())
 
 print(f"Geographic bounds: Lon [{lon_min:.2f}, {lon_max:.2f}], Lat [{lat_min:.2f}, {lat_max:.2f}]")
 
@@ -261,7 +298,7 @@ output_dir.mkdir(exist_ok=True)
 
 # Primary product map: log-evidence susceptibility, diverging colormap centred at 0 [T19/E13].
 print("\nCreating log-evidence susceptibility map (primary product)...")
-invalid_mask = (~valid_pixels).reshape(y_size, x_size)
+# log_evidence_2d is already masked at save time [T20]; np.where is a harmless no-op.
 masked_log_evidence = np.where(invalid_mask, np.nan, log_evidence_2d)
 le_absmax = float(np.nanmax(np.abs(masked_log_evidence))) if np.isfinite(masked_log_evidence).any() else 1.0
 
@@ -288,9 +325,7 @@ print(f"Log-evidence susceptibility map saved to: {le_map_path}")
 # Create figure
 fig, ax = plt.subplots(figsize=(14, 10))
 
-# Mask invalid pixels (insufficient valid features or non-finite predictions)
-# Use the valid_pixels mask we created earlier
-invalid_mask = (~valid_pixels).reshape(y_size, x_size)
+# invalid_mask (the Obu domain + evidence mask) was computed once at save time [T20].
 masked_prob = np.where(invalid_mask, np.nan, probabilities_2d)
 
 # Plot probabilities

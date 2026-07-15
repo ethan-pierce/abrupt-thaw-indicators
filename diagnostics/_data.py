@@ -95,17 +95,28 @@ def load(verify=True):
     feats, coords = _clean_with_coords()
     clean = pd.read_csv(DATA / 'features_clean.csv')
 
+    # Latitude/Longitude are carried through features_clean.csv as NON-MODEL
+    # metadata (T6); the reconstruction holds them aside in `coords`, so exclude
+    # them from the feature column-set/value asserts and verify them separately.
+    META = {'Latitude', 'Longitude'}
+
     if verify:
         assert len(feats) == len(clean), f"row mismatch: recon {len(feats)} vs clean {len(clean)}"
         assert (feats['Class'].values == clean['Class'].values).all(), "Class column mismatch"
-        missing = set(clean.columns) - set(feats.columns)
+        missing = set(clean.columns) - set(feats.columns) - META
         assert not missing, f"clean has columns the reconstruction lacks: {missing}"
         for c in clean.columns:
+            if c in META:
+                continue
             if not np.allclose(feats[c].values, clean[c].values, equal_nan=True):
                 raise AssertionError(f"value mismatch in column {c!r}")
+        for c in META & set(clean.columns):
+            recon_coord = coords['Latitude' if c == 'Latitude' else 'Longitude'].values
+            if not np.allclose(recon_coord, clean[c].values, equal_nan=True):
+                raise AssertionError(f"coordinate mismatch in column {c!r}")
 
-    # Use the pipeline's own column set (features_clean minus Class).
-    feature_cols = [c for c in clean.columns if c != 'Class']
+    # Use the pipeline's own column set (features_clean minus Class and metadata).
+    feature_cols = [c for c in clean.columns if c not in ({'Class'} | META)]
     X = feats[feature_cols].copy()
     y = feats['Class'].astype(int).copy()
     return X, y, coords['Latitude'].values, coords['Longitude'].values

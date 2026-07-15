@@ -137,6 +137,17 @@ def try_add(name, fn):
         print('Could not add', name, ':', repr(e))
 
 
+def try_add_col(name, compute):
+    """Guarded LOCAL-track add: ``compute()`` returns the column values and the
+    assignment is a direct subscript set (``thawdb[name] = ...``). This avoids
+    ``thawdb.__setitem__(...)`` inside a closure, which materializes a bound-method
+    reference that trips pandas' chained-assignment FutureWarning (harmless in
+    pandas 2.x, an error in 3.0)."""
+    def _assign():
+        thawdb[name] = compute()
+    try_add(name, _assign)
+
+
 def finalize():
     """Always-run end-of-run report + save (T39 crash-safety). Runs from a
     ``finally`` so it executes even if a later step raised, meaning an overnight
@@ -320,20 +331,20 @@ try:
     try_add('Land Cover', _add_land_cover)
 
     # Vegetation mode (ALFRESCO): keep NaN for nodata; clean skips the NaN category.
-    try_add('Vegetation Mode', lambda: thawdb.__setitem__(
-        'Vegetation Mode', local_rasters.sample_points(local_rasters.VEGMODE_TIF, lons, lats)))
+    try_add_col('Vegetation Mode',
+                lambda: local_rasters.sample_points(local_rasters.VEGMODE_TIF, lons, lats))
 
     # Flammability index (ALFRESCO), continuous.
-    try_add('Flammability Index', lambda: thawdb.__setitem__(
-        'Flammability Index', local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats)))
+    try_add_col('Flammability Index',
+                lambda: local_rasters.sample_points(local_rasters.FLAMMABILITY_TIF, lons, lats))
 
     # Mean annual SWE + SWE/precip/temp trends (Daymet V4): deep temporal reductions
     # that hang when point-sampled live on GEE (T30), so materialized once to a local
     # 1 km raster by build_daymet_rasters.py and read here. Bands per
     # local_rasters.DAYMET_BANDS. Each band is guarded separately.
     for _feat, _band in local_rasters.DAYMET_BANDS.items():
-        try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
-            f, local_rasters.sample_points(local_rasters.DAYMET_TIF, lons, lats, band=b)))
+        try_add_col(_feat, lambda b=_band: local_rasters.sample_points(
+            local_rasters.DAYMET_TIF, lons, lats, band=b))
 
     # Fire history (MODIS MCD64A1, T36): Time Since Last Fire + Burn Count. Like
     # Daymet, deep temporal reductions that hang when point-sampled live on GEE (T30),
@@ -341,13 +352,13 @@ try:
     # read here. Both are right-censored to the ~24-yr record ("no fire since 2001" !=
     # never-burned; see gee_features). Bands per local_rasters.MODIS_FIRE_BANDS.
     for _feat, _band in local_rasters.MODIS_FIRE_BANDS.items():
-        try_add(_feat, lambda f=_feat, b=_band: thawdb.__setitem__(
-            f, local_rasters.sample_points(local_rasters.MODIS_FIRE_TIF, lons, lats, band=b)))
+        try_add_col(_feat, lambda b=_band: local_rasters.sample_points(
+            local_rasters.MODIS_FIRE_TIF, lons, lats, band=b))
 
     # Yedoma (IRYP v2, T33): binary confirmed-presence via point-in-polygon. The
     # datacube path runs the identical sample_yedoma call at its cell centres, so
     # train/serve parity is exact by construction (as with T37 terrain).
-    try_add('Yedoma', lambda: thawdb.__setitem__('Yedoma', local_rasters.sample_yedoma(lons, lats)))
+    try_add_col('Yedoma', lambda: local_rasters.sample_yedoma(lons, lats))
 
     # --------------------------------------------------------------------------
     # T32: encode aspect as northness = cos(aspect), eastness = sin(aspect). Raw

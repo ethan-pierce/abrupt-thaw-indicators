@@ -401,10 +401,16 @@ column-changing wiring, then the dry-run gate before the overnight run.
   the new invariants (coord quarantine, empirical buffer, OOF SHAP on held-out, baselines,
   parity gate, contradictory-label ceiling) and `FINDINGS.md` is stamped to the new pipeline.
 
-- [ ] **T29 (remainder) — Document reconstructed GEE-track params.** Record the curvature
-  smoothing window, Daymet year range/aggregations, and the new MERIT/MODIS choices in the
-  methods table. *Depends:* T34, T36. *Done when:* the methods table reflects the rebuilt
-  feature set. *(Acquisition half of T29 done 2026-07-13.)*
+- [x] **T29 (remainder) — Document reconstructed GEE-track params.** ✓ 2026-07-15
+  Updated the `PIPELINE.md` methods table from the authoritative constructors and
+  materialization scripts: curvature now records the Zevenbergen–Thorne method, EPSG:3338,
+  bilinear DEM resampling, and 250 m/1 km analysis cells behind the named 500 m/2 km windows;
+  Daymet records the inclusive 1991–2020 window, annual mean/sum reductions, and OLS trends;
+  MERIT `hnd`/`upa` record raw native 90 m sampling (no 1 km averaging or canonical log); and
+  MODIS records the inclusive 2001–2024 history, monthly burn-count semantics, right-censoring,
+  500 m materialization, and QA coverage gap. Definitions cross-checked against
+  `data/gee_features.py`, `data/build_daymet_rasters.py`, and
+  `data/build_modis_fire_rasters.py`. *(Acquisition half completed 2026-07-13.)*
 
 ---
 

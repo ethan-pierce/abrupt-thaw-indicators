@@ -57,7 +57,7 @@ BLOCK_METHOD = 'albers_grid'          # equal-area km grid [B5b]
 BUFFER_KM = 0.0                        # empirical: block holdout already removes near-seam leakage [T43]
 N_OUTER = 5
 N_INNER = 5
-SWEEP_CELL_KM = [10, 25, 50, 100, 200]  # interpolation -> extrapolation [B5a]
+SWEEP_CELL_KM = [5, 10, 25, 50, 100, 200]  # interpolation -> extrapolation [B5a]; 5 km = interpolation-ceiling bookend
 OPERATIVE_CELL_KM = 10  # scale for selecting the operative model's hyperparameters (T14)
 
 # Grid widened on principled axes, small enough for nested CV [C10/T11].

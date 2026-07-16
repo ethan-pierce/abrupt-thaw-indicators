@@ -1,6 +1,6 @@
 """Move 1 (floor) + Move 2 (shuffle-label) for the abrupt/non-abrupt classifier.
 
-Establishes the floor the reported AUC-ROC~0.99 / AUC-PR~0.9999 must clear, and
+Establishes the floor the reported random-split AUC must clear, and
 attacks the too-good hypothesis with a shuffle-label probe. Uses the SAME random,
 class-stratified split the training pipeline uses (train_xgboost.py), so numbers
 are comparable to the author's evaluation.

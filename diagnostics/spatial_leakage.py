@@ -1,4 +1,4 @@
-"""Spatial-leakage trace: is AUC~0.99 earned, or an artifact of the random split?
+"""Spatial-leakage trace: is the high random-split AUC earned, or an artifact of the split?
 
 The Thaw Database is lake-dominated and road-clustered (SCOPE.md). Coarse GEE
 feature extraction makes nearby points near-identical in feature space with the

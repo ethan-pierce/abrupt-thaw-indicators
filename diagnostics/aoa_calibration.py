@@ -188,10 +188,12 @@ def main():
                 f'operative spatial-CV OOF.')
         note = 'Calibration located an empirical degradation boundary within the sampled DI range.'
     else:  # measured_skill_envelope
+        _finite_sk = [r['ap'] / floor for r in rows_rank if np.isfinite(r['ap'])]
+        _min_sk = min(_finite_sk) if _finite_sk else float('nan')
         rule = ('edge of the measured-skill envelope = maximum DI the operative spatial-CV OOF '
-                'verified. OOF AUC-PR stayed ~15x the prevalence floor across the ENTIRE tested '
-                'DI range (no degradation), so reliability is demonstrated everywhere the sample '
-                'reaches; cells with DI beyond this are flagged as genuine extrapolation.')
+                f'verified. OOF AUC-PR stayed >= {_min_sk:.0f}x the prevalence floor across the '
+                'ENTIRE tested DI range (no degradation), so reliability is demonstrated everywhere '
+                'the sample reaches; cells with DI beyond this are flagged as genuine extrapolation.')
         note = ('OOF skill did NOT decay within the sampled DI range; threshold set at the edge '
                 'of the tested envelope rather than the box-plot fence (the fence would flag a '
                 'large region where OOF skill is directly demonstrated). ' + caveat)

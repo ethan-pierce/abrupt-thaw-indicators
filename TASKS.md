@@ -497,10 +497,26 @@ column-changing wiring, then the dry-run gate before the overnight run.
   *Follow-up:* a full (non-smoke) retrain will refresh the **persisted** baseline AUC-PR in
   `run_manifest.json` / the sweep log (the last full run predates this fix).
 
-- [ ] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] *Depends:* T14 (done),
-  T19 (done), T25 (done), + rebuild. *Done when:* the `diagnostics/` suite is re-pointed at
-  the new invariants (coord quarantine, empirical buffer, OOF SHAP on held-out, baselines,
-  parity gate, contradictory-label ceiling) and `FINDINGS.md` is stamped to the new pipeline.
+- [x] **T28 — Update `/verify-ml` + regenerate FINDINGS.** [H20.2] ✓ 2026-07-16
+  Re-ran the suite against the rebuilt pipeline (git `338a253`, `features_clean` `faf00fec…`,
+  `model.json` `6629bc61…`) and rewrote `diagnostics/FINDINGS.md`, stamped to the new
+  70-feature model + spatial-block protocol and organized around the closeout invariants.
+  **Holds:** coords quarantined from `X` (`_data.py`, X=(19288,70)); shuffle-label collapses
+  to chance (AUC-ROC 0.49, AUC-PR 0.06); trivial baselines at floor; OOF SHAP genuinely
+  held-out (`shap_values.py`); train/serve parity **PASS** (60 clean/10 offset/0 construction);
+  contradictory-label ceiling negligible (4 pairs, oracle AUC-PR ≈1.0 — not binding).
+  **Persisting flags:** random-split AUC-PR 0.90 → spatial-CV 0.73–0.84 (operative 0.843);
+  geographic interleaving (62% of test within 1 km of train); XGBoost edge over logistic
+  small but stable (+0.076±0.019 @10 km); buffer `0.0 km` + block holdout empirically
+  defensible (`leakage_decay.py`/`block_cv.py`); top separators now climate/soil (spatial-
+  smoothness proxy risk for the SHAP story); AOA/extrapolation degrades gracefully
+  (0.78→0.57 @250 km). Old flag-6 hygiene items resolved by the rebuild (canonical persisted
+  split, spatial-CV AUC-PR headlined, no accuracy). Regenerated `leakage_decay.png` +
+  `extrapolation_range.png` (only stale figure). Probes derive n/prevalence/feature-count at
+  runtime; a few historical numbers linger in script *docstrings/comments* only.
+  *Done when:* the `diagnostics/` suite is re-pointed at the new invariants (coord quarantine,
+  empirical buffer, OOF SHAP on held-out, baselines, parity gate, contradictory-label ceiling)
+  and `FINDINGS.md` is stamped to the new pipeline.
 
 - [x] **T29 (remainder) — Document reconstructed GEE-track params.** ✓ 2026-07-15
   Updated the `PIPELINE.md` methods table from the authoritative constructors and

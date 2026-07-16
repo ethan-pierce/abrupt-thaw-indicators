@@ -8,9 +8,9 @@ present statewide but absent from training and silently folded into the dropped
 reference bucket — the model extrapolates onto a distribution it never saw and the
 map is quietly wrong. This gate documents, per feature, that train and serve agree.
 
-Both artifacts now share the rebuilt 70-feature 1 km schema (feature-table rebuild
+Both artifacts now share the rebuilt 1 km schema (feature-table rebuild
 + T47 datacube rewrite + retrain, 2026-07-15), so the comparison is finally
-meaningful (it was BLOCKED while serve was the old 49-feature / 4 km cube).
+meaningful (it was BLOCKED while serve was the earlier, coarser 4 km cube).
 
 Method — **matched-location parity** (factors out the lake-/road-biased sampling
 so any residual gap is *construction*, not landscape): the datacube's lon/lat grid

@@ -4,8 +4,8 @@ Consumes models/spatial_cv.py (the production splitter) at the SAME geometry the
 training pipeline uses -- Alaska Albers equal-area blocks (`albers_grid`), 5-fold,
 seed 42 -- so any buffer read off here is literally the buffer train_xgboost.py
 will impose. Three questions:
-  (1) GEOMETRY: for the pipeline's albers_grid cell sizes, how do the 1,107
-      Non-abrupt (minority) points spread across folds? A fold with ~no positives
+  (1) GEOMETRY: for the pipeline's albers_grid cell sizes, how do the minority
+      Non-abrupt points spread across folds? A fold with ~no positives
       makes AUC-PR unstable -> informs the block-size sweep.
   (2) BUFFER (T43): sweep the dead-zone buffer at the OPERATIVE block size
       (albers_grid, 10 km -> interpolation/case A, the map-serving regime) with a
@@ -272,8 +272,9 @@ def main():
     chosen = buffer_sweep(X, yv, lat, lon, prev)
     a_vs_b(X, yv, lat, lon, chosen)
 
-    print("\nCross-check vs the random-split probe (leakage_decay.py): random-split "
-          "AUC-PR=0.904 (leaky), leakage-specific gap contiguous through ~2 km.")
+    print("\nCross-check vs the random-split probe (leakage_decay.py): the random-split "
+          "AUC-PR is inflated by near-twin leakage, and the leakage-specific gap is "
+          "contiguous only over the first few km before the training pool depletes.")
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 
 Settled with the user (develop-model interview, 2026-07-08):
   * Start from the SAME random split verify-ml used (seed 8) so buffer r=0
-    reproduces the leaky AUC-PR ~= 0.90 reported by baseline_and_shuffle.py.
+    reproduces the leaky random-split AUC-PR reported by baseline_and_shuffle.py.
   * Sweep a spatial exclusion buffer r = 0..40 km in 1 km steps: at each r,
     drop every TRAIN point within r (great-circle) of ANY test point, refit,
     score the fixed test set. AUC-PR falls and plateaus; the plateau is the
@@ -92,7 +92,7 @@ def main():
     prev = yv.mean()
 
     rng = np.random.default_rng(SEED)
-    split_seed = int(rng.integers(0, 100))  # == 8, matches verify-ml
+    split_seed = int(rng.integers(0, 100))  # deterministic draw from default_rng(SEED); matches verify-ml
     idx = np.arange(len(y))
     itr, ite = train_test_split(idx, test_size=0.3, random_state=split_seed,
                                 shuffle=True, stratify=y)

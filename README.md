@@ -218,7 +218,7 @@ Legend: 🔴 blocking · 🟡 needed for a headline claim · ⚪ nice-to-have.
 8. ✅ **Archive the training-lands path entirely.** `build_prediction_data_traininglands.py`,
    `predict_traininglands.py`, and the `*_traininglands.png` / `*_traininglands.nc`
    outputs were built for a past PM update, not the manuscript. **Done 2026-07-13**
-   (moved to `archive/`; see TASKS.md T26). Headline map = the statewide 1 km
+   (moved to `archive/`; see `archive/TASKS.md` T26). Headline map = the statewide 1 km
    **continuous log-evidence susceptibility** surface (`predict.py`); the discrete
    classification map has since been removed entirely (G19/T22).
 

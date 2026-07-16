@@ -182,25 +182,6 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         flat = local_rasters.sample_points(path, lon2d.ravel(), lat2d.ravel(), band=band)
         return flat.reshape(lon2d.shape)
 
-    def sample_native(image, band, scale_native, reducer=None):
-        """Native-scale cell-centre point-sample of a GEE image (TASKS T37).
-
-        Terrain derivatives (slope/aspect/curvature) are recomputed on a
-        pyramid-aggregated DEM when reprojected to 1 km, collapsing the signal
-        (slope -> ~0.28x native at 4 km; see diagnostics/probe_native_serve.py),
-        so they CANNOT be served by load_data(...).reproject. Instead we read the
-        native pixel at each 1 km cell centre via a chunked reduceRegions at the
-        image's native scale — the identical construction build_feature_table.py
-        uses per training point, so train and serve agree at native scale by
-        construction. Returns native (unflipped) orientation like sample_local;
-        the caller flips to match the rest of the stack.
-        """
-        reducer = ee.Reducer.mean() if reducer is None else reducer
-        flat = ee_sampling.sample_points_reduceregions_chunked(
-            lon2d.ravel(), lat2d.ravel(), image, reducer, scale_native, band,
-            crs='EPSG:4326')
-        return flat.reshape(lon2d.shape)
-
     def assert_local_orientation(sample, layer_name):
         """T31 orientation guard for LOCAL categorical layers.
 
@@ -232,25 +213,108 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
             f"{mirror:.3f}) — check for a reintroduced double np.flipud (T31)."
         )
 
-    # --- Terrain (T37): native cell-centre point-sampling, NOT reproject ---
-    # A 1 km reproject pyramid-aggregates the native derivative (slope/aspect at
-    # 10 m, curv-500 m at 250 m), so those are point-sampled at native scale via
-    # sample_native. Curv-2 km's native analysis grid IS 1 km, so a reproject
-    # recovers it exactly (probe_native_serve: corr 1.000) and is kept — no need
-    # to point-sample ~1e6 cells for it.
-    if 'Elevation' in feature_names:
-        feature_arrays['Elevation'] = np.flipud(sample_native(elevation_image, 'elevation', 10))
+    # --- Native-scale sampling (T37 + T47): collect -> sample -> distribute ---
+    # A 1 km reproject pyramid-aggregates any feature whose native grid is finer
+    # than the serve grid: terrain derivatives (slope/aspect @10 m, curv-500 @250 m)
+    # are RECOMPUTED on the aggregated DEM (slope collapses to ~0.28x native at 4 km;
+    # probe_native_serve), and MERIT hnd/upa (~90 m) + SoilGrids (250 m) are
+    # stored/heavy-tailed quantities that averaging would bias. So all of these read
+    # the NATIVE pixel at each 1 km cell centre — the identical construction
+    # build_feature_table.py uses per training point, so train/serve agree at native
+    # scale by construction. Rather than one full-grid reduceRegions per band (T47:
+    # index chunks span the whole state → intractable), every native-band request is
+    # gathered into ONE multiband image per native scale (10 / 90 / 250 m) and sampled
+    # once via sample_native_multiband_tiled (one bounded-footprint reduceRegions per
+    # compact 128² grid tile, concurrent, off-ROI tiles skipped). Merging is
+    # numerically identical to per-band sampling (T47 parity gate). Results are native
+    # (unflipped) orientation; each distribution site below flips once.
+    #
+    # Curv-2 km is the exception: its native analysis grid IS 1 km, so reproject
+    # recovers it exactly (probe_native_serve: corr 1.000) — no need to point-sample.
+
+    # Soil metadata (used both to register the native requests here and to composite
+    # depths below). SoilGrids' 250 m grid is finer than the 1 km serve grid, so each
+    # depth band is point-sampled at its native cell (T35), NOT reproject-averaged —
+    # this keeps heavy-tailed SOC/Nitrogen from being pulled up by the ~16 native
+    # pixels under each 1 km cell and makes train/serve parity exact by construction.
+    SOIL_SCALE = 250
+    soil_vars = ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Silt', 'Clay']
+    soil_depths = {
+        '0-5 cm': ('soc_0-5cm_mean', 'nitrogen_0-5cm_mean', 'bdod_0-5cm_mean', 'sand_0-5cm_mean', 'silt_0-5cm_mean', 'clay_0-5cm_mean'),
+        '5-15 cm': ('soc_5-15cm_mean', 'nitrogen_5-15cm_mean', 'bdod_5-15cm_mean', 'sand_5-15cm_mean', 'silt_5-15cm_mean', 'clay_5-15cm_mean'),
+        '15-30 cm': ('soc_15-30cm_mean', 'nitrogen_15-30cm_mean', 'bdod_15-30cm_mean', 'sand_15-30cm_mean', 'silt_15-30cm_mean', 'clay_15-30cm_mean'),
+        '30-60 cm': ('soc_30-60cm_mean', 'nitrogen_30-60cm_mean', 'bdod_30-60cm_mean', 'sand_30-60cm_mean', 'silt_30-60cm_mean', 'clay_30-60cm_mean'),
+        '60-100 cm': ('soc_60-100cm_mean', 'nitrogen_60-100cm_mean', 'bdod_60-100cm_mean', 'sand_60-100cm_mean', 'silt_60-100cm_mean', 'clay_60-100cm_mean'),
+        '100-200 cm': ('soc_100-200cm_mean', 'nitrogen_100-200cm_mean', 'bdod_100-200cm_mean', 'sand_100-200cm_mean', 'silt_100-200cm_mean', 'clay_100-200cm_mean'),
+    }
+    soil_images = {
+        'Soil Organic Carbon': ee.Image('projects/soilgrids-isric/soc_mean'),
+        'Nitrogen': ee.Image('projects/soilgrids-isric/nitrogen_mean'),
+        'Bulk Density': ee.Image('projects/soilgrids-isric/bdod_mean'),
+        'Sand': ee.Image('projects/soilgrids-isric/sand_mean'),
+        'Silt': ee.Image('projects/soilgrids-isric/silt_mean'),
+        'Clay': ee.Image('projects/soilgrids-isric/clay_mean'),
+    }
+    _soil_depth_ranges = {'0-30 cm': ('0-5 cm', '5-15 cm', '15-30 cm'),
+                          '30-200 cm': ('30-60 cm', '60-100 cm', '100-200 cm')}
 
     # Slope is needed both as a feature and for the T32 flats mask; sample once.
     _need_slope = ('Slope' in feature_names
                    or any(n in feature_names for n in ('Northness', 'Eastness')))
-    slope_deg = np.flipud(sample_native(ee.Terrain.slope(elevation_image), 'slope', 10)) if _need_slope else None
+
+    # COLLECT: unique band key -> single-band ee.Image, grouped by native scale.
+    # These guards MUST mirror the distribution sites below.
+    native_req = {}
+    def _req(scale_native, key, single_band_image):
+        native_req.setdefault(scale_native, {})[key] = single_band_image
+
+    if 'Elevation' in feature_names:
+        _req(10, 'elevation', elevation_image)
+    if _need_slope:
+        _req(10, 'slope', ee.Terrain.slope(elevation_image))
+    if any(n in feature_names for n in ('Northness', 'Eastness')):
+        _req(10, 'aspect', ee.Terrain.aspect(elevation_image))
+    if 'Mean curvature (500 m)' in feature_names:
+        _req(250, 'MeanCurvature', gee_features.mean_curvature(500).select('MeanCurvature'))
+    if 'Height Above Nearest Drainage' in feature_names:
+        _req(gee_features.MERIT_SCALE, 'hnd', gee_features.height_above_drainage())
+    if 'Upstream Area' in feature_names:
+        _req(gee_features.MERIT_SCALE, 'upa', gee_features.upstream_area())
+    for _var in soil_vars:
+        _var_idx = soil_vars.index(_var)
+        for _drange, _dbands in _soil_depth_ranges.items():
+            if f'{_var} ({_drange})' in feature_names:
+                for _depth in _dbands:
+                    _band = soil_depths[_depth][_var_idx]
+                    _req(SOIL_SCALE, _band, soil_images[_var].select(_band))
+
+    # SAMPLE: one tiled, concurrent multiband pass per native scale.
+    native = {}
+    for _scale in sorted(native_req):
+        _keys = list(native_req[_scale])
+        _multi = native_req[_scale][_keys[0]].rename(_keys[0])
+        for _k in _keys[1:]:
+            _multi = _multi.addBands(native_req[_scale][_k].rename(_k))
+        print(f"Native-sampling {len(_keys)} band(s) @ {_scale} m: {_keys}", flush=True)
+
+        def _log(done, total, _s=_scale):
+            if done == total or done % 25 == 0:
+                print(f"  [native {_s} m] tiles {done}/{total}", flush=True)
+
+        native.update(ee_sampling.sample_native_multiband_tiled(
+            lon2d, lat2d, _multi, _keys, _scale, tile=128, workers=8, log=_log))
+
+    # DISTRIBUTE (native orientation -> single flip -> post-process) ---------------
+    if 'Elevation' in feature_names:
+        feature_arrays['Elevation'] = np.flipud(native['elevation'])
+
+    slope_deg = np.flipud(native['slope']) if _need_slope else None
     if 'Slope' in feature_names:
         feature_arrays['Slope'] = slope_deg
 
     # T32: Aspect -> northness/eastness, flats (slope < 1 deg) neutralized to 0.
     if any(n in feature_names for n in ('Northness', 'Eastness')):
-        aspect_deg = np.flipud(sample_native(ee.Terrain.aspect(elevation_image), 'aspect', 10))
+        aspect_deg = np.flipud(native['aspect'])
         asp_rad = np.deg2rad(aspect_deg)
         flat = slope_deg < 1.0  # NaN slope -> False (aspect kept / stays NaN)
         if 'Northness' in feature_names:
@@ -262,11 +326,8 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
             east[flat] = 0.0
             feature_arrays['Eastness'] = east
 
-    # Curvature (GEE track: TAGEE-family port, no custom asset).
     if 'Mean curvature (500 m)' in feature_names:
-        # Native analysis grid 250 m -> point-sample at native scale (T37).
-        feature_arrays['Mean curvature (500 m)'] = np.flipud(
-            sample_native(gee_features.mean_curvature(500).select('MeanCurvature'), 'MeanCurvature', 250))
+        feature_arrays['Mean curvature (500 m)'] = np.flipud(native['MeanCurvature'])
 
     if 'Mean curvature (2 km)' in feature_names:
         # Native analysis grid 1000 m == 1 km serve grid -> reproject is exact.
@@ -274,24 +335,12 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         curve2k_data = extract_data_array(curve2k, region, 'MeanCurvature', default_value)
         feature_arrays['Mean curvature (2 km)'] = np.flipud(curve2k_data)
 
-    # --- Hydrological terrain (T34): MERIT Hydro v1.0.1, native ~90 m ---
-    # hnd is served NATIVELY, like the 3DEP terrain (T37): a stored height, so a
-    # 1 km reproject would average the ~120 native pixels under each cell and blur
-    # the valley/slope contrast. Point-sampling at MERIT_SCALE via sample_native is
-    # the identical construction the point path uses, so parity is exact.
+    # Hydrological terrain (T34/T35): MERIT Hydro hnd/upa served natively (raw upa,
+    # T35 — no log baked in; the T13 linear baseline logs it in its own scope).
     if 'Height Above Nearest Drainage' in feature_names:
-        feature_arrays['Height Above Nearest Drainage'] = np.flipud(
-            sample_native(gee_features.height_above_drainage(), 'hnd', gee_features.MERIT_SCALE))
-
-    # upa is also served NATIVELY and RAW (T35): though heavy-tailed and finer than
-    # the 1 km grid, point-sampling the native pixel at MERIT_SCALE matches the
-    # point path by construction, so — like hnd — no reproject-averaging occurs and
-    # the log(mean(upa)) bias that averaging would introduce never arises. No log is
-    # baked in (a no-op for the XGBoost fit; the T13 linear baseline logs it in its
-    # own scope). This replaces the former reduceResolution(mean)-on-log path (T34).
+        feature_arrays['Height Above Nearest Drainage'] = np.flipud(native['hnd'])
     if 'Upstream Area' in feature_names:
-        feature_arrays['Upstream Area'] = np.flipud(
-            sample_native(gee_features.upstream_area(), 'upa', gee_features.MERIT_SCALE))
+        feature_arrays['Upstream Area'] = np.flipud(native['upa'])
 
     # Load bioclimatic variables
     bioclim = ee.Image('WORLDCLIM/V1/BIO')
@@ -410,62 +459,25 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
             if feature_name in feature_names:
                 feature_arrays[feature_name] = (vegetation_array == code).astype(float)
     
-    # Load soil variables (need to aggregate depths)
-    soil_vars = ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Silt', 'Clay']
-    soil_depths = {
-        '0-5 cm': ('soc_0-5cm_mean', 'nitrogen_0-5cm_mean', 'bdod_0-5cm_mean', 'sand_0-5cm_mean', 'silt_0-5cm_mean', 'clay_0-5cm_mean'),
-        '5-15 cm': ('soc_5-15cm_mean', 'nitrogen_5-15cm_mean', 'bdod_5-15cm_mean', 'sand_5-15cm_mean', 'silt_5-15cm_mean', 'clay_5-15cm_mean'),
-        '15-30 cm': ('soc_15-30cm_mean', 'nitrogen_15-30cm_mean', 'bdod_15-30cm_mean', 'sand_15-30cm_mean', 'silt_15-30cm_mean', 'clay_15-30cm_mean'),
-        '30-60 cm': ('soc_30-60cm_mean', 'nitrogen_30-60cm_mean', 'bdod_30-60cm_mean', 'sand_30-60cm_mean', 'silt_30-60cm_mean', 'clay_30-60cm_mean'),
-        '60-100 cm': ('soc_60-100cm_mean', 'nitrogen_60-100cm_mean', 'bdod_60-100cm_mean', 'sand_60-100cm_mean', 'silt_60-100cm_mean', 'clay_60-100cm_mean'),
-        '100-200 cm': ('soc_100-200cm_mean', 'nitrogen_100-200cm_mean', 'bdod_100-200cm_mean', 'sand_100-200cm_mean', 'silt_100-200cm_mean', 'clay_100-200cm_mean')
-    }
-    
-    soil_images = {
-        'Soil Organic Carbon': ee.Image('projects/soilgrids-isric/soc_mean'),
-        'Nitrogen': ee.Image('projects/soilgrids-isric/nitrogen_mean'),
-        'Bulk Density': ee.Image('projects/soilgrids-isric/bdod_mean'),
-        'Sand': ee.Image('projects/soilgrids-isric/sand_mean'),
-        'Silt': ee.Image('projects/soilgrids-isric/silt_mean'),
-        'Clay': ee.Image('projects/soilgrids-isric/clay_mean')
-    }
-    
-    # Load and aggregate soil variables.
-    # Served NATIVELY at SoilGrids' 250 m grid (T35): each depth band is
-    # point-sampled at the 1 km cell centre via sample_native (the identical
-    # construction the point path uses at scale 250), NOT reproject-averaged. This
-    # keeps heavy-tailed SOC/Nitrogen from being pulled up by the ~16 native pixels
-    # under each 1 km cell and makes train/serve parity exact by construction. The
-    # depth-compositing below (a linear weighted mean across depths) is unchanged;
-    # only the horizontal aggregation moved from a 16-px mean to the centre pixel.
-    SOIL_SCALE = 250
+    # Composite soil depths from the native-sampled bands (collected + sampled in
+    # the native block above; soil_vars/soil_depths were defined there). Each 250 m
+    # depth band was point-sampled at the 1 km cell centre (T35, native orientation);
+    # here we flip once and take the linear depth-weighted mean — unchanged from the
+    # per-band sample_native path, only the sampling moved into the batched pass.
+    _soil_range_weights = {'0-30 cm': (('0-5 cm', 5), ('5-15 cm', 10), ('15-30 cm', 15)),
+                           '30-200 cm': (('30-60 cm', 30), ('60-100 cm', 40), ('100-200 cm', 100))}
+    _soil_range_total = {'0-30 cm': 30, '30-200 cm': 170}
     for var in soil_vars:
-        for depth_range in ['0-30 cm', '30-200 cm']:
+        var_idx = soil_vars.index(var)
+        for depth_range, dbw in _soil_range_weights.items():
             feature_name = f'{var} ({depth_range})'
             if feature_name in feature_names:
-                if depth_range == '0-30 cm':
-                    # Weighted average: (0-5)*5 + (5-15)*10 + (15-30)*15 / 30
-                    depth_bands = ['0-5 cm', '5-15 cm', '15-30 cm']
-                    weights = [5, 10, 15]
-                else:  # 30-200 cm
-                    # Weighted average: (30-60)*30 + (60-100)*40 + (100-200)*100 / 170
-                    depth_bands = ['30-60 cm', '60-100 cm', '100-200 cm']
-                    weights = [30, 40, 100]
-
-                var_idx = soil_vars.index(var)
                 arrays = []
-                for depth, weight in zip(depth_bands, weights):
+                for depth, weight in dbw:
                     band = soil_depths[depth][var_idx]
-                    arr = sample_native(soil_images[var].select(band), band, SOIL_SCALE)
-                    # Flip before aggregating (sample_native returns native orientation)
-                    arr_flipped = np.flipud(arr)
-                    arrays.append(arr_flipped * weight)
-                
-                total_weight = sum(weights)
-                if depth_range == '0-30 cm':
-                    feature_arrays[feature_name] = sum(arrays) / 30
-                else:
-                    feature_arrays[feature_name] = sum(arrays) / 170
+                    # native[band] is native orientation -> flip once, then weight.
+                    arrays.append(np.flipud(native[band]) * weight)
+                feature_arrays[feature_name] = sum(arrays) / _soil_range_total[depth_range]
 
     
     # Stack features in the exact order required by the model
@@ -539,44 +551,49 @@ def plot_field(field, feature_names=None, feature_stack=None, ds=None, default_v
     
     return fig, ax
 
-# Load all features in model order and create feature stack
-print("\nLoading all features for prediction...")
-feature_stack, lon2d, lat2d = load_all_features(feature_names, SCALE, ee_roi, default_value=-9999)
+def main():
+    # Load all features in model order and create feature stack
+    print("\nLoading all features for prediction...")
+    feature_stack, lon2d, lat2d = load_all_features(feature_names, SCALE, ee_roi, default_value=-9999)
 
-print(f"\nFeature stack shape: {feature_stack.shape}")
-print(f"Expected shape: (height, width, {len(feature_names)})")
+    print(f"\nFeature stack shape: {feature_stack.shape}")
+    print(f"Expected shape: (height, width, {len(feature_names)})")
 
-# Create xarray Dataset with feature stack and metadata. longitude/latitude are
-# 2D (y, x) coords that georeference every cell centre (T20): predict.py samples
-# the Obu domain mask at these coords, and they carry the -9999 off-ROI fill so
-# out-of-footprint cells resolve to NaN (masked) downstream.
-ds = xr.Dataset(
-    {
-        'feature_stack': (['y', 'x', 'feature'], feature_stack)
-    },
-    coords={
-        'feature': feature_names,
-        'x': np.arange(feature_stack.shape[1]),
-        'y': np.arange(feature_stack.shape[0]),
-        'longitude': (['y', 'x'], lon2d),
-        'latitude': (['y', 'x'], lat2d),
-    },
-    attrs={
-        'scale': SCALE,
-        'default_value': -9999,
-        'description': 'Feature stack for abrupt thaw prediction model',
-        'num_features': len(feature_names),
-        'shape': f"{feature_stack.shape[0]} x {feature_stack.shape[1]} x {feature_stack.shape[2]}"
-    }
-)
+    # Create xarray Dataset with feature stack and metadata. longitude/latitude are
+    # 2D (y, x) coords that georeference every cell centre (T20): predict.py samples
+    # the Obu domain mask at these coords, and they carry the -9999 off-ROI fill so
+    # out-of-footprint cells resolve to NaN (masked) downstream.
+    ds = xr.Dataset(
+        {
+            'feature_stack': (['y', 'x', 'feature'], feature_stack)
+        },
+        coords={
+            'feature': feature_names,
+            'x': np.arange(feature_stack.shape[1]),
+            'y': np.arange(feature_stack.shape[0]),
+            'longitude': (['y', 'x'], lon2d),
+            'latitude': (['y', 'x'], lat2d),
+        },
+        attrs={
+            'scale': SCALE,
+            'default_value': -9999,
+            'description': 'Feature stack for abrupt thaw prediction model',
+            'num_features': len(feature_names),
+            'shape': f"{feature_stack.shape[0]} x {feature_stack.shape[1]} x {feature_stack.shape[2]}"
+        }
+    )
 
-# Add feature names as a coordinate variable for easy access
-ds['feature_names'] = ('feature', feature_names)
+    # Add feature names as a coordinate variable for easy access
+    ds['feature_names'] = ('feature', feature_names)
 
-# Save to NetCDF
-feature_stack_path = data / 'prediction_data.nc'
-ds.to_netcdf(feature_stack_path)
-print(f"\nFeature stack and metadata saved to: {feature_stack_path}")
-print(f"  Shape: {feature_stack.shape}")
-print(f"  Features: {len(feature_names)}")
-print(f"  Scale: {SCALE}m")
+    # Save to NetCDF
+    feature_stack_path = data / 'prediction_data.nc'
+    ds.to_netcdf(feature_stack_path)
+    print(f"\nFeature stack and metadata saved to: {feature_stack_path}")
+    print(f"  Shape: {feature_stack.shape}")
+    print(f"  Features: {len(feature_names)}")
+    print(f"  Scale: {SCALE}m")
+
+
+if __name__ == '__main__':
+    main()

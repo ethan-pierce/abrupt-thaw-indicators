@@ -396,7 +396,25 @@ column-changing wiring, then the dry-run gate before the overnight run.
   Verified: all files compile, no residual "gradual" in code, and a redirected-output smoke
   (real artifacts untouched) prints "test Non-abrupt …" with the renamed keys serialized.
 
-- [ ] **T41 — Grouped SHAP over emergent groups.** [FABLE A1§4 / A2§6 / A3§2]
+- [x] **T41 — Grouped SHAP over emergent groups.** [FABLE A1§4 / A2§6 / A3§2]
+  ✓ 2026-07-16 **DONE — authoritative run on the locked (post-T23) 70-feature operative model.**
+  `poetry run python models/shap_groups.py` over 19,288 OOF-explained points (5-fold, 10 km albers
+  block, buffer 0, operative hparams). Emergent cut at **dist 0.449 / |ρ|≥0.55** (largest merge-height
+  gap 0.144 between [0.377, 0.522]) → **22 families** (11 multi-member continuous + 8 continuous
+  singletons + Land Cover, Vegetation Mode, Yedoma). **Both deferred curation calls resolved (with
+  Ethan) = keep as clustered:** (1) alpine relief `[Elevation|Slope|HND|Mean Annual SWE]` stays **fused**
+  — all 6 pairwise |ρ| 0.69–0.81, no 2+2 seam (SWE tighter to Slope 0.77 than Elevation 0.73);
+  (2) `Trend in SWE` stays in **thermal continentality** — |ρ| 0.66–0.76 to the thermal block vs only
+  −0.29 to Trend-in-temperature (the three trends don't mutually cluster: Trend-temp×precip −0.33).
+  Manuscript labels baked into `MANUSCRIPT_LABELS` (keyed by member set; unmapped cluster → auto-tag +
+  warn). **Grouped-importance ranking (mean|Σ signed member SHAP|, Abrupt-oriented):** Alpine relief
+  23.4%, Annual/dry-season temp 16.4%, Land Cover 12.1%, Thermal continentality 8.7%, Isothermality/
+  precip-seasonality 6.2%, Precipitation amount 5.1%, Trend-in-precip 4.5%, Summer warmth 3.9%,
+  curv-500 m 3.6%, Upstream Area 2.9%, … (full record in `output/shap_families.json`). Emits
+  `output/shap_family_dendrogram.png`, `shap_grouped_importance.png`, `shap_grouped_contribution_box.png`,
+  `shap_families.json`. *Depends:* T25 (done), retrain (done), T23 feature-set lock (done). *Done:*
+  authoritative grouped SHAP reported over the emergent families; curation resolved; labels finalized.
+  *(⏳ history below retained for the record.)*
   ⏳ **Machinery built + design settled (grill 2026-07-15); authoritative run deferred.**
   New `models/shap_groups.py` reuses the canonical `shap_values.pooled_oof_shap` (per-fold
   refit + held-out TreeSHAP) and adds the grouping layer. **Purpose fixed as (a):** a

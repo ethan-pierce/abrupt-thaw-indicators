@@ -1,0 +1,314 @@
+{
+  "method": {
+    "grouping_basis": "feature-space Spearman (values)",
+    "distance": "1 - |Spearman|",
+    "linkage": "complete",
+    "cut_threshold": 0.4492963776826339,
+    "cut_rho_floor": 0.550703622317366,
+    "gap_size": 0.1444400948131933,
+    "gap_between_heights": [
+      0.37707633027603726,
+      0.5215164250892306
+    ],
+    "categorical_collapse": [
+      "Land Cover",
+      "Vegetation Mode",
+      "(lone binaries standalone)"
+    ],
+    "importance_metric": "mean over points of |sum of signed member SHAP| (margin, Abrupt-oriented)",
+    "n_points_scored": 19288,
+    "smoke": false
+  },
+  "families": [
+    {
+      "rank": 1,
+      "label": "Alpine relief",
+      "members": [
+        "Elevation",
+        "Slope",
+        "Height Above Nearest Drainage",
+        "Mean Annual SWE"
+      ],
+      "n_members": 4,
+      "importance": 1.2024494093212539,
+      "importance_frac": 0.23367564868345142,
+      "within_family_min_abs_spearman": 0.692098064789667
+    },
+    {
+      "rank": 2,
+      "label": "Annual / dry-season temperature",
+      "members": [
+        "Annual Mean Temperature",
+        "Mean Temperature of Driest Quarter"
+      ],
+      "n_members": 2,
+      "importance": 0.8417436031985533,
+      "importance_frac": 0.16357859297681057,
+      "within_family_min_abs_spearman": 0.7718262627206963
+    },
+    {
+      "rank": 3,
+      "label": "Land Cover (18 classes)",
+      "members": [
+        "Land Cover (Dwarf Scrub)",
+        "Land Cover (Sedge/Herbaceous)",
+        "Land Cover (Shrub/Scrub)",
+        "Land Cover (Developed, Low Intensity)",
+        "Land Cover (Open Water)",
+        "Land Cover (Evergreen Forest)",
+        "Land Cover (Woody Wetlands)",
+        "Land Cover (Barren Land (Rock/Sand/Clay))",
+        "Land Cover (Emergent Herbaceous Wetlands)",
+        "Land Cover (Deciduous Forest)",
+        "Land Cover (Grassland/Herbaceous)",
+        "Land Cover (Mixed Forest)",
+        "Land Cover (Cultivated Crops)",
+        "Land Cover (Developed, Open Space)",
+        "Land Cover (Developed, High Intensity)",
+        "Land Cover (Perennial Ice/Snow)",
+        "Land Cover (Developed, Medium Intensity)",
+        "Land Cover (Pasture/Hay)"
+      ],
+      "n_members": 18,
+      "importance": 0.624050214036691,
+      "importance_frac": 0.12127357495928619,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 4,
+      "label": "Thermal continentality",
+      "members": [
+        "Mean Diurnal Range",
+        "Temperature Seasonality",
+        "Min Temperature of Coldest Month",
+        "Temperature Annual Range",
+        "Mean Temperature of Coldest Quarter",
+        "Trend in SWE"
+      ],
+      "n_members": 6,
+      "importance": 0.44740311009163863,
+      "importance_frac": 0.0869452063123978,
+      "within_family_min_abs_spearman": 0.6630305602406187
+    },
+    {
+      "rank": 5,
+      "label": "Isothermality / precip seasonality",
+      "members": [
+        "Isothermality",
+        "Precipitation Seasonality"
+      ],
+      "n_members": 2,
+      "importance": 0.3176154603171647,
+      "importance_frac": 0.061723177828662955,
+      "within_family_min_abs_spearman": 0.7850788789025085
+    },
+    {
+      "rank": 6,
+      "label": "Precipitation amount",
+      "members": [
+        "Annual Precipitation",
+        "Precipitation of Wettest Month",
+        "Precipitation of Driest Month",
+        "Precipitation of Wettest Quarter",
+        "Precipitation of Driest Quarter",
+        "Precipitation of Warmest Quarter",
+        "Precipitation of Coldest Quarter"
+      ],
+      "n_members": 7,
+      "importance": 0.2617162093920689,
+      "importance_frac": 0.050860106484801555,
+      "within_family_min_abs_spearman": 0.7708089730535568
+    },
+    {
+      "rank": 7,
+      "label": "Trend in precipitation",
+      "members": [
+        "Trend in precipitation"
+      ],
+      "n_members": 1,
+      "importance": 0.23025020135503388,
+      "importance_frac": 0.04474522149876018,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 8,
+      "label": "Summer warmth",
+      "members": [
+        "Max Temperature of Warmest Month",
+        "Mean Temperature of Wettest Quarter",
+        "Mean Temperature of Warmest Quarter"
+      ],
+      "n_members": 3,
+      "importance": 0.20139140485089882,
+      "importance_frac": 0.039137003854797896,
+      "within_family_min_abs_spearman": 0.6799351973461014
+    },
+    {
+      "rank": 9,
+      "label": "Mean curvature (500 m)",
+      "members": [
+        "Mean curvature (500 m)"
+      ],
+      "n_members": 1,
+      "importance": 0.1843091175520062,
+      "importance_frac": 0.03581735104061504,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 10,
+      "label": "Upstream Area",
+      "members": [
+        "Upstream Area"
+      ],
+      "n_members": 1,
+      "importance": 0.14692451007601276,
+      "importance_frac": 0.028552286635402258,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 11,
+      "label": "Sand fraction",
+      "members": [
+        "Sand (0-30 cm)",
+        "Sand (30-200 cm)"
+      ],
+      "n_members": 2,
+      "importance": 0.12877328152380668,
+      "importance_frac": 0.02502490321830487,
+      "within_family_min_abs_spearman": 0.9457720458225708
+    },
+    {
+      "rank": 12,
+      "label": "Mean curvature (2 km)",
+      "members": [
+        "Mean curvature (2 km)"
+      ],
+      "n_members": 1,
+      "importance": 0.10255747062634986,
+      "importance_frac": 0.019930305000918032,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 13,
+      "label": "Soil organic / fertility",
+      "members": [
+        "Soil Organic Carbon (0-30 cm)",
+        "Soil Organic Carbon (30-200 cm)",
+        "Nitrogen (0-30 cm)",
+        "Nitrogen (30-200 cm)"
+      ],
+      "n_members": 4,
+      "importance": 0.09169862283114609,
+      "importance_frac": 0.017820072102278726,
+      "within_family_min_abs_spearman": 0.6229236697239627
+    },
+    {
+      "rank": 14,
+      "label": "Clay fraction",
+      "members": [
+        "Clay (0-30 cm)",
+        "Clay (30-200 cm)"
+      ],
+      "n_members": 2,
+      "importance": 0.08910836565638856,
+      "importance_frac": 0.01731669955215199,
+      "within_family_min_abs_spearman": 0.8491642591636177
+    },
+    {
+      "rank": 15,
+      "label": "Bulk density",
+      "members": [
+        "Bulk Density (0-30 cm)",
+        "Bulk Density (30-200 cm)"
+      ],
+      "n_members": 2,
+      "importance": 0.06503539307200293,
+      "importance_frac": 0.012638525617524213,
+      "within_family_min_abs_spearman": 0.6300767993812445
+    },
+    {
+      "rank": 16,
+      "label": "Vegetation Mode (7 classes)",
+      "members": [
+        "Vegetation Mode (Graminoid tundra)",
+        "Vegetation Mode (Shrub tundra)",
+        "Vegetation Mode (White spruce)",
+        "Vegetation Mode (Black spruce)",
+        "Vegetation Mode (Deciduous forest)",
+        "Vegetation Mode (Wetland tundra)",
+        "Vegetation Mode (Temperate rainforest)"
+      ],
+      "n_members": 7,
+      "importance": 0.05359163612520236,
+      "importance_frac": 0.0104146255455629,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 17,
+      "label": "Flammability Index",
+      "members": [
+        "Flammability Index"
+      ],
+      "n_members": 1,
+      "importance": 0.05187794110267601,
+      "importance_frac": 0.010081597982881083,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 18,
+      "label": "Yedoma",
+      "members": [
+        "Yedoma"
+      ],
+      "n_members": 1,
+      "importance": 0.04908761360159813,
+      "importance_frac": 0.009539345158105944,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 19,
+      "label": "Trend in temperature",
+      "members": [
+        "Trend in temperature"
+      ],
+      "n_members": 1,
+      "importance": 0.04145203238625528,
+      "importance_frac": 0.00805549945138505,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 20,
+      "label": "Eastness",
+      "members": [
+        "Eastness"
+      ],
+      "n_members": 1,
+      "importance": 0.006995220171431521,
+      "importance_frac": 0.0013594023986136048,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 21,
+      "label": "Northness",
+      "members": [
+        "Northness"
+      ],
+      "n_members": 1,
+      "importance": 0.005847003991218582,
+      "importance_frac": 0.0011362660581903132,
+      "within_family_min_abs_spearman": null
+    },
+    {
+      "rank": 22,
+      "label": "Fire history",
+      "members": [
+        "Time Since Last Fire",
+        "Burn Count"
+      ],
+      "n_members": 2,
+      "importance": 0.0019275550871881012,
+      "importance_frac": 0.00037458763909744544,
+      "within_family_min_abs_spearman": 0.9999576089619934
+    }
+  ]
+}

@@ -29,8 +29,14 @@ untouched. See CLAUDE.md glossary + SCOPE.md.
 Ordered: pre-build probes first (their results shape the build), then the
 column-changing wiring, then the dry-run gate before the overnight run.
 
-- [ ] **T47 — Datacube native-sampling rewrite (statewide build is intractable).** [handoff 2026-07-15]
-  ⚠ **ACTIVE BLOCKER.** The statewide 1 km build (`build_prediction_data.py`, grid 2087×3229 ≈
+- [x] **T47 — Datacube native-sampling rewrite (statewide build is intractable).** [handoff 2026-07-15]
+  ✓ 2026-07-15 **DONE.** Rewrote as planned; `data/prediction_data.nc` rebuilt statewide to
+  `(2087, 3229, 70)` in ~1h42m (was 2+ days → 0 features). Verified: one-tile parity + small-block
+  smoke + full build, then a high-effort code review (fixes applied: single-band scale group would
+  serve all-NaN — restored the `mean`-column fallback; EE concurrency-limit errors now retried, not
+  fatal; probe gained a single-band case). Cube is git-ignored (reproducible artifact). Now unblocks
+  **T23** + **T20** (real-cube masking). *(Original problem statement retained below for the record.)*
+  The statewide 1 km build (`build_prediction_data.py`, grid 2087×3229 ≈
   6.74M cells) is unrunnable as written: `ee_sampling.sample_points_reduceregions_chunked` chunks
   the grid by **index**, so 20k row-major points span Alaska's full ~3229 km E–W width → every
   `reduceRegions` recomputes over the whole mosaic (~1.7 min/chunk), once per native band (~36:

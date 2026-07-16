@@ -43,6 +43,7 @@ deliberately different grids.
 """
 
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import ee
 import numpy as np
@@ -56,6 +57,9 @@ _TRANSIENT = (
     'timed out', 'timeout', 'deadline', 'try again', 'temporarily',
     'backend error', 'internal error', 'service unavailable',
     'rate limit', 'too many requests', 'quota',
+    # Concurrency-limit errors from the tiled fan-out (T47): EE emits these under
+    # parallel reduceRegions load; they are transient (back off + retry), not fatal.
+    'too many concurrent', 'concurrent aggregations', 'concurrent requests',
     '429', '500', '502', '503',
 )
 _MEMORY = (
@@ -143,36 +147,113 @@ def sample_points_reduceregions(lons, lats, image: ee.Image, reducer: ee.Reducer
     return out
 
 
-def sample_points_reduceregions_chunked(lons, lats, image: ee.Image,
-                                        reducer: ee.Reducer, scale: float, band: str,
-                                        crs: str = 'EPSG:4326',
-                                        chunk: int = 20000) -> np.ndarray:
-    """Chunked ``reduceRegions`` for a CHEAP raster sampled at very many points.
+def sample_native_multiband_tiled(
+    lon2d, lat2d, image: ee.Image, bands, scale: float,
+    reducer: ee.Reducer = None, crs: str = 'EPSG:4326',
+    tile: int = 128, workers: int = 8, log=None,
+) -> dict:
+    """Point-sample a MULTI-BAND image at every grid-cell centre via 2-D tiled,
+    concurrent ``reduceRegions`` — the datacube's native-scale server (TASKS T47).
 
-    Used to serve native-scale terrain at the datacube's ~1e6 grid cell centres
-    (TASKS T37): a 1 km reproject would pyramid-aggregate 10 m slope/aspect
-    (probe_native_serve), so the datacube must read the native pixel at each cell
-    centre — the same construction the point path uses per training point. A
-    single ``reduceRegions`` over ~1e6 client-built points is too large a request,
-    so points are split into contiguous chunks. Because the datacube grid is
-    raster-ordered, consecutive chunks are spatially compact strips, so each
-    ``reduceRegions`` still covers only a bounded footprint.
+    ``lon2d``/``lat2d`` are the 2-D ``(row, col)`` cell-centre coordinates of the
+    prediction grid in GEE-native (unflipped) orientation. The grid is cut into
+    square ``tile``x``tile`` INDEX blocks; each block is spatially compact, so one
+    ``reduceRegions`` over its points touches only a bounded footprint of the
+    native mosaic. This replaces ``sample_points_reduceregions_chunked``, whose
+    index chunks of 20k row-major points spanned Alaska's full ~29 deg E-W width,
+    re-triggering a statewide computation per chunk (~1.7 min/chunk) — 0 features
+    in 3h14m at statewide scale.
 
-    NOT for deep temporal reductions — for those a single call is mandatory (see
-    the module docstring); chunking one re-triggers the whole reduction per chunk.
-    Invalid/off-grid coords (``|lon|>180`` or ``|lat|>90``, e.g. the -9999 off-ROI
-    fill) sample to ``NaN``, matching ``local_rasters.sample_points``.
+    All ``bands`` must share ``scale``: they are reduced in ONE pass with one
+    ``reducer`` (``mean`` by default). Merging bands is numerically identical to
+    sampling each alone — ``reduceRegions`` reduces every band independently — so
+    train/serve parity (a Point reduces the single native pixel it falls in at
+    ``scale``) is preserved (verified per band by the T47 one-tile parity gate).
+
+    Results are reassembled by band **name** and ``row_id`` (never position;
+    ``reduceRegions`` does not preserve order). Per-band masking yields ragged NaN
+    across bands, and off-grid cells (``|lon|>180`` / ``|lat|>90`` / non-finite,
+    e.g. the -9999 off-ROI fill) stay NaN — matching ``local_rasters.sample_points``.
+    A band masked over a whole tile is simply absent from that tile's frame and
+    stays NaN. Tiles with no valid cell are skipped entirely (the big statewide
+    win: Alaska is diagonal, so many bbox tiles are all off-ROI).
+
+    Returns ``{band: 2-D array}`` in native (unflipped) orientation; the caller
+    flips to match the rest of the stack. ``log(done, total)`` is called after
+    each tile completes if provided.
     """
-    lons = np.asarray(lons, dtype=float)
-    lats = np.asarray(lats, dtype=float)
-    out = np.full(lons.shape, np.nan, dtype=float)
-    ok = (np.isfinite(lons) & np.isfinite(lats)
-          & (np.abs(lons) <= 180) & (np.abs(lats) <= 90))
-    idx = np.flatnonzero(ok)
-    for start in range(0, idx.size, chunk):
-        sl = idx[start:start + chunk]
-        out[sl] = sample_points_reduceregions(
-            lons[sl], lats[sl], image, reducer, scale, band, crs)
+    reducer = ee.Reducer.mean() if reducer is None else reducer
+    lon2d = np.asarray(lon2d, dtype=float)
+    lat2d = np.asarray(lat2d, dtype=float)
+    nrows, ncols = lon2d.shape
+    out = {b: np.full((nrows, ncols), np.nan, dtype=float) for b in bands}
+    img = image.select(bands)
+
+    tiles = [(r0, min(r0 + tile, nrows), c0, min(c0 + tile, ncols))
+             for r0 in range(0, nrows, tile)
+             for c0 in range(0, ncols, tile)]
+
+    def _do_tile(t):
+        """Worker: build the tile's valid-point FC and run one reduceRegions.
+        Returns ``(t, oki, df)`` or ``None`` for an all-off-grid tile. ``row_id``
+        is the LOCAL index into this tile's valid points."""
+        r0, r1, c0, c1 = t
+        lo = lon2d[r0:r1, c0:c1].ravel()
+        la = lat2d[r0:r1, c0:c1].ravel()
+        ok = (np.isfinite(lo) & np.isfinite(la)
+              & (np.abs(lo) <= 180) & (np.abs(la) <= 90))
+        oki = np.flatnonzero(ok)
+        if oki.size == 0:
+            return None
+        points_fc = ee.FeatureCollection([
+            ee.Feature(ee.Geometry.Point([float(lo[i]), float(la[i])]),
+                       {'row_id': int(j)})
+            for j, i in enumerate(oki)
+        ])
+        df = _compute_reduced(img, points_fc, reducer, scale, crs)
+        return t, oki, df
+
+    def _scatter(res):
+        """Main-thread reassembly (no shared-array races): place each band's
+        values back into its (row, col) block by row_id, valid cells only."""
+        t, oki, df = res
+        r0, r1, c0, c1 = t
+        h, w = r1 - r0, c1 - c0
+        if 'row_id' not in df.columns:
+            return
+        rid = df['row_id'].to_numpy().astype(int)
+        # reduceRegions names each MULTIband mean-output column by its band, but a
+        # SINGLE-band image's lone output column is named 'mean' (not the band). So
+        # a single-band group would find `b not in df.columns` and silently return
+        # all-NaN. Mirror sample_points_reduceregions' fallback: for a one-band call
+        # only, take the sole numeric non-key column. For a true multiband call a
+        # missing band means it was masked over the whole tile -> stays NaN (we must
+        # NOT borrow another band's column), so the fallback is gated on len==1.
+        numeric = [c for c in df.columns
+                   if c != 'row_id' and pd.api.types.is_numeric_dtype(df[c])]
+        for b in bands:
+            if b in df.columns:
+                col = b
+            elif len(bands) == 1 and len(numeric) == 1:
+                col = numeric[0]
+            else:
+                continue  # band masked over the whole tile -> stays NaN
+            valid_vals = np.full(oki.size, np.nan, dtype=float)
+            valid_vals[rid] = df[col].to_numpy(dtype=float)
+            block = np.full(h * w, np.nan, dtype=float)
+            block[oki] = valid_vals
+            out[b][r0:r1, c0:c1] = block.reshape(h, w)
+
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futures = [ex.submit(_do_tile, t) for t in tiles]
+        done = 0
+        for fut in as_completed(futures):
+            res = fut.result()
+            if res is not None:
+                _scatter(res)
+            done += 1
+            if log is not None:
+                log(done, len(tiles))
     return out
 
 

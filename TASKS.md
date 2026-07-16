@@ -29,6 +29,27 @@ untouched. See CLAUDE.md glossary + SCOPE.md.
 Ordered: pre-build probes first (their results shape the build), then the
 column-changing wiring, then the dry-run gate before the overnight run.
 
+- [ ] **T47 — Datacube native-sampling rewrite (statewide build is intractable).** [handoff 2026-07-15]
+  ⚠ **ACTIVE BLOCKER.** The statewide 1 km build (`build_prediction_data.py`, grid 2087×3229 ≈
+  6.74M cells) is unrunnable as written: `ee_sampling.sample_points_reduceregions_chunked` chunks
+  the grid by **index**, so 20k row-major points span Alaska's full ~3229 km E–W width → every
+  `reduceRegions` recomputes over the whole mosaic (~1.7 min/chunk), once per native band (~36:
+  elev/slope/aspect @10 m, hnd/upa @90 m, curv-500 + 30 soil bands @250 m). Prior run: 3h14m,
+  **0 features**, died inside Elevation. **Fix:** spatial tiling + same-scale band-merge + concurrency.
+  - New `ee_sampling.sample_native_multiband_tiled(lon2d, lat2d, image, bands, scale, …, tile=128,
+    workers=8)` → `dict[band]->2D array`: square 128×128 grid-index tiles (compact footprint,
+    16 384 pts/tile < proven 20k), skip all-off-ROI tiles, valid-cell filter, reassemble by band
+    **name + `row_id`**, `ThreadPoolExecutor(8)`, reuse `_compute_reduced` retry/tileScale.
+  - Restructure `load_all_features` **collect→sample→distribute**: 3 per-scale multiband images
+    (10/90/250 m) sampled once each; post-processing (flats mask, northness/eastness, soil depth-
+    weighting, single `np.flipud`) reads the cached band dict. `Mean curvature (2 km)` stays on the
+    `reproject` path (native grid = 1 km, exact). **Delete** `sample_points_reduceregions_chunked`;
+    **keep** `sample_points_reduceregions` (parity reference).
+  - **Verify:** (1) one-tile parity — new tiled == old single-call per band, NaN-aligned; (2) small-
+    block smoke — full 70-feature stack over a few tiles; (3) full build `python -u` + progress logs.
+  *Depends:* T46 (done). *Blocks:* T23, T20 (real-cube masking), prediction. *Done when:*
+  `data/prediction_data.nc` is `(2087, 3229, 70)` from the rewritten sampler.
+
 - [x] **T37 — Terrain train/serve scale: probe first, don't coarsen blind.** [FABLE A1§1 / A2]
   ✓ 2026-07-14 **Probe (`diagnostics/probe_terrain_scale.py`): the mismatch is a
   *recompute*, and severe.** EE reproject to 4 km recomputes the derivative on a
@@ -229,7 +250,7 @@ column-changing wiring, then the dry-run gate before the overnight run.
 
 - [ ] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
   ⚠ **BLOCKED (2026-07-15): the serve side is still pre-rebuild.** Only the *train* side of
-  the rebuild is done — `features_clean.csv` is fresh (71 model features: Northness/Eastness,
+  the rebuild is done — `features_clean.csv` is fresh (70 model features: Northness/Eastness,
   Yedoma, MERIT `hnd`/`upa`, MODIS `Time Since Last Fire`/`Burn Count`, no `Silt`). The
   datacube `data/prediction_data.nc` (and `models/model.json`) are still the **old 49-feature,
   4 km schema** (`scale=4000`, 294×862): they carry `Aspect`, `Silt`, `Maximum Fire Temperature`,

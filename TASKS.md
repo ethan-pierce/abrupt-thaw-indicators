@@ -254,25 +254,39 @@ column-changing wiring, then the dry-run gate before the overnight run.
   question → SCOPE.)* Buffer-sensitivity sweep reported in both figures; the requested
   1/2/5/10 km readout is in the block-CV table.
 
-- [ ] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
-  ⚠ **BLOCKED (2026-07-15): the serve side is still pre-rebuild.** Only the *train* side of
-  the rebuild is done — `features_clean.csv` is fresh (70 model features: Northness/Eastness,
-  Yedoma, MERIT `hnd`/`upa`, MODIS `Time Since Last Fire`/`Burn Count`, no `Silt`). The
-  datacube `data/prediction_data.nc` (and `models/model.json`) are still the **old 49-feature,
-  4 km schema** (`scale=4000`, 294×862): they carry `Aspect`, `Silt`, `Maximum Fire Temperature`,
-  `Projected precipitation change` and lack every new feature. So train and serve are on
-  **disjoint feature sets** and a per-feature parity comparison is not yet meaningful.
-  **Unblock:** re-run `data/build_prediction_data.py` (the GEE overnight run — emits the new
-  1 km datacube from the completed feature-table rebuild) and retrain (`models/train_xgboost.py`);
-  T23 runs once train and serve share the new schema.
-  *Depends:* rebuild (**datacube half still outstanding** — feature-table half done). *Done when:* a per-feature **training-column-vs-datacube-pixel
-  distribution-parity** check is documented for **every** feature (not soil-NaN only),
-  including: soil-NaN reproduction; **the soil 250 m→1 km `reproject`-averaging** left
-  unfixed under T37 (the one remaining terrain/soil scale gap — confirm it is as mild as
-  assumed); terrain (now served natively both sides → expect near-exact parity, the T37
-  construction check); and the **land-cover/veg category-set subset check** (report any
-  class present statewide but absent from training points, and the area affected — silent
-  reference-bucket absorption). No change to one-hot construction.
+- [x] **T23 — Train/serve parity gate (broadened).** [FABLE A2 / A1§5 / A3§5; absorbs T42 + the T37 tail]
+  ✓ 2026-07-16 **GATE PASSES** — unblocked once the T47 datacube rebuild + retrain landed
+  train and serve on the shared 70-feature 1 km schema (the earlier BLOCKED note predated
+  T47). New `diagnostics/train_serve_parity.py` documents a per-feature check for **all 70**
+  features (report `diagnostics/train_serve_parity.md`, figure `train_serve_parity.png`).
+  **Method = matched-location parity:** the cube's lon/lat grid is regular, so each training
+  point is nearest-indexed to its 1 km cell and the training column compared against the cube
+  value *there* — factoring out the lake-/road-biased sampling so residual gaps are
+  *construction*, not landscape. **Result: 60/70 clean, 10 offset-sensitive, 0 construction
+  bugs.** Feature sets identical + same order.
+  - The bug detector is an **order-of-magnitude scale/transform slip** (ratio >10× or <0.1× —
+    what a unit error / stray log / wrong band produces): **none found.** Coarse features are
+    ρ≈1 (all 19 bioclim = 1.000, Elevation 0.995, curv-2 km 1.000, SWE/trends ≈0.99, Yedoma
+    match 0.992).
+  - The 10 flagged are all **offset-sensitive**, not bugs: fine-native / spatially-singular
+    features (`Upstream Area`, `HND`, `Mean curvature (500 m)`, `Northness`/`Eastness`, small-
+    patch land covers) whose matched parity is limited by the exact-coord-vs-cell-centre offset
+    (≤~0.7 km). Proven by a **near-centre control** (parity recomputed on points on their cell
+    centre rises monotonically as offset shrinks) + preserved scale ratios. The gap also
+    *quantifies* the documented lake-/road-collection bias (`Open Water` train-active 0.43 vs
+    serve 0.04; `Slope` 0.74° vs 3.92°; `HND` 1 m vs 17 m) — a representativeness signal for
+    T21/SCOPE, not a construction defect.
+  - **Soil-NaN reproduction:** train 16.3% / cube-at-point 13.8% / statewide 5.2%, ρ 0.92–0.98,
+    ratio ≈1.00. The T23 note's "**soil 250 m→1 km `reproject`-averaging**" concern is **STALE** —
+    T35 moved soil to native 250 m sampling on BOTH paths; there is no reproject-average, and the
+    parity confirms identical construction. **Fire >70°N QA gap** reproduced (serve NaN 4.8%).
+  - **Category-set subset check:** two non-background classes present in-domain but absent from
+    training → silently absorbed into the dropped reference bucket: **Land Cover `Moss`** (1,097
+    cells, 0.04% of domain) and **Vegetation Mode `Barren lichen moss`** (18 cells, ~0%).
+    Negligible area — documented, no action. No change to one-hot construction (gate is read-only).
+  *Depends:* rebuild (done — T47 datacube + retrain). *Done:* per-feature parity documented for
+  every feature; soil-NaN + fire-gap reproduced; terrain native-parity confirmed; subset check
+  reported. (FINDINGS re-point + suite integration is T28.)
 
 - [x] **T20 — Obu domain mask.** [G17; design resolved via grill 2026-07-15]
   ✓ 2026-07-16 **DONE on the rebuilt statewide 1 km cube.** Ran `predict.py` on

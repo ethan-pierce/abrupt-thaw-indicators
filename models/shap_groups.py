@@ -63,6 +63,37 @@ GAP_BAND = (0.15, 0.60)
 # remaining lone binary column (e.g. Yedoma) becomes its own standalone family.
 CATEGORICAL_PREFIXES = ('Land Cover', 'Vegetation Mode')
 
+# Manuscript family names for the emergent MULTI-member continuous families, keyed by the
+# exact member set (order-independent). Settled in the grill design (memory
+# t41-grouped-shap-design) and confirmed by the two curation calls (2026-07-16): the
+# alpine-relief four stay fused (all pairwise |rho| 0.69-0.81, no 2+2 seam) and Trend in SWE
+# stays in thermal continentality (|rho| 0.66-0.76 to the thermal block vs -0.29 to Trend in
+# temperature). A cluster whose membership isn't a key here keeps the auto-tag + a warning,
+# so a future re-cluster surfaces instead of silently mislabelling.
+MANUSCRIPT_LABELS = {
+    frozenset({'Elevation', 'Slope', 'Height Above Nearest Drainage',
+               'Mean Annual SWE'}): 'Alpine relief',
+    frozenset({'Annual Mean Temperature',
+               'Mean Temperature of Driest Quarter'}): 'Annual / dry-season temperature',
+    frozenset({'Mean Diurnal Range', 'Temperature Seasonality',
+               'Min Temperature of Coldest Month', 'Temperature Annual Range',
+               'Mean Temperature of Coldest Quarter', 'Trend in SWE'}): 'Thermal continentality',
+    frozenset({'Isothermality',
+               'Precipitation Seasonality'}): 'Isothermality / precip seasonality',
+    frozenset({'Annual Precipitation', 'Precipitation of Wettest Month',
+               'Precipitation of Driest Month', 'Precipitation of Wettest Quarter',
+               'Precipitation of Driest Quarter', 'Precipitation of Warmest Quarter',
+               'Precipitation of Coldest Quarter'}): 'Precipitation amount',
+    frozenset({'Max Temperature of Warmest Month', 'Mean Temperature of Wettest Quarter',
+               'Mean Temperature of Warmest Quarter'}): 'Summer warmth',
+    frozenset({'Sand (0-30 cm)', 'Sand (30-200 cm)'}): 'Sand fraction',
+    frozenset({'Soil Organic Carbon (0-30 cm)', 'Soil Organic Carbon (30-200 cm)',
+               'Nitrogen (0-30 cm)', 'Nitrogen (30-200 cm)'}): 'Soil organic / fertility',
+    frozenset({'Clay (0-30 cm)', 'Clay (30-200 cm)'}): 'Clay fraction',
+    frozenset({'Bulk Density (0-30 cm)', 'Bulk Density (30-200 cm)'}): 'Bulk density',
+    frozenset({'Time Since Last Fire', 'Burn Count'}): 'Fire history',
+}
+
 
 # --------------------------------------------------------------------------
 # emergent families (feature-space clustering + categorical collapse)
@@ -162,19 +193,26 @@ def grouped_shap_matrix(expl, families):
 
 
 def display_label(key, members, expl):
-    """Legible provisional label for a family (renamed by hand at manuscript time).
+    """Legible label for a family.
 
-    Singletons / categoricals keep their own name; a multi-member continuous family is
-    tagged by its highest-individual-importance member + "(+k)".
+    Multi-member continuous families use the settled manuscript name (MANUSCRIPT_LABELS,
+    keyed by member set); an unmapped multi-member cluster falls back to its top-importance
+    member + "(+k)" and warns, so a re-cluster surfaces rather than mislabelling silently.
+    Singletons keep their own column name; categoricals are named by source + class count.
     """
     if key in ('Land Cover', 'Vegetation Mode'):
         return f"{key} ({len(members)} classes)"
     if len(members) == 1:
         return members[0]
+    manuscript = MANUSCRIPT_LABELS.get(frozenset(members))
+    if manuscript is not None:
+        return manuscript
     cols = list(expl.feature_names)
     idx = {c: i for i, c in enumerate(cols)}
     imp = {m: np.mean(np.abs(expl.values[:, idx[m]])) for m in members if m in idx}
     top = max(imp, key=imp.get)
+    print(f"[warn] no manuscript label for family {sorted(members)}; using auto-tag "
+          f"'{top} (+{len(members) - 1})'. Update MANUSCRIPT_LABELS if the cut changed.")
     return f"{top} (+{len(members) - 1})"
 
 
@@ -338,9 +376,10 @@ def main():
               f"[{len(families[keys[i]])} feat{rho_s}]")
     print(f"\nWrote family figures + shap_families.json to {out_dir} "
           f"({int(scored.sum())} points explained out-of-fold)")
-    print("NOTE: family labels are provisional (auto-tagged by top member); rename by hand "
-          "at manuscript time. Two curation calls deferred to the operational run (see "
-          "memory t41-grouped-shap-design).")
+    print("NOTE: multi-member families carry their settled manuscript labels "
+          "(MANUSCRIPT_LABELS); an unmapped cluster would fall back to an auto-tag and warn. "
+          "Both curation calls resolved (2026-07-16): alpine-relief four stay fused, Trend in "
+          "SWE stays in thermal continentality (see memory t41-grouped-shap-design).")
 
 
 if __name__ == '__main__':

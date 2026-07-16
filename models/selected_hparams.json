@@ -1,0 +1,12 @@
+{
+  "operative_cell_km": 10,
+  "selection_auc_pr": 0.8428178311504781,
+  "n_train": 19288,
+  "hyperparameters": {
+    "max_depth": 3,
+    "min_child_weight": 5,
+    "reg_lambda": 1.0,
+    "learning_rate": 0.05,
+    "n_estimators": 200
+  }
+}

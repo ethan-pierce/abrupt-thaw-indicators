@@ -7,7 +7,8 @@
     100,
     200
   ],
-  "buffer_km": 1.0,
+  "operative_cell_km": 10,
+  "buffer_km": 0.0,
   "n_splits_outer": 5,
   "n_splits_inner": 5,
   "seeds": {
@@ -35,6 +36,13 @@
     "n_estimators": [
       200,
       400
+    ]
+  },
+  "logit_grid": {
+    "C": [
+      0.01,
+      0.1,
+      1.0
     ]
   },
   "smoke": false

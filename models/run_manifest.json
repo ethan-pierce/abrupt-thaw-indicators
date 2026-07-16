@@ -1,0 +1,81 @@
+{
+  "created_utc": "2026-07-15T21:05:16.359267+00:00",
+  "git": {
+    "sha": "5b250ae6acfa24e10f26bd98a179a15ecc8401fc",
+    "dirty": true
+  },
+  "features_clean_csv": {
+    "path": "/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/features_clean.csv",
+    "sha256": "faf00fecd366c5de58db863fd217565f9e874603730a2b7e549bf7a16ca4d41b"
+  },
+  "cv_config": {
+    "block_method": "albers_grid",
+    "sweep_cell_km": [
+      10,
+      25,
+      50,
+      100,
+      200
+    ],
+    "operative_cell_km": 10,
+    "buffer_km": 0.0,
+    "n_splits_outer": 5,
+    "n_splits_inner": 5,
+    "seeds": {
+      "SPLIT_SEED": 42,
+      "MODEL_SEED": 42,
+      "CV_SEED": 42
+    },
+    "param_grid": {
+      "max_depth": [
+        3,
+        5
+      ],
+      "min_child_weight": [
+        5,
+        20
+      ],
+      "reg_lambda": [
+        1.0,
+        10.0
+      ],
+      "learning_rate": [
+        0.05,
+        0.1
+      ],
+      "n_estimators": [
+        200,
+        400
+      ]
+    },
+    "logit_grid": {
+      "C": [
+        0.01,
+        0.1,
+        1.0
+      ]
+    },
+    "smoke": false
+  },
+  "product_versions": {
+    "obu": [
+      "Obu2019"
+    ],
+    "brown_ipa": "arctic-permafrost-map",
+    "thawdb": [
+      "Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv",
+      "Alaska_Permafrost_Thaw_Database_v2.0.0.csv"
+    ]
+  },
+  "selected_hyperparameters": {
+    "hyperparameters": {
+      "max_depth": 3,
+      "min_child_weight": 5,
+      "reg_lambda": 1.0,
+      "learning_rate": 0.05,
+      "n_estimators": 200
+    },
+    "selection_auc_pr": 0.8428178311504781,
+    "operative_cell_km": 10
+  }
+}

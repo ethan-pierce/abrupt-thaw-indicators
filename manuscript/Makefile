@@ -7,9 +7,10 @@ MAIN := main
 pdf:
 	tectonic -X compile --keep-logs --synctex $(MAIN).tex
 
-# Rebuild on save (requires: brew install fswatch).
-watch:
-	fswatch -o *.tex *.bib | while read _; do $(MAKE) pdf; done
+# Rebuild on save (requires: brew install fswatch). Builds once first, then watches.
+watch: pdf
+	@echo "Watching *.tex *.bib — Ctrl-C to stop."
+	@fswatch -o *.tex *.bib | while read _; do $(MAKE) pdf; done
 
 # Remove build byproducts, keep the PDF.
 clean:

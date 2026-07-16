@@ -38,12 +38,12 @@ from _data import load
 SCALES = [5, 10, 25, 50, 100, 200]   # matches SWEEP_CELL_KM (5 km bookend added, T-repeated-cv)
 N_REPEATS = 20                        # block->fold reshuffles per scale
 SEED0 = 42                            # repeat r uses CV seed SEED0 + r
-LOGIT_C = 1.0                         # best fixed C at the operative scale (verified: C=0.01/0.1/1.0
-                                      # -> 0.740/0.768/0.785 OOF AUC-PR @10 km), so the baseline is
-                                      # its strongest fixed config, not a handicap. NOTE: the headline
-                                      # pipeline SELECTS C per fold, which reaches ~0.81 @10 km (adaptive
-                                      # > any single fixed C); this diagnostic fixes it to isolate
-                                      # partition variance from selection variance for both models.
+LOGIT_C = 1.0                         # strongest fixed C at the operative scale (OOF AUC-PR rose
+                                      # monotonically with C across the tested grid), so the baseline
+                                      # runs at its best fixed config, not a handicap. NOTE: the headline
+                                      # pipeline SELECTS C per fold (adaptive > any single fixed C);
+                                      # this diagnostic fixes it to isolate partition variance from
+                                      # selection variance for both models.
 FIG = Path(__file__).resolve().parent / 'repeated_cv.png'
 
 

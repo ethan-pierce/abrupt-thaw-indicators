@@ -329,9 +329,42 @@ column-changing wiring, then the dry-run gate before the overnight run.
   off-permafrost pixels are NaN in `susceptibility.nc` and the other saved products (not
   figure-only) **on the rebuilt statewide 1 km datacube**.
 
-- [ ] **T21 — AOA mask.** [G18] Importance-weighted dissimilarity-to-training mask with a
-  CV-derived threshold, output as a reliability layer. *Depends:* T14 (done), T19 (done).
-  *Done when:* an extrapolation-flag raster is produced.
+- [x] **T21 — AOA mask.** [G18] ✓ 2026-07-16 Reworked `models/aoa.py` into a defensible
+  reliability layer and calibrated its threshold to CV performance. **The metric fix:** the
+  literal M&P raw-standardized-z distance was dominated by a few heavy-tailed features (grid
+  spread 50–77× training; one feature — Upstream Area — carried up to 93–100% of the
+  "dissimilarity"), making it univariate-in-disguise and swinging outside-% 42–64% with the
+  arbitrary transform choice. Replaced it with a **rank→training-CDF coordinate**: each
+  continuous feature → empirical training-CDF rank ∈ [0,1] (`np.interp` on sorted training
+  values), with a **capped** linear IQR extension beyond the training range (coord ∈
+  [−1, 2]; `OOR_CAP=1.0`) so genuinely-out-of-range cells register as extrapolation without
+  the tail re-dominating — a bare unbounded IQR extension reintroduced the 100%-single-
+  feature blow-up (DI→1.3e6), the cap was essential. Binaries (26 one-hots) pass through
+  0/1; all coords weighted by mean|SHAP| (sum 1); continuous NaN→rank 0.5 (median), binary
+  NaN→0. Rank space is what XGBoost's split-based model actually perceives and it is
+  bounded, so no feature dominates (max single-feature share 100%→30% on the flagged tail,
+  ~18% on the full grid). **The threshold (Part 2, new `diagnostics/aoa_calibration.py`):**
+  anchored to pooled-OOF skill — bin held-out points by DI (operative 10 km albers_grid CV),
+  AUC-PR (positive=Non-abrupt, class 1) per bin. **Finding:** OOF AUC-PR stays ~14–16× the
+  prevalence floor (0.057) across the *entire* DI range the biased sample can test (to
+  DI≈0.51) — **no degradation**. So the boundary is the **edge of the measured-skill
+  envelope** = max tested OOF DI (0.506), *not* the box-plot fence (0.179, which would flag
+  43% of the map where OOF skill is directly demonstrated). rank-CDF Spearman(DI,|resid|)
+  +0.49 vs raw-z +0.53 — comparable, and rank-CDF is the multivariate/bounded one. Threshold
+  written to `models/aoa_threshold.json`; `aoa.py` reads it (box-plot fence retained only as
+  a fallback if the file is absent). **Result on the real 2,849,807-pixel Obu domain (mask
+  parity with `predict.py` verified): 97.3% inside AOA / 2.7% (76,003 px) flagged as
+  extrapolation** — the flagged tail driven by Trend in SWE (30%), Mean Annual SWE (29%),
+  Slope (18%): glacier/icefield + steep-terrain novelty, physically real. Continuous `DI` is
+  the headline reliability surface; `inside_aoa` is derived. **Honest caveats recorded** in
+  code + `aoa.nc` attrs + the calibration `note`: rank-CDF departs from literal M&P
+  (performance calibration is its justification); the DI-vs-skill curve is measured only over
+  the DI range the biased sample spans — beyond it uncertainty is unquantifiable (the AOA
+  flags, calibration can't score). Emits `data/aoa.nc` (`DI`+`inside_aoa`, full provenance
+  attrs: metric, weights, threshold+source+rule, fence, CV protocol, drivers, caveat),
+  `output/aoa_map.png`, `output/aoa_di_map.png`, per-feature drivers readout to stdout, and
+  `diagnostics/aoa_calibration.png` (skill-vs-DI, both metrics, thresholds). *Depends:* T14
+  (done), T19 (done). *Done when:* an extrapolation-flag raster is produced. **✓ produced.**
 
 - [x] **T22 — Remove discrete classification.** [G19] ✓ 2026-07-15 Stripped the discrete
   class path from `predict.py`: removed `DECISION_THRESHOLD` (config + print + attr), the

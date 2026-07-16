@@ -131,9 +131,18 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    a heavy-tailed feature — the canonical set stays raw/physical and train/serve parity
    is exact by construction. Aspect is served as northness/eastness (T32).
 5. **`models/predict.py`** reads `prediction_data.nc`, `model.json`, Obu PerProb →
-   **continuous log-evidence susceptibility surface** + **AOA mask**. *(new)* emits the
-   log-evidence index (E13), Obu-masked (G17), with the AOA reliability layer (G18);
-   **no discrete classification** (G19).
+   **continuous log-evidence susceptibility surface** only. Emits the log-evidence index
+   (E13), Obu-masked (G17); **no discrete classification** (G19). It does **not** emit the
+   AOA — reliability is a separate layer (T20/T21 design).
+5b. **`models/aoa.py`** (the AOA reliability layer, G18) runs *after* `predict.py` on the
+   identical Obu-domain pixels. It scores each grid cell's importance-weighted
+   dissimilarity index (DI) over a rank→training-CDF coordinate (mean|SHAP| weights) and
+   emits `data/aoa.nc` (`DI` continuous — the headline reliability surface — plus a derived
+   `inside_aoa` flag), `output/aoa_map.png`, `output/aoa_di_map.png`. Its threshold is
+   anchored to CV performance by `diagnostics/aoa_calibration.py`
+   (→ `models/aoa_threshold.json`): OOF AUC-PR holds ~15× the prevalence floor across the
+   whole tested DI range, so the boundary is the edge of that measured-skill envelope
+   (only the small fraction of cells more novel than anything CV tested is flagged).
 6. **`models/shap_values.py`** reads `features_clean.csv` + CV config and **refits
    per-fold** → **pooled out-of-fold SHAP** outputs (F14/F15). The all-data `model.json`
    is deliberately **not** used here (OOF SHAP requires per-fold refits), so the
@@ -152,7 +161,9 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
   spread + prevalence floor; AUC-ROC secondary; baseline diagnostics. *(no accuracy)*
 - **Continuous log-evidence abrupt-thaw susceptibility surface** (statewide 1 km,
   masked by Obu permafrost domain) — the single headline map.
-- **Area-of-Applicability / dissimilarity mask** — extrapolation-reliability layer.
+- **Area-of-Applicability reliability layer** (`data/aoa.nc`) — continuous rank→CDF
+  dissimilarity index (headline) + derived extrapolation flag, threshold CV-calibrated
+  (`diagnostics/aoa_calibration.py`). Emitted by `models/aoa.py`, **not** `predict.py`.
 - **Pooled out-of-fold SHAP** — importance ranking, beeswarm, dependence plots.
 - **`diagnostics/` re-run** — updated `/verify-ml` suite + regenerated `FINDINGS.md`
   verifying the new invariants (coord quarantine, buffer, OOF SHAP, baselines). *(H20.2)*

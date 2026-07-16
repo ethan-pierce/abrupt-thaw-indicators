@@ -274,7 +274,16 @@ column-changing wiring, then the dry-run gate before the overnight run.
   class present statewide but absent from training points, and the area affected — silent
   reference-bucket absorption). No change to one-hot construction.
 
-- [ ] **T20 — Obu domain mask.** [G17; design resolved via grill 2026-07-15]
+- [x] **T20 — Obu domain mask.** [G17; design resolved via grill 2026-07-15]
+  ✓ 2026-07-16 **DONE on the rebuilt statewide 1 km cube.** Ran `predict.py` on
+  `prediction_data.nc` `(2087, 3229, 70)`: Obu domain (PerProb>0) = 2,849,807 cells (42.3%),
+  3,889,116 masked (57.7%). Independently re-derived the mask from cube lon/lat + Obu and confirmed
+  **every** off-domain cell is NaN in all three saved products (`susceptibility.nc`, `predictions.nc`,
+  `prediction_probabilities.nc`): off-domain finite = 0, in-domain finite = 2,849,807 (exact match) in
+  each. Visually verified (green permafrost domain kept, southern-coast/Aleutian non-permafrost arc +
+  ocean excluded; susceptibility colour appears only inside the mask). log-evidence range
+  [−9.347, 6.214], median −2.534, 25.0% favour abrupt. Products + maps regenerated.
+  *(Original design + statement retained below.)*
   Replace the arbitrary "≥50% features non-NaN" keep (`predict.py:94-97`) with a permafrost-
   domain mask from Obu PerProb (`local_rasters.OBU_TIF` / `sample_points`). **Design (with Ethan):**
   - *Concept-validity mask, not reliability* — off-permafrost, abrupt-vs-non-abrupt thaw is

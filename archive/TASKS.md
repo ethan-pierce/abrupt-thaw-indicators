@@ -1,5 +1,11 @@
 # TASKS — methods-cleanup + feature rebuild
 
+> **CLOSED LEDGER — all tasks complete as of 2026-07-16 (T28 final).** This is no
+> longer an active worklist; it is retained (and archived) as the authoritative
+> provenance ledger that decodes the `TNN` task references cited across the repo
+> — `PIPELINE.md`, `README.md`, `SCOPE.md`, `diagnostics/FINDINGS.md`, code
+> comments, and the commit log. Do not treat unchecked-looking history as pending.
+
 Atomic, dependency-ordered task list, sorted relative to the **feature rebuild**
 (the ~12 h `build_feature_table.py` point run + the `build_prediction_data.py`
 datacube):

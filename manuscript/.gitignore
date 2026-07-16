@@ -1,0 +1,15 @@
+# LaTeX build byproducts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.toc
+*.lof
+*.lot
+
+# Built PDF (uncomment to keep it out of version control)
+# main.pdf

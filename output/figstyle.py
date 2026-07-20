@@ -192,19 +192,29 @@ def north_arrow(ax, x: float = 0.95, y: float = 0.14, size: float = 0.09):
 # Save: PDF canonical + PNG companion, from one call
 # --------------------------------------------------------------------------- #
 def save(fig, name: str, *, outdir: Path | None = None, rasterized_dpi: int = 300,
-         png: bool = True):
+         png: bool = True, tight: bool = True):
     """Write ``<name>.pdf`` (canonical, vector) and ``<name>.png`` (viewing).
 
     Rasterized data layers (set ``rasterized=True`` on the heavy artist in the
     script) are flattened at ``rasterized_dpi`` (300 default; 600 for fine
     combination detail); vector text/axes stay crisp. Returns the PDF path.
+
+    Set ``tight=False`` for multi-Axes figures with rasterized images (imshow /
+    hexbin) in more than one Axes: the house style's ``savefig.bbox: tight``
+    forces a two-pass PDF render, and matplotlib's mixed-mode PDF renderer
+    mis-places rasterized images across that second pass when multiple Axes
+    each hold one (they all collapse into one Axes' corner, scaled down, with
+    other rasterized content going blank) — a real matplotlib limitation, not
+    a bug in the figure script. Hand-tune margins with ``subplots_adjust``
+    instead of relying on tight-bbox cropping when you pass ``tight=False``.
     """
     outdir = Path(outdir) if outdir is not None else _HERE
     outdir.mkdir(parents=True, exist_ok=True)
     pdf = outdir / f"{name}.pdf"
-    fig.savefig(pdf, dpi=rasterized_dpi)
-    if png:
-        fig.savefig(outdir / f"{name}.png", dpi=300)
+    with mpl.rc_context({} if tight else {"savefig.bbox": None}):
+        fig.savefig(pdf, dpi=rasterized_dpi)
+        if png:
+            fig.savefig(outdir / f"{name}.png", dpi=300)
     return pdf
 
 

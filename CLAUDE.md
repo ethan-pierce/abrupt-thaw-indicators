@@ -43,6 +43,12 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
   (a `.png`/image, e.g. the `diagnostics/*.png` plots), open it for the user right after
   it's written — `open <path>` on macOS — so they can see it without asking. Applies to
   every figure generated in a turn, not just the last.
+- **Keep manuscript figure sources in `output/`; copy only final figure assets into
+  `manuscript/figures/`.** Figure-generation scripts and their canonical rendered outputs
+  both live in `output/`. When a render is ready for the manuscript, copy (do not move)
+  only the figure asset into `manuscript/figures/` and name it with a two-digit manuscript
+  order prefix: `01_figure_name.ext`, `02_figure_name.ext`, and so on. Never put generation
+  scripts or unnumbered figure files in `manuscript/figures/`.
 - **Commit messages: one concise subject line, nothing else.** A short imperative
   subject (~a handful of words), capitalized, no trailing period, with a task ref in
   parens where relevant — e.g. `Fix datacube categorical double-flip (T31)`. **No body**

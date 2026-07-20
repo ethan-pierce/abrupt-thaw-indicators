@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#445258"/>
+    </marker>
+    <marker id="leader" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#314047"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #172226; }
+      .panel { font: 700 27px Arial, sans-serif; fill: #172226; }
+      .head { font: 700 20px Arial, sans-serif; fill: #172226; }
+      .body { font: 17px Arial, sans-serif; fill: #26343a; }
+      .small { font: 15px Arial, sans-serif; fill: #4d5d64; }
+      .tiny { font: 13px Arial, sans-serif; fill: #4d5d64; }
+      .white { font: 700 17px Arial, sans-serif; fill: #fff; }
+      .arrow { stroke: #445258; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .lead { stroke: #314047; stroke-width: 1.5; fill: none; marker-end: url(#leader); }
+      .soil { fill: #d5bd91; stroke: #796b54; stroke-width: 2; }
+      .frozen { fill: #b9dce1; stroke: #548b96; stroke-width: 2; }
+      .ice { fill: #e8f6f7; stroke: #639ca7; stroke-width: 1.5; }
+      .water { fill: #68aebf; stroke: #337d90; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#fffdf9"/>
+  <text x="55" y="55" class="title">Thaw mode describes the geomorphic pathway of permafrost thaw</text>
+  <line x1="920" y1="82" x2="920" y2="945" stroke="#d3d9d8" stroke-width="2"/>
+
+  <!-- Panel a: process framework -->
+  <text x="50" y="105" class="panel">a</text>
+  <text x="90" y="105" class="head">Contrasting thaw pathways from a shared initial state</text>
+
+  <!-- Compact scope inset -->
+  <rect x="90" y="130" width="780" height="86" fill="#f4f2ec" stroke="#aab4b4" stroke-width="1.5"/>
+  <text x="110" y="158" class="small">RELATED BUT DISTINCT QUESTIONS</text>
+  <text x="110" y="188" class="body"><tspan font-weight="700">Occurrence</tspan><tspan>  thaw present or absent</tspan></text>
+  <line x1="337" y1="144" x2="337" y2="202" stroke="#c2c9c8"/>
+  <text x="360" y="188" class="body"><tspan font-weight="700">Stage</tspan><tspan>  state of development</tspan></text>
+  <rect x="614" y="143" width="235" height="54" fill="#e5f0f2" stroke="#337d90" stroke-width="2.5"/>
+  <text x="631" y="176" class="body"><tspan font-weight="700">Mode</tspan><tspan>  thaw pathway</tspan></text>
+
+  <!-- Shared starting stratigraphy -->
+  <text x="260" y="253" class="head">Epigenetic ice-wedge lowland endmember</text>
+  <rect x="250" y="278" width="455" height="142" class="frozen"/>
+  <rect x="250" y="278" width="455" height="53" class="soil"/>
+  <path d="M250 278 Q330 253 420 277 T590 274 T705 275" fill="none" stroke="#64845c" stroke-width="10"/>
+  <line x1="250" y1="331" x2="705" y2="331" stroke="#7c4d35" stroke-width="2" stroke-dasharray="8 5"/>
+  <!-- Epigenetic wedges are broad near the top of permafrost and narrow downward. -->
+  <path d="M318 333 L376 333 L358 357 L347 410 L337 360 Z" class="ice"/>
+  <path d="M455 333 L525 333 L507 360 L493 414 L478 360 Z" class="ice"/>
+  <path d="M603 333 L653 333 L642 355 L631 405 L620 357 Z" class="ice"/>
+  <text x="716" y="289" class="tiny">ground surface</text>
+  <path d="M710 282 L684 277" class="lead"/>
+  <text x="716" y="329" class="tiny">active layer</text>
+  <path d="M710 324 L680 310" class="lead"/>
+  <text x="716" y="353" class="tiny">permafrost table</text>
+  <path d="M710 347 L681 332" class="lead"/>
+  <text x="716" y="390" class="tiny">excess ice wedge</text>
+  <path d="M710 384 L638 372" class="lead"/>
+  <text x="250" y="408" class="tiny">schematic late-summer section; vertical scale exaggerated</text>
+
+  <text x="430" y="450" class="small">THAW INITIATION</text>
+  <path d="M478 425 L478 472 L262 510" class="arrow"/>
+  <path d="M478 472 L690 510" class="arrow"/>
+
+  <!-- Non-abrupt branch -->
+  <rect x="75" y="525" width="385" height="355" fill="#f3efe6" stroke="#81745e" stroke-width="2"/>
+  <rect x="75" y="525" width="385" height="42" fill="#81745e"/>
+  <text x="170" y="553" class="white">NON-ABRUPT MODE</text>
+  <text x="98" y="596" class="body">Top-down thaw with limited displacement</text>
+  <rect x="100" y="643" width="335" height="145" class="frozen"/>
+  <path d="M100 643 Q180 622 265 642 T435 640 L435 705 Q350 696 270 710 T100 704 Z" class="soil"/>
+  <path d="M100 643 Q180 622 265 642 T435 640" fill="none" stroke="#64845c" stroke-width="9"/>
+  <path d="M100 704 Q190 694 270 710 T435 705" fill="none" stroke="#7c4d35" stroke-width="2" stroke-dasharray="8 5"/>
+  <!-- Deepened thaw front remains above excess ice in the non-abrupt endmember. -->
+  <path d="M165 707 L220 707 L207 730 L194 782 L181 732 Z" class="ice"/>
+  <path d="M305 708 L367 708 L352 733 L338 784 L323 733 Z" class="ice"/>
+  <text x="98" y="818" class="small">Active-layer deepening or talik development</text>
+  <text x="98" y="842" class="small">while surface continuity is broadly maintained</text>
+
+  <!-- Abrupt branch -->
+  <rect x="500" y="525" width="385" height="355" fill="#e9f2f3" stroke="#337d90" stroke-width="2.5"/>
+  <rect x="500" y="525" width="385" height="42" fill="#337d90"/>
+  <text x="609" y="553" class="white">ABRUPT MODE</text>
+  <text x="523" y="596" class="body">Ground-ice loss reorganizes the surface</text>
+  <rect x="525" y="643" width="335" height="145" class="frozen"/>
+  <!-- Degraded wedge creates a vertically aligned trough; thawed sediment occupies lost ice volume. -->
+  <path d="M525 643 Q585 622 637 642 L662 704 Q688 720 714 704 L741 640 Q803 620 860 644
+           L860 704 L726 704 Q727 758 688 778 Q649 758 650 704 L525 704 Z" class="soil"/>
+  <path d="M525 643 Q585 622 637 642 L662 704 Q688 720 714 704 L741 640 Q803 620 860 644" fill="none" stroke="#64845c" stroke-width="9"/>
+  <!-- Pond occupies the subsidence trough; the thaw front bows downward beneath it. -->
+  <path d="M662 703 Q688 694 714 703 L711 724 Q688 731 665 724 Z" class="water"/>
+  <path d="M650 704 Q649 758 688 778 Q727 758 726 704" fill="none" stroke="#7c4d35" stroke-width="2" stroke-dasharray="8 5"/>
+  <path d="M552 704 L620 704 L608 729 L596 782 L582 730 Z" class="ice"/>
+  <path d="M764 704 L824 704 L811 730 L798 782 L784 730 Z" class="ice"/>
+  <text x="731" y="748" class="tiny">thaw bulb /</text>
+  <text x="731" y="765" class="tiny">incipient talik</text>
+  <path d="M731 750 L706 744" class="lead"/>
+  <text x="523" y="818" class="small">Subsidence, erosion, or mass movement</text>
+  <text x="523" y="842" class="small">produces topographic reorganization</text>
+
+  <!-- Mechanistic sequence -->
+  <rect x="105" y="902" width="755" height="56" fill="#fff" stroke="#aab4b4"/>
+  <text x="122" y="924" class="tiny">THERMAL NOTE</text>
+  <text x="122" y="946" class="small">The zero curtain is a transient near-0 °C condition during phase change—not a fixed subsurface boundary.</text>
+
+  <!-- Panel b: equal photo plate -->
+  <text x="965" y="105" class="panel">b</text>
+  <text x="1005" y="105" class="head">Field expressions of abrupt thaw</text>
+
+  <!-- Photo 1 -->
+  <rect x="965" y="145" width="550" height="225" fill="#dbe7e1" stroke="#7d8d88" stroke-width="2"/>
+  <path d="M965 310 L1070 220 L1160 285 L1260 200 L1515 320 L1515 370 L965 370 Z" fill="#86a397"/>
+  <ellipse cx="1250" cy="325" rx="185" ry="37" class="water"/>
+  <path d="M1360 257 L1310 305" class="lead"/>
+  <rect x="980" y="160" width="215" height="34" fill="#172226" opacity=".86"/>
+  <text x="993" y="183" class="white">THERMOKARST LAKE</text>
+  <text x="980" y="352" class="tiny">[location]  •  [scale]  •  [photo credit]</text>
+
+  <!-- Photo 2 -->
+  <rect x="965" y="405" width="550" height="225" fill="#dfd1b9" stroke="#967b5d" stroke-width="2"/>
+  <path d="M965 470 L1130 445 L1230 550 L1515 585 L1515 630 L965 630 Z" fill="#a47754"/>
+  <path d="M1215 540 Q1320 570 1515 585" stroke="#e5c494" stroke-width="17" fill="none"/>
+  <path d="M1370 465 L1270 535" class="lead"/>
+  <rect x="980" y="420" width="285" height="34" fill="#172226" opacity=".86"/>
+  <text x="993" y="443" class="white">RETROGRESSIVE THAW SLUMP</text>
+  <text x="980" y="612" class="tiny">[location]  •  [scale]  •  [photo credit]</text>
+
+  <!-- Photo 3 -->
+  <rect x="965" y="665" width="550" height="225" fill="#cad8c7" stroke="#758875" stroke-width="2"/>
+  <path d="M965 760 Q1070 700 1160 748 T1325 735 T1515 720 L1515 890 L965 890 Z" fill="#78916e"/>
+  <path d="M1130 710 L1195 830 L1280 800 L1350 700" stroke="#654f3c" stroke-width="18" fill="none"/>
+  <path d="M1190 830 Q1230 808 1285 798 L1300 890 L1170 890 Z" class="water"/>
+  <path d="M1390 730 L1300 785" class="lead"/>
+  <rect x="980" y="680" width="245" height="34" fill="#172226" opacity=".86"/>
+  <text x="993" y="703" class="white">THERMOEROSIONAL GULLY</text>
+  <text x="980" y="872" class="tiny">[location]  •  [scale]  •  [photo credit]</text>
+
+  <text x="965" y="928" class="small">Examples illustrate distinct process forms; they are not model outcome classes.</text>
+</svg>

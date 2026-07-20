@@ -18,6 +18,8 @@ data/modis_fire/*.tif
 data/NLCD2016
 # IRYP v2 yedoma confidence shapefile (T33) — large in-repo source download
 data/IRYP_v2_yedoma_confidence_Shapefile
+# Circumpolar Thermokarst Landscapes (Olefeldt 2016) — large in-repo source download
+data/Circumpolar_Thermokarst_Landscapes
 
 # Non-authoritative SHAP-group smoke outputs
 output/_smoke/

@@ -1,0 +1,66 @@
+# Abrupt-thaw-indicators house figure style — Earth's Future / AGU (Wiley).
+# Applied via `figstyle.use()`. Do not override these inside figure scripts;
+# change the guide, not the figure. See STYLE.md for the decision record.
+#
+# Point sizes are LITERAL printed sizes: figures are drawn at true AGU column
+# widths (figstyle.figure(...)), so 7 pt here is 7 pt on the page.
+
+# --- Fonts (Source Sans 3 registered by figstyle; DejaVu Sans fallback) ---
+font.family:      sans-serif
+font.sans-serif:  Source Sans 3, DejaVu Sans
+font.size:        7      # base = tick-label size
+axes.titlesize:   9      # panel subtitle (multi-panel only; prefer omitting)
+axes.titleweight: semibold
+axes.labelsize:   8
+xtick.labelsize:  7
+ytick.labelsize:  7
+legend.fontsize:  7
+figure.titlesize: 9
+
+# --- Font embedding (AGU rejects Type-3 fonts) ---
+pdf.fonttype: 42
+ps.fonttype:  42
+
+# --- Figure / savefig ---
+figure.dpi:        150
+savefig.dpi:       300
+figure.facecolor:  white
+savefig.facecolor: white
+savefig.bbox:      tight
+savefig.pad_inches: 0.02
+
+# --- Axes ---
+# Hex colors in .mplstyle files MUST omit the leading '#' ('#' starts a comment).
+axes.edgecolor:      4d4d4d
+axes.linewidth:      0.6
+axes.labelcolor:     1a1a1a
+axes.titlecolor:     1a1a1a
+axes.grid:           False
+axes.spines.top:     False
+axes.spines.right:   False
+# Default categorical cycle = Okabe-Ito (CVD-safe). Class/family colors come
+# from figstyle constants; this cycle is the fallback for incidental series.
+axes.prop_cycle: cycler('color', ['E69F00', '56B4E9', '009E73', 'F0E442', '0072B2', 'D55E00', 'CC79A7', '999999'])
+
+# --- Ticks ---
+xtick.color:       4d4d4d
+ytick.color:       4d4d4d
+xtick.labelcolor:  1a1a1a
+ytick.labelcolor:  1a1a1a
+xtick.direction:   out
+ytick.direction:   out
+xtick.major.size:  3
+ytick.major.size:  3
+xtick.major.width: 0.6
+ytick.major.width: 0.6
+
+# --- Lines / markers / legend ---
+lines.linewidth:      1.3
+lines.markersize:     4
+legend.frameon:       False
+legend.handletextpad: 0.5
+legend.borderpad:     0.5
+legend.borderaxespad: 0.5
+
+# --- Text ---
+text.color: 1a1a1a

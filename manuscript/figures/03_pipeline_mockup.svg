@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#445258"/>
+    </marker>
+    <style>
+      .title { font: 700 26px Arial, sans-serif; fill: #172226; }
+      .bandhead { font: 700 16px Arial, sans-serif; fill: #fff; letter-spacing: 0.5px; }
+      .boxhead { font: 700 14px Arial, sans-serif; fill: #172226; }
+      .boxhead-hi { font: 700 14px Arial, sans-serif; fill: #5a3d0a; }
+      .body { font: 13px Arial, sans-serif; fill: #26343a; }
+      .body-hi { font: 13px Arial, sans-serif; fill: #5a3d0a; }
+      .mono { font: 13px "Courier New", monospace; fill: #26343a; }
+      .mono-hi { font: 700 13px "Courier New", monospace; fill: #7a4f0a; }
+      .tiny { font: 12px Arial, sans-serif; fill: #4d5d64; }
+      .note-label { font: 700 11px Arial, sans-serif; fill: #4d5d64; letter-spacing: 1px; }
+      .note-body { font: 13px Arial, sans-serif; fill: #26343a; }
+      .arrow { stroke: #445258; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .arrow-dashed { stroke: #7a8488; stroke-width: 2; fill: none; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+      .box { fill: #fff; stroke: #97a2a1; stroke-width: 1.5; }
+      .box-hi { fill: #fdf6e3; stroke: #c98a1e; stroke-width: 2.5; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#fffdf9"/>
+  <text x="55" y="50" class="title">From features to a statewide abrupt-thaw susceptibility surface</text>
+
+  <!-- ================= BAND A: TRAIN / EVALUATE ================= -->
+  <rect x="50" y="85" width="380" height="815" fill="#f6f5f0" stroke="#ccd0ce" stroke-width="1.5"/>
+  <rect x="50" y="85" width="380" height="40" fill="#55666b"/>
+  <text x="70" y="111" class="bandhead">TRAIN / EVALUATE  ·  §3.1–3.4</text>
+
+  <!-- feature stack -->
+  <rect x="75" y="150" width="150" height="160" class="box"/>
+  <text x="90" y="174" class="boxhead">Feature stack</text>
+  <line x1="90" y1="184" x2="210" y2="184" stroke="#d3d9d8"/>
+  <text x="90" y="205" class="body">70 features</text>
+  <text x="90" y="228" class="tiny">remote sensing</text>
+  <text x="90" y="248" class="tiny">community data</text>
+  <text x="90" y="264" class="tiny">products</text>
+  <text x="90" y="286" class="tiny">climate reanalysis</text>
+
+  <!-- labels -->
+  <rect x="255" y="150" width="150" height="160" class="box"/>
+  <text x="270" y="174" class="boxhead">Thaw Database</text>
+  <line x1="270" y1="184" x2="390" y2="184" stroke="#d3d9d8"/>
+  <text x="270" y="205" class="body">n = 19,288</text>
+  <text x="270" y="228" class="tiny">0 Abrupt  93.2%</text>
+  <text x="270" y="246" class="tiny">1 Non-abrupt  6.8%</text>
+  <text x="270" y="272" class="tiny">(negatively defined:</text>
+  <text x="270" y="288" class="tiny">gradual + GTN-P/CALM)</text>
+
+  <!-- converge into XGBoost -->
+  <path d="M150 310 L150 335 Q150 345 240 345" class="arrow"/>
+  <path d="M330 310 L330 335 Q330 345 240 345" class="arrow"/>
+  <path d="M240 345 L240 372" class="arrow"/>
+
+  <!-- XGBoost -->
+  <rect x="75" y="375" width="330" height="170" class="box"/>
+  <rect x="75" y="375" width="330" height="34" fill="#55666b"/>
+  <text x="90" y="398" class="bandhead">XGBoost classifier</text>
+  <text x="90" y="432" class="body">Spatial-block CV</text>
+  <text x="90" y="454" class="tiny">albers_grid · 10 km blocks</text>
+  <text x="90" y="472" class="tiny">5×5 nested · seed 42</text>
+  <text x="90" y="496" class="tiny">(matched-fold logistic baseline)</text>
+  <text x="90" y="522" class="tiny" font-weight="700">→ fitted P_model(abrupt | x)</text>
+
+  <!-- dashed to credibility checks -->
+  <path d="M240 545 L240 578" class="arrow-dashed"/>
+  <rect x="75" y="580" width="330" height="150" fill="none" stroke="#97a2a1" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="90" y="604" class="note-label">CREDIBILITY CHECKS (diagnostic)</text>
+  <text x="90" y="630" class="body">AUC-PR vs. 0.0574 floor</text>
+  <text x="90" y="652" class="tiny">≈0.84 spatial-block CV</text>
+  <text x="90" y="676" class="body">Leave-region-out decay</text>
+  <text x="90" y="698" class="tiny">→0.57 @ 250 km (~10× floor)</text>
+  <text x="90" y="720" class="tiny" font-style="italic">→ Figs 5–6, not in main flow</text>
+
+  <!-- exit arrows to the two branches -->
+  <path d="M405 430 C 440 430, 440 225, 470 225" class="arrow"/>
+  <path d="M405 490 C 440 490, 440 640, 470 640" class="arrow"/>
+
+  <!-- ================= BAND B: INTERPRETATION ================= -->
+  <rect x="470" y="85" width="1080" height="415" fill="#f8f5ea" stroke="#ccd0ce" stroke-width="1.5"/>
+  <rect x="470" y="85" width="1080" height="40" fill="#8a7a4a"/>
+  <text x="490" y="111" class="bandhead">INTERPRETATION  ·  §3.8</text>
+
+  <rect x="500" y="160" width="310" height="140" class="box"/>
+  <text x="515" y="184" class="boxhead">TreeSHAP attribution</text>
+  <line x1="515" y1="194" x2="795" y2="194" stroke="#d3d9d8"/>
+  <text x="515" y="216" class="body">OOF fold-refit → ranking</text>
+  <text x="515" y="238" class="body">All-data model → mapping</text>
+  <text x="515" y="264" class="tiny">(same family definitions</text>
+  <text x="515" y="280" class="tiny">applied to both)</text>
+
+  <path d="M810 230 L848 230" class="arrow"/>
+
+  <rect x="850" y="160" width="310" height="140" class="box"/>
+  <text x="865" y="184" class="boxhead">Feature-space clustering</text>
+  <line x1="865" y1="194" x2="1145" y2="194" stroke="#d3d9d8"/>
+  <text x="865" y="216" class="body">1 − |Spearman ρ|</text>
+  <text x="865" y="238" class="body">complete linkage</text>
+  <text x="865" y="264" class="tiny">gap-cut 0.449</text>
+  <text x="865" y="282" class="tiny" font-weight="700">→ emergent families</text>
+
+  <path d="M1160 230 L1198 230" class="arrow"/>
+
+  <rect x="1200" y="160" width="320" height="140" class="box"/>
+  <text x="1215" y="184" class="boxhead">Grouped importance (Fig 7)</text>
+  <line x1="1215" y1="194" x2="1505" y2="194" stroke="#d3d9d8"/>
+  <text x="1215" y="216" class="tiny">Alpine relief 23% · temperature 16%</text>
+  <text x="1215" y="234" class="tiny">Land cover 12% · continentality 9% …</text>
+  <text x="1215" y="260" class="body">Signed direction</text>
+  <text x="1215" y="280" class="tiny">&gt;0 favors abrupt</text>
+
+  <path d="M1005 300 L1005 320 Q1005 332 1050 332" class="arrow"/>
+  <path d="M1360 300 L1360 320 Q1360 332 1300 332" class="arrow"/>
+
+  <rect x="850" y="335" width="670" height="140" class="box"/>
+  <text x="865" y="359" class="boxhead">Mechanism (Figs 8–9)</text>
+  <line x1="865" y1="369" x2="1505" y2="369" stroke="#d3d9d8"/>
+  <text x="865" y="392" class="body">Dependence shapes — top ~4 families (how each pushes)</text>
+  <text x="865" y="414" class="body">Per-cell dominant family, in-AOA (spatial variation of drivers)</text>
+  <text x="865" y="440" class="tiny" font-style="italic">→ evidence against a single spatial-proxy trend</text>
+
+  <!-- ================= BAND C: PRODUCT ================= -->
+  <rect x="470" y="540" width="1080" height="360" fill="#eef5f5" stroke="#ccd0ce" stroke-width="1.5"/>
+  <rect x="470" y="540" width="1080" height="40" fill="#3f7d86"/>
+  <text x="490" y="566" class="bandhead">PRODUCT  ·  §3.5–3.7</text>
+
+  <rect x="500" y="575" width="280" height="130" class="box"/>
+  <text x="515" y="599" class="boxhead">Score statewide datacube</text>
+  <line x1="515" y1="609" x2="765" y2="609" stroke="#d3d9d8"/>
+  <text x="515" y="632" class="mono">P_model(abrupt | x)</text>
+  <text x="515" y="654" class="tiny">2,849,807 valid cells</text>
+  <text x="515" y="674" class="tiny">(42.3% of grid)</text>
+
+  <path d="M780 640 L818 640" class="arrow"/>
+
+  <rect x="820" y="560" width="330" height="160" class="box-hi"/>
+  <text x="835" y="584" class="boxhead-hi">Log-evidence index</text>
+  <line x1="835" y1="594" x2="1135" y2="594" stroke="#e3c581"/>
+  <text x="835" y="620" class="mono-hi">logit(P_model) − logit(π_sample)</text>
+  <text x="835" y="646" class="body-hi">0 = neutral · &gt;0 favors abrupt</text>
+  <text x="835" y="668" class="tiny" font-style="italic" fill="#7a5f2a">prior-free — not a probability;</text>
+  <text x="835" y="686" class="tiny" font-style="italic" fill="#7a5f2a">π_sample is a collection artifact,</text>
+  <text x="835" y="704" class="tiny" font-style="italic" fill="#7a5f2a">not landscape prevalence</text>
+
+  <path d="M1150 640 L1188 640" class="arrow"/>
+
+  <rect x="1190" y="560" width="330" height="200" class="box"/>
+  <text x="1205" y="584" class="boxhead">Susceptibility map + AOA mask</text>
+  <line x1="1205" y1="594" x2="1495" y2="594" stroke="#d3d9d8"/>
+  <text x="1205" y="616" class="boxhead" font-weight="700">Fig 4</text>
+  <text x="1205" y="640" class="tiny">25.6% of in-AOA domain</text>
+  <text x="1205" y="658" class="tiny">log-evidence &gt; 0</text>
+  <text x="1205" y="680" class="tiny">(710,882 / 2,773,804 cells)</text>
+  <text x="1205" y="704" class="tiny">anchored only to log-evidence = 0</text>
+  <text x="1205" y="732" class="tiny" font-style="italic">spatial pattern interpreted via Fig 9</text>
+
+  <rect x="820" y="750" width="330" height="120" class="box"/>
+  <text x="835" y="774" class="boxhead">Applicability domain (AOA)</text>
+  <line x1="835" y1="784" x2="1135" y2="784" stroke="#d3d9d8"/>
+  <text x="835" y="806" class="tiny">SHAP-weighted dissimilarity index</text>
+  <text x="835" y="824" class="tiny">vs. training feature space</text>
+  <text x="835" y="846" class="tiny">threshold DI = 0.506 · flags 2.7%</text>
+  <text x="835" y="862" class="tiny" font-style="italic">(from feature space — independent of P_model)</text>
+
+  <path d="M1150 800 Q1180 800 1200 790 Q1220 780 1220 762" class="arrow"/>
+
+  <!-- ================= NOTE BAR ================= -->
+  <rect x="50" y="920" width="1500" height="60" fill="#fff" stroke="#aab4b4"/>
+  <text x="70" y="942" class="note-label">NOTE</text>
+  <text x="70" y="966" class="note-body">Log-evidence is a prior-free likelihood-ratio index (0 = neutral; &gt;0 favors abrupt) — not a calibrated probability. Sample prevalence (93%/7%) reflects lake- and road-biased collection, not landscape truth.</text>
+
+</svg>

@@ -18,7 +18,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
    - Not script-generated (Illustrator); a sub-agent specs/mocks it.
 
 2. **Study-area / sampling map** — *L1* · new (script)
-   - Alaska permafrost domain + labeled training-point locations, with the lake/road sampling clustering visible. The clean lead + makes the bias story visible for L3/L4c.
+   - Alaska permafrost domain + the 19,288 deduplicated model-training locations, shown as matched 25-km, shared-log-scale density hexagons for abrupt and non-abrupt classes. The clustering is explicit; add sourced roads/hydrography only if a citable statewide layer is acquired. The clean lead makes the bias story visible for L3/L4c.
 
 3. **Methods / pipeline schematic** — hand-drawn
    - features → XGBoost → SHAP → log-evidence → map + AOA. Helps readers follow the unusual log-evidence framing. Not script-generated; sub-agent specs/mocks it.
@@ -40,8 +40,9 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Interpretation (SHAP)
 
-7. **SHAP global** — *L6a + L6b* · merge of two existing PNGs
-   - 2-panel: (a) grouped-family importance ranking; (b) signed direction (`>0` favors abrupt, `<0` favors non-abrupt). Assets: `output/shap_grouped_importance.png` + `output/shap_grouped_contribution_box.png`.
+7. **SHAP global + emergent families** — *L6a + L6b* · merge of three existing PNGs
+   - Opens §4.3 by *establishing the analysis unit before attributing* — the family construction is presented as the first result (grouping is from feature-space correlation, not SHAP → preempts circularity).
+   - 2-panel: **(a) family dendrogram with grouped-family importance bars aligned to its leaves** (clustering + each family's weight in one read); **(b) signed direction** (`>0` favors abrupt, `<0` favors non-abrupt). Assets: `output/shap_family_dendrogram.png` + `output/shap_grouped_importance.png` + `output/shap_grouped_contribution_box.png`.
    - Grouped families (Abrupt-oriented, OOF fold-refit SHAP): Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, …
 
 8. **SHAP mechanism** — *L6b (deepened)* · new
@@ -56,12 +57,12 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
     - Abrupt-favoring fraction by physiographic ecoregion (Alaska Unified Ecoregions); drop ecoregions below a permafrost-coverage threshold; report per-region AOA coverage; in-AOA only.
 
 11. **Olefeldt incumbent contrast** — *L7* · new, **GATED**
-    - Against Olefeldt et al. 2016 thermokarst-landscape classes (the only Alaska-statewide comparable incumbent). Reproject to grid; show log-evidence spans a wide range within a single Olefeldt class → mode is an orthogonal axis the categorical map doesn't resolve. **Positioning, NOT validation.** Gate on clean data acquisition; fall back to Form A (qualitative paragraph) if alignment is hard. Form C (divergence-hotspot map) ruled out.
+    - Against Olefeldt et al. 2016 thermokarst-landscape classes (the only Alaska-statewide comparable incumbent). Reproject to grid; show log-evidence spans a wide range within a single Olefeldt class → mode is an orthogonal axis the categorical map doesn't resolve. **Positioning, NOT validation** — complementary/refining, never corrective; state plainly what Olefeldt maps (landscape type + occurrence potential, a valid different axis) to preempt the strawman concern. Data acquired (`data/Circumpolar_Thermokarst_Landscapes/`) → **Form B is the plan**; Form A (qualitative paragraph) remains the fallback if alignment proves hard. Form C (divergence-hotspot map) ruled out.
 
 ## Supplement
 
 - L2b artifact controls: shuffle → chance, dummies at floor, contradictory-label count (only 4 pairs).
-- Family-construction dendrogram: `output/shap_family_dendrogram.png` (documents the emergent-clustering → family method; apply family definitions identically to L6a and L9).
+- Full SHAP family membership table + clustering parameters (the dendrogram itself is now promoted into main-text Fig 7; the Supplement carries the full per-family member list and cut-threshold detail; apply family definitions identically to L6a and L9).
 - AOA dissimilarity-index detail: `output/aoa_di_map.png`, `output/aoa_threshold_decision.png`.
 - Calibration: `diagnostics/aoa_calibration.png`.
 - Extra / unused field photos.

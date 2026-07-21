@@ -35,8 +35,8 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
 
 ## Credibility framing
 
-- **Headline metric: spatial-block-CV AUC-PR ≈ 0.84** (operative 10 km selection 0.843),
-  **≈15× the 0.0574 prevalence floor**, reported with across-fold spread (σ ≈ 0.07–0.12).
+- **Headline metric: spatial-block-CV AUC-PR ≈ 0.85** (operative 10 km, repeated-CV 0.852 ± 0.011),
+  **≈15× the 0.0574 prevalence floor**, reported with across-partition spread (σ ≈ 0.01–0.03 over 20 reshuffles).
 - **AUC-ROC (~0.98–0.99): mention once, label minority-insensitive, never headline.**
 - **Do not quote the random-split 0.90** — inflated by spatial leakage (findings flag #1/#2).
 - **Logistic regression (0.78) is the *floor*, not a rival.** Frame the +0.076 ± 0.019 margin
@@ -53,7 +53,7 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
 - **No partialling / spatial-CV-survival analysis** (the deferred mechanism-vs-proxy test).
   Rationale: sampling bias is likely inseparable from mechanistic causality, so (b) would
   probably fail to disentangle and risks revision. Lean instead on **leave-region-out
-  (AUC-PR 0.57 @ 250 km, ~10× floor)** as the "not just location-proxy" evidence.
+  (AUC-PR 0.54 @ 251 km, ~9× floor)** as the "not just location-proxy" evidence.
 - Grouped SHAP families (Abrupt-oriented, from OOF fold-refit SHAP): Alpine relief 23%,
   Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, … .
 
@@ -62,10 +62,10 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
 | Link | Claim | Evidence |
 | --- | --- | --- |
 | **L1** | Mode matters & is unmapped (abrupt drives outsized C feedback; no incumbent predicts mode) | literature positioning |
-| **L2a** | Mode is learnable out-of-sample, above chance | spatial-CV AUC-PR 0.84 = 15× floor |
+| **L2a** | Mode is learnable out-of-sample, above chance | spatial-CV AUC-PR 0.85 ≈ 15× floor |
 | **L2b** | It's real, not an artifact | shuffle→chance; dummies at floor; no leakage passthrough; only 4 contradictory-label pairs (noise doesn't bound separation) |
 | **L2c** | Not model-specific | logistic floor 0.78; XGBoost earns place via NaN handling + SHAP |
-| **L3** | Signal generalizes across space (not memorized neighborhoods) | graceful decay to 0.57 @ 250 km; block-size sweep. *(The link the lake/road bias most threatens.)* |
+| **L3** | Signal generalizes across space (not memorized neighborhoods) | graceful decay to 0.54 @ 251 km; block-size ladder. *(The link the lake/road bias most threatens.)* |
 | **L4a** | Why an index, not a probability | sample ≠ landscape prevalence; prior-free log-evidence |
 | **L4b** | AOA bounds where it's trustworthy | AOA mask (2.7% flagged) |
 | **L4c** | Representativeness stated honestly | parity gate: training points flatter/wetter/lower-drainage than statewide grid |

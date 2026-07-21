@@ -136,9 +136,10 @@ The AOA uses a rank-CDF SHAP-weighted dissimilarity index; OOF AUC-PR stayed ~15
 prevalence floor across the entire *sampled* DI range (no decay), so the threshold
 (DI = 0.506) is set at the edge of the measured-skill envelope — cells beyond it are
 flagged as genuine extrapolation, not scored. Spearman(DI, |residual|) = 0.489.
-Leave-region-out (case B, 3 km buffer) degrades gracefully rather than collapsing:
-AUC-PR ~0.78 at interpolation scale down to **0.57 at ~250 km** median distance-to-train
-— still ~10× the 0.057 floor (random-split reference 0.904, interpolation-A 0.795).
+Leave-region-out (case B, 3 km buffer), scoring the **operative model** (spw=1, selected
+hparams — identical to the Fig 5a curve), degrades gracefully rather than collapsing:
+AUC-PR ~0.84 at ~17 km reach (50 regions) down to **0.54 at ~251 km** median distance-to-train
+(3 regions) — still ~9× the 0.057 floor.
 — `aoa_calibration.py` → `models/aoa_threshold.json`; `extrapolation_range.py`
 (→ `extrapolation_range.png`).
 

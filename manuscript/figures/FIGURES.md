@@ -31,9 +31,11 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Credibility
 
-5. **Spatial out-of-sample performance** — *L2a, L2c, L3* (MERGED)
-   - (a) AUC-PR vs block size, laddered floor → logistic → XGBoost with across-fold error bars. Asset: `output/aucpr_vs_blocksize.png` (publication-ready as-is). Headline metric: spatial-block-CV AUC-PR ≈ 0.84 (10 km = 0.843), ≈15× the 0.0574 prevalence floor.
-   - (b) leave-region-out decay: graceful decay to AUC-PR 0.57 @ 250 km (~10× floor) — the "not just a location-proxy" evidence. Assets: `diagnostics/leakage_decay.png` / `diagnostics/extrapolation_range.png`.
+5. **Spatial out-of-sample performance** — *L2a, L2c, L3* (MERGED) · script: `output/fig05_spatial_performance.py`
+   - Spine: the signal is **not a location proxy** — it generalizes across space. Two panels, each refuting a distinct proxy attack, both scoring the **same operative model** (spw=1, selected hparams) under progressively harder spatial regimes. Colored value ladder (XGBoost blue / logistic orange-dashed / gray-dotted floor); the floor is the only reference anchor (no leaky ceiling). Numbers annotated on-figure are read live from the cached JSON.
+   - (a) **block-size ladder** (refutes short-range leakage): repeated spatial block-CV, 20 reshuffles/scale (`diagnostics/repeated_cv.py` → `output/repeated_cv_results.json`), laddered floor → logistic → XGBoost. Headline: **AUC-PR 0.852 ± 0.011 @ 10 km** (repeated-CV mean ± across-partition σ), ≈15× the 0.0574 floor; logistic 0.776, margin +0.076 ± 0.019. Caveat (caption): hyperparameters fixed, so per-fold selection cost is not re-paid.
+   - (b) **leave-region-out extrapolation** (refutes region memorization): AUC-PR vs median distance-to-nearest-training-point (`diagnostics/extrapolation_range.py` → `output/extrapolation_range_results.json`), graceful decay to **0.54 @ 251 km** (3 held-out regions, ~9× floor).
+   - `diagnostics/leakage_decay.png` (buffer sweep) is demoted to the Supplement (see below); `output/aucpr_vs_blocksize.png` is superseded.
 
 6. **Representativeness / parity** — *L4c*
    - Asset: `diagnostics/train_serve_parity.png`. The honesty gate: training points flatter/wetter/lower-drainage than the statewide grid.
@@ -62,6 +64,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 ## Supplement
 
 - L2b artifact controls: shuffle → chance, dummies at floor, contradictory-label count (only 4 pairs).
+- Leakage-decay buffer sweep (`diagnostics/leakage_decay.png`): finer-grained short-range control for Fig 5a; its right half degenerates once the training pool is depleted, so it is a Supplement control rather than a main panel.
 - Full SHAP family membership table + clustering parameters (the dendrogram itself is now promoted into main-text Fig 7; the Supplement carries the full per-family member list and cut-threshold detail; apply family definitions identically to L6a and L9).
 - AOA dissimilarity-index detail: `output/aoa_di_map.png`, `output/aoa_threshold_decision.png`.
 - Calibration: `diagnostics/aoa_calibration.png`.

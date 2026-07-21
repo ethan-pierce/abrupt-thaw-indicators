@@ -70,9 +70,9 @@
   <rect x="75" y="580" width="330" height="150" fill="none" stroke="#97a2a1" stroke-width="1.5" stroke-dasharray="7 5"/>
   <text x="90" y="604" class="note-label">CREDIBILITY CHECKS (diagnostic)</text>
   <text x="90" y="630" class="body">AUC-PR vs. 0.0574 floor</text>
-  <text x="90" y="652" class="tiny">≈0.84 spatial-block CV</text>
+  <text x="90" y="652" class="tiny">≈0.85 spatial-block CV</text>
   <text x="90" y="676" class="body">Leave-region-out decay</text>
-  <text x="90" y="698" class="tiny">→0.57 @ 250 km (~10× floor)</text>
+  <text x="90" y="698" class="tiny">→0.54 @ 251 km (~9× floor)</text>
   <text x="90" y="720" class="tiny" font-style="italic">→ Figs 5–6, not in main flow</text>
 
   <!-- exit arrows to the two branches -->

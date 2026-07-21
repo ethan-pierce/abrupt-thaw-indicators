@@ -45,6 +45,7 @@ LOGIT_C = 1.0                         # strongest fixed C at the operative scale
                                       # this diagnostic fixes it to isolate partition variance from
                                       # selection variance for both models.
 FIG = Path(__file__).resolve().parent / 'repeated_cv.png'
+OUT_JSON = Path(__file__).resolve().parent.parent / 'output' / 'repeated_cv_results.json'
 
 
 def pooled_ap(factory, X, y, folds):
@@ -92,6 +93,7 @@ def main():
             'xgb_min': np.nanmin(xgb_aps), 'xgb_max': np.nanmax(xgb_aps),
             'logit_mean': np.nanmean(logit_aps), 'logit_std': np.nanstd(logit_aps),
             'margin_mean': np.nanmean(margin), 'margin_std': np.nanstd(margin),
+            'xgb_raw': xgb_aps.tolist(), 'logit_raw': logit_aps.tolist(),
         }
         s = stats[scale]
         print(f"{scale:>8} | {s['xgb_mean']:.3f} ± {s['xgb_std']:.3f} "
@@ -107,6 +109,23 @@ def main():
               f"± {op['margin_std']:.3f} -> XGBoost edge is "
               f"{'OUTSIDE' if margin_stable else 'WITHIN'} 2σ of partition noise "
               f"({'stable signal' if margin_stable else 'not distinguishable from noise'}).")
+
+    # Cache results for the manuscript figure (output/fig05_spatial_performance.py).
+    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        'prevalence_floor': prevalence,
+        'n_repeats': N_REPEATS,
+        'seed0': SEED0,
+        'operative_cell_km': tx.OPERATIVE_CELL_KM,
+        'logit_C': LOGIT_C,
+        'hparams': hp,
+        'scales_km': SCALES,
+        'per_scale': {str(scale): {k: (float(v) if np.isscalar(v) else v)
+                                   for k, v in stats[scale].items()}
+                      for scale in SCALES},
+    }
+    OUT_JSON.write_text(json.dumps(payload, indent=2))
+    print(f"Wrote results: {OUT_JSON}")
 
     # Figure: mean line + ±1σ band per model, prevalence floor.
     fig, ax = plt.subplots(figsize=(8, 5))

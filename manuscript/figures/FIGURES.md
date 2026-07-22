@@ -37,8 +37,10 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
    - (b) **leave-region-out extrapolation** (refutes region memorization): AUC-PR vs median distance-to-nearest-training-point (`diagnostics/extrapolation_range.py` → `output/extrapolation_range_results.json`), graceful decay to **0.54 @ 251 km** (3 held-out regions, ~9× floor).
    - `diagnostics/leakage_decay.png` (buffer sweep) is demoted to the Supplement (see below); `output/aucpr_vs_blocksize.png` is superseded.
 
-6. **Representativeness / parity** — *L4c*
-   - Asset: `diagnostics/train_serve_parity.png`. The honesty gate: training points flatter/wetter/lower-drainage than the statewide grid.
+6. **Representativeness / sampling-bias honesty gate** — *L4c* · script: `output/fig06_representativeness.py`
+   - The honesty gate, framed as *scope not defect*: the training sample is lake-/road-biased (flatter/lower/wetter/valley-bottom than the statewide grid), which forbids prevalence / calibrated-probability / single-threshold claims (hence the prior-free log-evidence index, L4a) while the discriminative signal itself generalizes across space (Fig 5 / L3). **Coverage (the AOA, Fig 4b) vs density (this figure) are different things** — a sample can span every covariate's full range (so every cell is in-AOA) while wildly over-representing part of it; the AOA can't see that, this figure shows it.
+   - Marginal distributions, **training sample vs in-AOA statewide grid** (2,773,804 cells — the full in-AOA distribution, *not* the matched-cell parity sample), for 7 cherry-picked features. (a–d) train-over-grid ridgelines on an arcsinh (symlog-consistent) x, median-annotated: Slope (0.74° vs 3.7°), Height Above Nearest Drainage (1.0 m vs 16 m), Elevation (61 m vs 280 m), Upstream Area (0.023 vs 0.0099 km²). (e–g) paired bars: Open Water (0.43 vs 0.039), Emergent Herbaceous Wetland (0.076 vs 0.037), Deciduous Forest (0.010 vs 0.036).
+   - Green = training, purple = in-AOA grid (deliberately off the warm/cool class axis, CVD-checked); quantitative annotations only (distributions + medians, no fold-change or semi-qualitative text); invariance argument kept lean (conceptual in text; `s(x)`-cancellation parked in Methods/Supplement).
 
 ## Interpretation (SHAP)
 
@@ -64,6 +66,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 ## Supplement
 
 - L2b artifact controls: shuffle → chance, dummies at floor, contradictory-label count (only 4 pairs).
+- Train/serve **construction**-parity gate (`diagnostics/train_serve_parity.{png,md}`): per-feature agreement of the training column vs the datacube pixel at matched cells (Spearman ρ / 0–1 agreement) — a QA artifact proving no unit/transform slip. Demoted here from the old Fig 6 slot: it answers "is the pipeline wired right?", a different question from Fig 6's *density* / representativeness story (the offset-sensitive features surface the sampling bias only as a byproduct).
 - Leakage-decay buffer sweep (`diagnostics/leakage_decay.png`): finer-grained short-range control for Fig 5a; its right half degenerates once the training pool is depleted, so it is a Supplement control rather than a main panel.
 - Full SHAP family membership table + clustering parameters (the dendrogram itself is now promoted into main-text Fig 7; the Supplement carries the full per-family member list and cut-threshold detail; apply family definitions identically to L6a and L9).
 - AOA dissimilarity-index detail: `output/aoa_di_map.png`, `output/aoa_threshold_decision.png`.

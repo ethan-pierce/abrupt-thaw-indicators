@@ -307,6 +307,24 @@ def write_families_json(order, keys, labels, families, importance, meta, n_point
     (out_dir / 'shap_families.json').write_text(json.dumps(rec, indent=2))
 
 
+def write_grouped_matrix(order, labels, G, importance, out_dir):
+    """Persist the per-point grouped-SHAP matrix so figures can plot distributions.
+
+    The JSON keeps only summary importances; the per-point signed contributions
+    (needed for the Fig 7 violins) are otherwise discarded when this script ends.
+    Store them column-reordered by descending importance so downstream plotting is
+    a pure load (mirrors the diagnostics -> cached-artifact -> figure pattern used
+    by Fig 5). Labels are saved in the SAME (importance-sorted) column order as G.
+    """
+    order = np.asarray(order, dtype=int)
+    np.savez(
+        out_dir / 'shap_grouped_matrix.npz',
+        G=G[:, order].astype(np.float32),                 # (n_points, n_families), importance-sorted
+        labels=np.array([labels[i] for i in order], dtype=object),
+        importance=importance[order].astype(np.float64),
+    )
+
+
 # --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
@@ -365,6 +383,7 @@ def main():
     plot_grouped_contribution_box(order, labels, G, out_dir)
     write_families_json(order, keys, labels, families, importance, meta,
                         expl.values.shape[0], out_dir)
+    write_grouped_matrix(order, labels, G, importance, out_dir)
 
     print("\nTop indicator families by grouped SHAP importance:")
     total = importance.sum()

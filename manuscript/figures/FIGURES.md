@@ -44,10 +44,12 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Interpretation (SHAP)
 
-7. **SHAP global + emergent families** — *L6a + L6b* · merge of three existing PNGs
-   - Opens §4.3 by *establishing the analysis unit before attributing* — the family construction is presented as the first result (grouping is from feature-space correlation, not SHAP → preempts circularity).
-   - 2-panel: **(a) family dendrogram with grouped-family importance bars aligned to its leaves** (clustering + each family's weight in one read); **(b) signed direction** (`>0` favors abrupt, `<0` favors non-abrupt). Assets: `output/shap_family_dendrogram.png` + `output/shap_grouped_importance.png` + `output/shap_grouped_contribution_box.png`.
-   - Grouped families (Abrupt-oriented, OOF fold-refit SHAP): Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, …
+7. **SHAP global + emergent families** — *L6a + L6b* · script: `output/fig07_shap_families.py` (reads `output/shap_grouped_matrix.npz`, written by `models/shap_groups.py`)
+   - Opens §4.3 by *establishing the analysis unit before attributing* — the family construction is a result (grouping is from feature-space correlation, not SHAP → preempts circularity). That anti-circularity point is made in prose/caption; the **dendrogram itself is a Supplement figure** (`output/shap_family_dendrogram.png`), not shown here — at main-text size its 44 leaf labels are unreadable, and it can't represent the collapsed categorical families (Land Cover etc.) at all.
+   - 2-panel, sharing one **importance-sorted family y-axis** (all 22 families, most important on top): **(a) magnitude** — horizontal teal bars, mean over points of `|Σ member SHAP|` (margin), annotated with each family's % of summed family importance; **(b) signed direction** — per-family **zero-split violin** (mass right of 0 warm = favors Abrupt, left cool = favors Non-abrupt), KDE clipped to the observed data range, with median + 5/95 marks overlaid; vertical zero line; directional cue flanking the x-axis.
+   - Both panels earn their place: **Land Cover** is #3 by magnitude yet its signed distribution *straddles zero* (median ≈ 0.02, p5/p95 = −0.20/+1.35) — it discriminates in both directions, which a mean-signed bar would erase.
+   - Grouped families (Abrupt-oriented, OOF fold-refit SHAP): Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, … Fire history ranks **last** (<1%) — an informative null kept visible in the tail.
+   - Family palette for the Fig 9 dominance map is deferred to Fig 9 (scoped to the families that actually dominate a cell), not born here.
 
 8. **SHAP mechanism** — *L6b (deepened)* · new
    - Dependence plots (SHAP value vs underlying feature value) for the top ~4 families — shows *how* each family pushes, not just which way. This is what earns the reserved mechanistic language (alpine relief → ground-ice/drainage; temperature → thermal state).
@@ -68,7 +70,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 - L2b artifact controls: shuffle → chance, dummies at floor, contradictory-label count (only 4 pairs).
 - Train/serve **construction**-parity gate (`diagnostics/train_serve_parity.{png,md}`): per-feature agreement of the training column vs the datacube pixel at matched cells (Spearman ρ / 0–1 agreement) — a QA artifact proving no unit/transform slip. Demoted here from the old Fig 6 slot: it answers "is the pipeline wired right?", a different question from Fig 6's *density* / representativeness story (the offset-sensitive features surface the sampling bias only as a byproduct).
 - Leakage-decay buffer sweep (`diagnostics/leakage_decay.png`): finer-grained short-range control for Fig 5a; its right half degenerates once the training pool is depleted, so it is a Supplement control rather than a main panel.
-- Full SHAP family membership table + clustering parameters (the dendrogram itself is now promoted into main-text Fig 7; the Supplement carries the full per-family member list and cut-threshold detail; apply family definitions identically to L6a and L9).
+- **SHAP family dendrogram** (`output/shap_family_dendrogram.png`) + full family membership table + clustering parameters. The dendrogram lives here, not in main-text Fig 7: at column size its 44 leaf labels are unreadable and it can't show the collapsed categorical families. The Supplement carries the tree, the full per-family member list, and the cut-threshold detail; apply family definitions identically to L6a and L9.
 - AOA dissimilarity-index detail: `output/aoa_di_map.png`, `output/aoa_threshold_decision.png`.
 - Calibration: `diagnostics/aoa_calibration.png`.
 - Extra / unused field photos.

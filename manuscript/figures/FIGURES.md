@@ -2,8 +2,9 @@
 
 Working figure spec for the map-led Earth's Future draft. Derived from the L1→L7
 argument chain in `STRATEGY.md` (figures fall out of the chain, not vice versa).
-**11 main figures**, in manuscript order. Each is handed off to a sub-agent one at a
-time; this file is the shared source of truth.
+**12 main figures**, in manuscript order (the SHAP interpretation block is 7, 8, 9, 10).
+Each is handed off to a sub-agent
+one at a time; this file is the shared source of truth.
 
 Class encoding (fixed): `0 = Abrupt` (majority ~93%), `1 = Non-abrupt` (minority ~7%);
 metric "positive" = Non-abrupt. Index = prior-free **log-evidence** (`>0` favors abrupt),
@@ -44,25 +45,31 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Interpretation (SHAP)
 
-7. **SHAP global + emergent families** — *L6a + L6b* · script: `output/fig07_shap_families.py` (reads `output/shap_grouped_matrix.npz`, written by `models/shap_groups.py`)
-   - Opens §4.3 by *establishing the analysis unit before attributing* — the family construction is a result (grouping is from feature-space correlation, not SHAP → preempts circularity). That anti-circularity point is made in prose/caption; the **dendrogram itself is a Supplement figure** (`output/shap_family_dendrogram.png`), not shown here — at main-text size its 44 leaf labels are unreadable, and it can't represent the collapsed categorical families (Land Cover etc.) at all.
-   - 2-panel, sharing one **importance-sorted family y-axis** (all 22 families, most important on top): **(a) magnitude** — horizontal teal bars, mean over points of `|Σ member SHAP|` (margin), annotated with each family's % of summed family importance; **(b) signed direction** — per-family **zero-split violin** (mass right of 0 warm = favors Abrupt, left cool = favors Non-abrupt), KDE clipped to the observed data range, with median + 5/95 marks overlaid; vertical zero line; directional cue flanking the x-axis.
-   - Both panels earn their place: **Land Cover** is #3 by magnitude yet its signed distribution *straddles zero* (median ≈ 0.02, p5/p95 = −0.20/+1.35) — it discriminates in both directions, which a mean-signed bar would erase.
-   - Grouped families (Abrupt-oriented, OOF fold-refit SHAP): Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, … Fire history ranks **last** (<1%) — an informative null kept visible in the tail.
-   - Family palette for the Fig 9 dominance map is deferred to Fig 9 (scoped to the families that actually dominate a cell), not born here.
+7. **SHAP family importance** — *L6a* · script: `output/fig07_shap_families.py` (reads `output/shap_grouped_matrix.npz` for family bars + `output/shap_mechanism_cache.npz` for the domain inset; see `output/fig07_redesign_spec.md`)
+   - Opens §4.3 by *establishing the analysis unit before attributing* — the 22 emergent families are built from feature-space correlation, not SHAP (preempts circularity), stated in prose/caption. The **dendrogram is a Supplement figure** (`output/shap_family_dendrogram.png`).
+   - **Single panel** (the direction violins are dropped — see below): horizontal bars, all 22 families, importance-sorted, `mean|Σ member SHAP|` (margin), each **colored by thematic domain** and annotated with its **member count** + % of summed family importance.
+   - **Anti-subtotal device — a domain-aggregate inset:** the seven climate-ish family rows invite an illegitimate mental sum, so a small inset strip shows the *correct* feature-level thematic totals (`mean|Σ|` per domain): **Relief 24.7% ≈ Temperature 24.6%** (co-lead), Snow 14.3%, Land cover 14.3%, Precipitation 9.1%, Seasonality 6.9%, Soil 5.1%, Yedoma/ground ice 1.1%. Honest multi-factor result — no single dominant control; families sharing information cannot be summed.
+   - Family ranking (Abrupt-oriented, OOF fold-refit SHAP): Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal continentality 9%, … Fire history **last** (<1%, informative null).
+   - **Direction dropped from Fig 7:** nearly all families lean abrupt only because the sample is 94% abrupt (prevalence, not a per-feature finding); the informative direction is *where SHAP crosses zero*, shown per-feature in Fig 8. A caption sentence states the abrupt-orientation + prevalence lean.
+   - Domain palette + feature→domain map live in `output/shap_domains.py` (single source of truth, shared with Fig 10).
 
-8. **SHAP mechanism** — *L6b (deepened)* · new
-   - Dependence plots (SHAP value vs underlying feature value) for the top ~4 families — shows *how* each family pushes, not just which way. This is what earns the reserved mechanistic language (alpine relief → ground-ice/drainage; temperature → thermal state).
+8. **SHAP mechanism — continuous dependence** — *L6b (deepened)* · new · script `output/fig08_shap_mechanism.py` (see `output/fig08_redesign_spec.md`)
+   - **3×3 grid of own-SHAP dependence plots** (each feature's own SHAP vs its own value) for the **top-9 individual indicators** by own `mean|SHAP|` (4 relief / 2 snow / 3 climate — Slope, Annual Mean Temperature, Trend in SWE, Isothermality, Mean Annual SWE, HAND, Trend in precipitation, Mean curvature 500 m, Upstream Area). Per-feature (not family-sum-vs-one-member), so single-feature threshold statements are honest.
+   - Shapes reported as **fact**, mechanism reserved for §5.2: Slope's two-regime shape (flat lowland *and* steep alpine favor abrupt; the flat-0° mass peeled out + flagged as sampling-biased), Temperature's warm-edge cliff (> −4 °C → non-abrupt, ~5% boundary cells).
 
-9. **SHAP-dominance map** — *L6c / L7* · new
-   - Per-cell TreeSHAP over ~2.85M in-AOA cells (`models/model.json`), mapped as the dominant grouped family per cell. Descriptive only (all-data model, restrict display to AOA). Doubles as the proxy rebuttal — regionally varying drivers ≠ one smooth spatial trend.
+9. **SHAP mechanism — Land Cover per class** — *L6b* · new (split from Fig 8)
+   - The categorical analog of the dependence shapes: per-class box of the Land Cover family SHAP (classes with n ≥ 100), signed-sorted, colored by sign. Open Water strongly favors Abrupt; Sedge/Herbaceous favors Non-abrupt. Land Cover is the one family that discriminates in **both** directions (its family SHAP straddles zero) — split off here because a one-hot has no continuous shape.
+
+10. **SHAP dominant-domain map** — *L6c / L7* · new · script `output/fig10_shap_dominance.py` (see `output/fig10_spec.md`)
+   - Per-cell TreeSHAP over ~2.85M in-AOA cells (`models/model.json`, all-data), mapped as the **dominant thematic domain** per cell (largest `|Σ domain SHAP|`; **hue only**) + an **area-fraction inset** (% of in-AOA area each domain dominates). Same domain colors as Fig 7 (`shap_domains.py`). Descriptive only, AOA-restricted display.
+   - Doubles as the proxy rebuttal — regionally varying drivers ≠ one smooth spatial trend. **Validation gate:** if one domain dominates > ~60% of in-AOA area the map is near-monochrome and the framing is revisited before finalizing.
 
 ## Downstream (L7)
 
-10. **Ecoregion breakdown** — *L7* · new
+11. **Ecoregion breakdown** — *L7* · new
     - Abrupt-favoring fraction by physiographic ecoregion (Alaska Unified Ecoregions); drop ecoregions below a permafrost-coverage threshold; report per-region AOA coverage; in-AOA only.
 
-11. **Olefeldt incumbent contrast** — *L7* · new, **GATED**
+12. **Olefeldt incumbent contrast** — *L7* · new, **GATED**
     - Against Olefeldt et al. 2016 thermokarst-landscape classes (the only Alaska-statewide comparable incumbent). Reproject to grid; show log-evidence spans a wide range within a single Olefeldt class → mode is an orthogonal axis the categorical map doesn't resolve. **Positioning, NOT validation** — complementary/refining, never corrective; state plainly what Olefeldt maps (landscape type + occurrence potential, a valid different axis) to preempt the strawman concern. Data acquired (`data/Circumpolar_Thermokarst_Landscapes/`) → **Form B is the plan**; Form A (qualitative paragraph) remains the fallback if alignment proves hard. Form C (divergence-hotspot map) ruled out.
 
 ## Supplement

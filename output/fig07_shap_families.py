@@ -1,175 +1,188 @@
-"""Figure 7 — Indicator-family SHAP: magnitude + signed direction (L6a + L6b).
+"""Figure 7 — SHAP indicator-family importance, colored by thematic domain.
 
-Opens the interpretation section by reporting SHAP over the emergent feature
-*families* (not the ~70 partly-redundant columns), so credit is not split across
-near-duplicate features. Two panels sharing one importance-sorted family axis:
+A single magnitude panel: the 22 emergent feature *families* (feature-space
+Spearman clusters, NOT SHAP-space — the anti-circularity point), importance-
+sorted, each bar as tall as its family's mean |Σ member SHAP| (margin) and
+filled with its thematic-domain color. Two annotations per bar: the family's
+share of summed family importance, and its member count n (so redundancy is
+visible — a 5% family built from 7 correlated members is a different claim than
+a 3% family that is one column).
 
-  (a) magnitude  — grouped importance, mean over points of |sum of member SHAP|
-                   (margin). Answers "which families matter", unsigned.
-  (b) direction  — the per-point signed contribution distribution per family,
-                   drawn as a zero-split violin (mass right of 0 warm = favors
-                   Abrupt, left cool = favors Non-abrupt), KDE clipped to the
-                   observed data range, with median + 5/95 marks overlaid.
+The honest result the figure communicates is a MULTI-FACTOR signal. The 22 rows
+must not be eye-summed into a "climate ≈ N%" claim: families remain mutually
+correlated (|rho| up to 0.55), so a cross-family sum is illegitimate. The
+lower-right inset gives the ONLY legitimate cross-family subtotal — the eight
+thematic-domain aggregates, computed one level up from the same per-point SHAP —
+and shows Relief and Temperature co-leading at ~25% each, neither dominating.
 
-Both are needed: Land Cover is #3 by magnitude yet its signed distribution
-straddles zero (it discriminates in *both* directions) — a mean-signed bar would
-erase it, the violin shows it.
+Direction is deliberately NOT shown here (the old panel (b) violins are dropped):
+the sample is ~94% Abrupt, so nearly every family leans warm relative to that
+abrupt-heavy average — prevalence, not a per-indicator claim. The prior-free
+reading is the log-evidence index and the Fig 8 dependence shapes (where SHAP
+crosses zero). Land Cover — the one genuinely bidirectional family — gets its own
+per-class figure.
 
-The family construction (feature-space Spearman clustering, NOT SHAP-space — the
-anti-circularity point) is reported by the dendrogram, which lives in the
-Supplement (output/shap_family_dendrogram.png); this figure states it in prose /
-caption only.
+Domain palette and the feature/family -> domain maps live in shap_domains.py, a
+single source of truth Fig 9 (the dominance map) imports too, so the two figures
+cannot drift. The dendrogram documenting family construction is in the Supplement
+(output/shap_family_dendrogram.png).
 
-Data: output/shap_grouped_matrix.npz (per-point grouped-SHAP matrix, columns
-importance-sorted), written by models/shap_groups.py. Regenerate that cache
-(a multi-minute OOF fold-refit TreeSHAP run) if the model or feature set changes;
-this script is pure plotting.
+Data:
+  output/shap_grouped_matrix.npz   — per-point grouped-SHAP matrix (family bars),
+                                     columns importance-sorted; from models/shap_groups.py.
+  output/shap_mechanism_cache.npz  — per-feature OOF SHAP (inset domain aggregates);
+                                     same OOF SHAP, one level finer, so the two are consistent.
 
-Writes output/07_shap_families.{pdf,png}.
+Writes output/07_shap_families.{pdf,png}. Pure plotting; regenerate the caches
+(multi-minute OOF fold-refit TreeSHAP) if the model or feature set changes.
 """
 
 from __future__ import annotations
 
+import json
 import sys
-import warnings
 from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import gaussian_kde
 
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 
-import figstyle  # noqa: E402
+import figstyle          # noqa: E402
+import shap_domains as sd  # noqa: E402
 
-CACHE = _HERE / "shap_grouped_matrix.npz"
+GROUPED = _HERE / "shap_grouped_matrix.npz"
+FAMILIES_JSON = _HERE / "shap_families.json"
+MECH = _HERE / "shap_mechanism_cache.npz"
 
-BAR_COLOR = "#1b6b6b"            # deep desaturated teal — off the warm/cool axis, not Fig 6 green
-WARM = figstyle.ABRUPT          # >0 favors Abrupt
-COOL = figstyle.NON_ABRUPT      # <0 favors Non-abrupt
+INSET_TITLE = "Feature-level thematic aggregate"
 
-VIOLIN_HALF = 0.40              # half-height of a violin body (row spacing is 1.0)
-KDE_POINTS = 256
+# Family bar labels are the emergent-cluster labels from the SHAP cache; a few
+# are relabeled here for the reader (presentation only — the grouping in
+# models/shap_groups.py and the cache keys are untouched). Anything not listed
+# renders with its cache label.
+DISPLAY_LABEL = {
+    "Annual / dry-season temperature": "Annual Mean Temperature",
+    "Isothermality / precip seasonality": "Seasonality",
+    "Summer warmth": "Summer temperature",
+    "Soil organic / fertility": "Soil organic content",
+    "Eastness": "Aspect (eastness)",
+    "Northness": "Aspect (northness)",
+}
 
 
-def load_cache():
-    """Return (labels, importance, G) with columns already importance-sorted desc."""
-    if not CACHE.exists():
+def load_families():
+    """(labels, importance, n_members) with columns importance-sorted descending.
+
+    Member counts are read from shap_families.json (keyed by family label) rather
+    than hardcoded, so a regrouping in models/shap_groups.py flows through without
+    editing this script.
+    """
+    if not GROUPED.exists():
         raise FileNotFoundError(
-            f"{CACHE} not found — run `poetry run python models/shap_groups.py` first "
-            "to write the per-point grouped-SHAP matrix.")
-    d = np.load(CACHE, allow_pickle=True)
-    return list(d["labels"]), d["importance"].astype(float), d["G"].astype(float)
+            f"{GROUPED} not found — run `poetry run python models/shap_groups.py` first.")
+    d = np.load(GROUPED, allow_pickle=True)
+    labels, importance = list(d["labels"]), d["importance"].astype(float)
+    n_by_label = {f["label"]: f["n_members"]
+                  for f in json.loads(FAMILIES_JSON.read_text())["families"]}
+    missing = [l for l in labels if l not in n_by_label]
+    if missing:
+        raise KeyError(f"no n_members in {FAMILIES_JSON.name} for families: {missing}")
+    n_members = [n_by_label[l] for l in labels]
+    return labels, importance, n_members
 
 
-def magnitude_panel(ax, ys, labels, importance):
-    """(a) horizontal teal magnitude bars; family names on this (shared) axis."""
+def load_domain_shares():
+    """Domain aggregates computed live from per-feature SHAP (share-sorted desc)."""
+    if not MECH.exists():
+        raise FileNotFoundError(f"{MECH} not found — needed for the domain-aggregate inset.")
+    c = np.load(MECH, allow_pickle=True)
+    return sd.domain_aggregates(c["values"], list(c["feature_names"]))
+
+
+def family_panel(ax, labels, importance, n_members):
+    """Horizontal domain-colored family bars, importance-sorted (top = strongest)."""
+    n = len(labels)
+    ys = np.arange(n)[::-1]
+    colors = [sd.DOMAIN_COLORS[sd.FAMILY_DOMAIN[l]] for l in labels]
     frac = importance / importance.sum() * 100.0
-    ax.barh(ys, importance, height=0.72, color=BAR_COLOR, zorder=2)
-    for y, imp, f in zip(ys, importance, frac):
-        # % of summed family importance — the share the narrative quotes.
-        ax.annotate(f"{f:.0f}%" if f >= 0.5 else "<1%",
-                    xy=(imp, y), xytext=(3, 0), textcoords="offset points",
-                    va="center", ha="left", fontsize=6.5, color=figstyle.MUTED)
+
+    ax.barh(ys, importance, height=0.74, color=colors, zorder=2)
+    for y, imp, f, k in zip(ys, importance, frac, n_members):
+        pct = f"{f:.0f}%" if f >= 0.5 else "<1%"
+        ax.annotate(f"{pct}   n={k}",
+                    xy=(imp, y), xytext=(4, 0), textcoords="offset points",
+                    va="center", ha="left", fontsize=6.4, color=figstyle.MUTED)
 
     ax.set_yticks(ys)
-    ax.set_yticklabels(labels, fontsize=7.5)
-    ax.set_ylim(-0.7, len(labels) - 0.3)
-    ax.set_xlim(0, importance.max() * 1.14)
-    ax.set_xlabel("Mean |Σ member SHAP|  (margin)", fontsize=7.5)
+    ax.set_yticklabels([DISPLAY_LABEL.get(l, l) for l in labels], fontsize=7.3)
+    ax.set_ylim(-0.7, n - 0.3)
+    ax.set_xlim(0, importance.max() * 1.24)
+    ax.set_xlabel("Mean absolute contribution to log-evidence", fontsize=7.5)
     ax.tick_params(axis="x", labelsize=7)
+    ax.tick_params(axis="y", length=0)
     for s in ("left", "right", "top"):
         ax.spines[s].set_visible(False)
-    ax.tick_params(axis="y", length=0)
-    ax.text(0.0, 1.012, "(a)", transform=ax.transAxes, ha="left", va="bottom",
-            fontsize=9, fontweight="bold", color=figstyle.INK)
 
 
-def _violin(ax, vals, y, xlim):
-    """One zero-split violin at row `y`: warm right of 0, cool left; marks overlaid."""
-    vals = np.asarray(vals, float)
-    vals = vals[np.isfinite(vals)]
-    med = float(np.median(vals))
-    p5, p95 = np.percentile(vals, [5, 95])
+def aggregate_inset(ax, shares):
+    """Lower-right inset: 8 domain-aggregate bars, descending, in domain colors.
 
-    lo, hi = float(vals.min()), float(vals.max())     # clip KDE support to observed range
-    drew_body = False
-    if hi - lo > 1e-9:
-        try:
-            xs = np.linspace(lo, hi, KDE_POINTS)
-            with warnings.catch_warnings(), np.errstate(all="ignore"):
-                warnings.simplefilter("ignore", RuntimeWarning)
-                d = gaussian_kde(vals)(xs)
-            d = d / d.max() * VIOLIN_HALF
-            # split fill at exactly x=0 so no wedge is miscolored at the seam
-            xs_f = np.concatenate([xs, [0.0]])
-            d_f = np.concatenate([d, [np.interp(0.0, xs, d)]])
-            o = np.argsort(xs_f); xs_f, d_f = xs_f[o], d_f[o]
-            ax.fill_between(xs_f, y - d_f, y + d_f, where=xs_f >= 0,
-                            color=WARM, alpha=0.85, lw=0, zorder=2, interpolate=True)
-            ax.fill_between(xs_f, y - d_f, y + d_f, where=xs_f <= 0,
-                            color=COOL, alpha=0.85, lw=0, zorder=2, interpolate=True)
-            drew_body = True
-        except np.linalg.LinAlgError:
-            pass
+    Doubles as the domain color key for the family bars (each bar labeled in its
+    own color), so no separate legend is needed.
+    """
+    doms = list(shares)                     # already share-sorted descending
+    vals = np.array([shares[d]["share"] * 100 for d in doms])
+    ys = np.arange(len(doms))[::-1]
+    colors = [sd.DOMAIN_COLORS[d] for d in doms]
 
-    # honest quantile overlay: 5-95 whisker + median tick, on top of the silhouette
-    ax.plot([max(p5, xlim[0]), min(p95, xlim[1])], [y, y],
-            color=figstyle.INK, lw=0.8, zorder=4, solid_capstyle="butt")
-    ax.plot([med, med], [y - VIOLIN_HALF * 0.72, y + VIOLIN_HALF * 0.72],
-            color="white" if drew_body else figstyle.INK, lw=1.4, zorder=5)
-
-
-def direction_panel(ax, ys, G, xlim):
-    """(b) zero-split violins of per-family signed grouped SHAP."""
-    for y, col in zip(ys, range(G.shape[1])):
-        _violin(ax, G[:, col], y, xlim)
-
-    ax.axvline(0.0, color=figstyle.INK, lw=0.8, ls=(0, (4, 3)), zorder=3)
-    ax.set_xlim(*xlim)
-    ax.set_ylim(-0.7, G.shape[1] - 0.3)
+    ax.barh(ys, vals, height=0.72, color=colors, zorder=2)
+    # share % just past each bar tip — always on white, so readable over any fill
+    for y, v in zip(ys, vals):
+        ax.annotate(f"{v:.1f}%", xy=(v, y), xytext=(3, 0),
+                    textcoords="offset points", va="center", ha="left",
+                    fontsize=6.2, color=figstyle.INK, zorder=4)
+    ax.set_xlim(0, vals.max() * 1.16)
+    ax.set_ylim(-0.7, len(doms) - 0.3)
+    ax.set_xticks([])
+    # domain names in a left gutter (the color key), never over a dark bar
     ax.set_yticks(ys)
-    ax.set_yticklabels([])
+    ax.set_yticklabels(doms, fontsize=6.2, color=figstyle.INK)
     ax.tick_params(axis="y", length=0)
-    ax.set_xlabel("Grouped SHAP value  (margin)", fontsize=7.5)
-    ax.tick_params(axis="x", labelsize=7)
-    for s in ("left", "right", "top"):
+    for s in ("left", "right", "top", "bottom"):
         ax.spines[s].set_visible(False)
-    ax.text(0.0, 1.012, "(b)", transform=ax.transAxes, ha="left", va="bottom",
-            fontsize=9, fontweight="bold", color=figstyle.INK)
-
-    # directional cue flanking the axis it describes — which end favors which mode
-    ax.text(0.0, 0.012, "← favors non-abrupt", transform=ax.transAxes,
-            ha="left", va="bottom", fontsize=6.8, color=COOL)
-    ax.text(1.0, 0.012, "favors abrupt →", transform=ax.transAxes,
-            ha="right", va="bottom", fontsize=6.8, color=WARM)
+    ax.set_title(INSET_TITLE, fontsize=7.3, color=figstyle.INK, loc="left", pad=4,
+                 fontweight="bold")
 
 
 def main():
     figstyle.use()
-    labels, importance, G = load_cache()
-    n = len(labels)
-    ys = np.arange(n)[::-1]      # most important family at the top
+    labels, importance, n_members = load_families()
+    shares = load_domain_shares()
 
-    # Robust x-window for (b): cover every family's 2-98 pct, padded, 0 always in view.
-    p = np.percentile(G, [2, 98], axis=0)
-    lo, hi = float(p[0].min()), float(p[1].max())
-    pad = 0.06 * (hi - lo)
-    xlim = (min(0.0, lo - pad), hi + pad)
+    fig = figstyle.figure("onehalf", height=7.7, subplots=False)
+    ax = fig.add_axes([0.30, 0.065, 0.685, 0.915])
+    family_panel(ax, labels, importance, n_members)
 
-    fig = figstyle.figure("full", height=8.1, subplots=False)
-    gs = fig.add_gridspec(1, 2, width_ratios=[1.0, 1.85], wspace=0.04,
-                          left=0.235, right=0.985, top=0.95, bottom=0.065)
-    ax_mag = fig.add_subplot(gs[0, 0])
-    ax_dir = fig.add_subplot(gs[0, 1])
-
-    magnitude_panel(ax_mag, ys, labels, importance)
-    direction_panel(ax_dir, ys, G, xlim)
+    # inset in the lower-right whitespace left by the short tail bars; shifted far
+    # enough right that its longest gutter label clears the family-annotation column
+    ax_in = ax.inset_axes([0.50, 0.045, 0.48, 0.35])
+    aggregate_inset(ax_in, shares)
 
     figstyle.save(fig, "07_shap_families")
     plt.close(fig)
-    print(f"wrote output/07_shap_families.{{pdf,png}}  ({n} families, N={G.shape[0]:,} points)")
+
+    print(f"wrote output/07_shap_families.{{pdf,png}}  ({len(labels)} families)")
+    print("\nfamily order (importance desc):")
+    for l, i, k in zip(labels, importance, n_members):
+        print(f"  {i:7.4f}  n={k:2d}  {sd.FAMILY_DOMAIN[l]:26s}  {l}")
+    print("\ndomain aggregates (inset):")
+    for d, rec in shares.items():
+        print(f"  {rec['share']*100:5.1f}%  {d}")
+    print("\npalette:")
+    for d, c in sd.DOMAIN_COLORS.items():
+        print(f"  {c}  {d}")
 
 
 if __name__ == "__main__":

@@ -31,6 +31,9 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
 
 ## Repo rules
 
+- **Never modify a `.tex` file unless the user explicitly gives permission to
+  edit it.** Do not infer permission from placeholders, empty citation commands,
+  or requests for research, review, citation-finding, or wording feedback.
 - **Always run Python through Poetry** (`poetry run python ...`, `poetry run pytest`, etc.).
   The project dependencies (`pyproj`, `xgboost`, `sklearn`, …) live only in the Poetry
   virtualenv; the bare `python` on PATH does not have them.

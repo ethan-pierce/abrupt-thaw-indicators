@@ -1,0 +1,395 @@
+<metadata>
+	<idinfo>
+		<keywords>
+			<theme>
+				<themekt>ISO 19115 Topic Category</themekt>
+				<themekey>biodiversity and ecosystems</themekey>
+				<themekey>boundaries</themekey>
+				<themekey>environment</themekey>
+				<themekey>location</themekey>
+			</theme>
+			<theme>
+				<themekt>EPA GIS Keyword Thesaurus</themekt>
+				<themekey>Ecosystem</themekey>
+				<themekey>Environment</themekey>
+				<themekey>Management</themekey>
+				<themekey>Natural Resources</themekey>
+				<themekey>Surface Water</themekey>
+			</theme>
+			<place>
+				<placekt>None</placekt>
+				<placekey>Alaska</placekey>
+				<placekey>United States</placekey>
+			</place>
+		</keywords>
+		<citation>
+			<citeinfo>
+				<origin>US Environmental Protection Agency</origin>
+				<title>Level III Ecoregions of Alaska</title>
+				<pubinfo>
+					<publish>U.S. EPA Office of Research and Development (ORD) - National Health and Environmental Effects Research Laboratory (NHEERL)</publish>
+					<pubplace>Corvallis, OR</pubplace>
+				</pubinfo>
+				<pubdate>2012</pubdate>
+				<onlink>ftp://newftp.epa.gov/EPADataCommons/ORD/Ecoregions/ak/ak_eco_l3.zip</onlink>
+				<onlink>https://edg.epa.gov/metadata/</onlink>
+			</citeinfo>
+		</citation>
+		<descript>
+			<abstract>Ecoregions denote areas of general similarity in ecosystems and in the type, quality, and quantity of environmental resources. The ecoregions of Alaska are a framework for organizing and interpreting environmental data for State, national, and international level inventory, monitoring, and research efforts. The map and descriptions for 20 ecological regions were derived by synthesizing information on the geographic distribution of environmental factors such as climate, physiography, geology, permafrost, soils, and vegetation. A qualitative assessment was used to interpret the distributional patterns and relative importance of these factors from place to place (Gallant and others, 1995). Numeric identifiers assigned to the ecoregions are coordinated with those used on the map of "Ecoregions of the Conterminous United States" (Omernik 1987, U.S. EPA 2010) as a continuation of efforts to map ecoregions for the United States. Additionally, the ecoregions for Alaska and the conterminous United States, along with ecological regions for Canada (Wiken 1986) and Mexico, have been combined for maps at three hierarchical levels for North America (Omernik 1995, Commission for Environmental Cooperation, 1997, 2006). A Roman numeral hierarchical scheme has been adopted for different levels of ecological regions. Level I is the coarsest level, dividing North America into 15 ecological regions. Level II divides the continent into 50 regions. At Level III, there are currently 182 ecological regions for North America. Level IV ecoregions have been developed for the conterminous United States, but Level III is the highest level available for Alaska. 
+
+	Literature cited: 
+	Commission for Environmental Cooperation Working Group, 1997, Ecological regions of North America - toward a common perspective: Montreal, Commission for Environmental Cooperation, 71 p.
+	Commission for Environmental Cooperation, 2006, Ecological regions of North America, Level III, Map scale 1:10,000,000, https://www.epa.gov/eco-research/ecoregions-north-america.  
+	Gallant, A.L., Binnian, E.F. Omernik, J.M. and Shasby, M.B., 1995, Ecoregions of Alaska: U.S. Geological Survey Professional Paper 1567.
+	Omernik, J.M., 1987, Ecoregions of the Conterminous United States: Annals of the Association of American Geographers, v. 77, no.1, p. 118-125.
+	Omernik, J.M., 1995, Ecoregions: a Framework for Managing Ecosystems: The George Wright Forum, v. 12, no. 1, p. 35-51.
+	U.S. Environmental Protection Agency, 2010, Level III ecoregions of the continental United States (revision of Omernik, 1987): Corvallis, Oregon, USEPA - National Health and Environmental Effects Research Laboratory, Map M-1, various scales.
+	Wiken, E.B., 1986, Terrestrial Ecozones of Canada: Lands Directorate, Environmental Canada Ecological Land Classification Series 19, 26 p.
+ Comments and questions regarding ecoregions should be addressed to Glenn Griffith, USGS, c/o US EPA., 200 SW 35th Street, Corvallis, OR 97333, (541)-754-4465, email:griffith.glenn@epa.gov Alternate: James Omernik, USGS, c/o US EPA, 200 SW 35th Street, Corvallis, OR 97333, (541)-754-4458, email:omernik.james@epa.gov</abstract>
+			<purpose>Ecoregion maps assist managers of aquatic and terrestrial resources to understand the regional patterns of the realistically attainable quality of these resources</purpose>
+			<supplinf>Electronic versions of ecoregion maps and posters, as well as other ecoregion resources are available at: https://www.epa.gov/eco-research/ecoregions. Ecoregions were digitized at 1:250,000 or smaller scales and are intended for large geographic extents (i.e. states, multiple counties, or river basins). Use for smaller areas, such as individual counties or a 1:24,000 scale map boundary, is not recommended. </supplinf>
+		</descript>
+		<spdom>
+			<bounding>
+				<westbc>-180.000000</westbc>
+				<eastbc>180.000000</eastbc>
+				<northbc>71.405930</northbc>
+				<southbc>49.177353</southbc>
+			</bounding>
+		</spdom>
+		<accconst>None</accconst>
+		<useconst>None</useconst>
+		<timeperd>
+			<current>Publication date</current>
+			<timeinfo>
+				<sngdate>
+					<caldate>20120508</caldate>
+				</sngdate>
+			</timeinfo>
+		</timeperd>
+		<status>
+			<progress>Complete</progress>
+			<update>As needed</update>
+		</status>
+		<secinfo>
+			<secsys>FIPS Pub 199</secsys>
+			<secclass>No Confidentiality</secclass>
+			<sechandl>Standard Technical Controls</sechandl>
+		</secinfo>
+		<ptcontac>
+			<cntinfo>
+				<cntperp>
+					<cntorg>U.S. Environmental Protection Agency, Office of Research and Development, National Health and Environmental Effects Research Laboratory (NHEERL)</cntorg>
+					<cntper>Randy Comeleo</cntper>
+				</cntperp>
+				<cntpos>GIS Analyst</cntpos>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>200 S.W. 35th Street</address>
+					<city>Corvallis</city>
+					<state>OR</state>
+					<postal>97333</postal>
+				</cntaddr>
+				<cntvoice>(541) 754-4491</cntvoice>
+				<cntemail>comeleo.randy@epa.gov</cntemail>
+				<cntinst>https://www.epa.gov/aboutepa/about-national-health-and-environmental-effects-research-laboratory-nheerl</cntinst>
+			</cntinfo>
+		</ptcontac>
+	</idinfo>
+	<spdoinfo>
+		<direct>Vector</direct>
+		<ptvctinf>
+			<sdtsterm>
+				<sdtstype>GT-polygon composed of chains</sdtstype>
+				<ptvctcnt>367</ptvctcnt>
+			</sdtsterm>
+		</ptvctinf>
+	</spdoinfo>
+	<spref>
+		<horizsys>
+			<planar>
+				<mapproj>
+					<mapprojn>Albers Conical Equal Area (NAD83 Alaska Albers) </mapprojn>
+					<albers>
+						<stdparll>55.0</stdparll>
+						<stdparll>65.0</stdparll>
+						<longcm>-154.0</longcm>
+						<latprjo>50.0</latprjo>
+						<feast>0.0</feast>
+						<fnorth>0.0</fnorth>
+					</albers>
+				</mapproj>
+				<planci>
+					<plance>coordinate pair</plance>
+					<coordrep>
+						<absres>0.0000000037527980722984474</absres>
+						<ordres>0.0000000037527980722984474</ordres>
+					</coordrep>
+					<plandu>Meter</plandu>
+				</planci>
+			</planar>
+			<geodetic>
+				<horizdn>D North American 1983</horizdn>
+				<ellips>GRS 1980</ellips>
+				<semiaxis>6378137.0</semiaxis>
+				<denflat>298.257222101</denflat>
+			</geodetic>
+		</horizsys>
+	</spref>
+	<eainfo>
+		<detailed>
+			<enttyp>
+				<enttypl>ak_eco_l3.shp</enttypl>
+				<enttypd>shapefile name</enttypd>
+				<enttypds>USEPA</enttypds>
+			</enttyp>
+			<attr>
+				<attrlabl>FID</attrlabl>
+				<attrdef>Internal feature number.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Sequential unique whole numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape</attrlabl>
+				<attrdef>Feature geometry.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Coordinates defining the features.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>US_L3CODE</attrlabl>
+				<attrdef>Code for Level III Ecoregion (United States)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique code</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>US_L3NAME</attrlabl>
+				<attrdef>Name for Level III Ecoregion (United States)</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<udom>unique name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L3CODE</attrlabl>
+				<attrdef>Code for Level III Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique code</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L3NAME</attrlabl>
+				<attrdef>Name for Level III Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L2CODE</attrlabl>
+				<attrdef>Code for Level II Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique code</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L2NAME</attrlabl>
+				<attrdef>Name for Level II Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L1CODE</attrlabl>
+				<attrdef>Code for Level I Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique code</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L1NAME</attrlabl>
+				<attrdef>Name for Level I Ecoregion (North America)</attrdef>
+				<attrdefs>CEC</attrdefs>
+				<attrdomv>
+					<udom>unique name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>STATE_NAME</attrlabl>
+				<attrdef>Name of  US State</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<udom>unique name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>EPA_REGION</attrlabl>
+				<attrdef>EPA Administrative Region</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<rdom>
+						<rdommin>1</rdommin>
+						<rdommax>10</rdommax>
+					</rdom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>L3_KEY</attrlabl>
+				<attrdef>US Level III Code and Name for Legend, color layer/style file</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<udom>unique code plus name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L3KEY</attrlabl>
+				<attrdef>US Level III Code and Name for Legend, color layer/style file</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<udom>unique code plus name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L2KEY</attrlabl>
+				<attrdef>NA Level II Code and Name for Legend, color layer/style file</attrdef>
+				<attrdefs>USEPA</attrdefs>
+				<attrdomv>
+					<udom>unique code plus name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>NA_L1KEY</attrlabl>
+				<attrdef>Level I Code and Name for Legend, Match to Style</attrdef>
+				<attrdefs>USEPA's color style for North America Ecoregions</attrdefs>
+				<attrdomv>
+					<udom>unique code plus name</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape_Leng</attrlabl>
+				<attrdef>Length of feature</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Positive real numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+			<attr>
+				<attrlabl>Shape_Area</attrlabl>
+				<attrdef>Area of feature in internal units squared.</attrdef>
+				<attrdefs>ESRI</attrdefs>
+				<attrdomv>
+					<udom>Positive real numbers that are automatically generated.</udom>
+				</attrdomv>
+			</attr>
+		</detailed>
+		<overview>
+			<eaover>Ecoregions are hierarchical, with Level IV being the most detailed and Level I defining the broadest classifications.  Because of this hierarchy, Level IV features include appropriate codes and names for Levels III,  II, and I.    Likewise, Level III features contain Levels II and I, and Level II retains Level I information.  Attributes pertaining to Level IV are only available for the Conterminous United States (US_).  Level III has  attributes for the US and North America (NA_) while Levels II and I apply to only  North America.   All features are identified by State and EPA Administrative Regions, as well.   Fields ending with "KEY" combine ecoregion code and name attributes for convenient legends and are linked to style and layer files containing color definitions.</eaover>
+			<eadetcit>none</eadetcit>
+		</overview>
+	</eainfo>
+	<distinfo>
+		<resdesc>Downloadable Data</resdesc>
+		<distliab>Although these data have been processed successfully on a computer system at the Environmental Protection Agency, no warranty expressed or implied is made regarding the accuracy or utility of the data on any other system or for general or scientific purposes, nor shall the act of distribution constitute any such warranty. It is also strongly recommended that careful attention be paid to the contents of the metadata file associated with these data to evaluate data set limitations, restrictions or intended use. The U.S. Environmental Protection Agency shall not be held liable for improper or incorrect use of the data described and/or contained herein.</distliab>
+		<distrib>
+			<cntinfo>
+				<cntorgp>
+					<cntorg>U.S. Environmental Protection Agency, Office of Research and Development, National Health and Environmental Effects Research Laboratory (NHEERL)</cntorg>
+					<cntper>Randy Comeleo</cntper>
+				</cntorgp>
+				<cntpos>GIS Analyst</cntpos>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>200 S.W. 35th Street</address>
+					<city>Corvallis</city>
+					<state>OR</state>
+					<postal>97333</postal>
+				</cntaddr>
+				<cntvoice>(541) 754-4491</cntvoice>
+				<cntemail>comeleo.randy@epa.gov</cntemail>
+				<cntinst>https://www.epa.gov/aboutepa/about-national-health-and-environmental-effects-research-laboratory-nheerl</cntinst>
+			</cntinfo>
+		</distrib>
+	</distinfo>
+	<metainfo>
+		<metd>20120502</metd>
+		<metfrd>20160502</metfrd>
+		<metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+		<metstdv>FGDC-STD-001-1998</metstdv>
+		<metc>
+			<cntinfo>
+				<cntperp>
+					<cntorg>U.S. Environmental Protection Agency, Office of Research and Development, National Health and Environmental Effects Research Laboratory (NHEERL)</cntorg>
+					<cntper>Randy Comeleo</cntper>
+				</cntperp>
+				<cntpos>GIS Analyst</cntpos>
+				<cntaddr>
+					<addrtype>mailing address</addrtype>
+					<address>200 S.W. 35th Street</address>
+					<city>Corvallis</city>
+					<state>OR</state>
+					<postal>97333</postal>
+				</cntaddr>
+				<cntvoice>(541) 754-4491</cntvoice>
+				<cntemail>comeleo.randy@epa.gov</cntemail>
+				<cntinst>https://www.epa.gov/aboutepa/about-national-health-and-environmental-effects-research-laboratory-nheerl</cntinst>
+			</cntinfo>
+		</metc>
+	</metainfo>
+	<dataqual>
+		<logic>Although ecoregion polygons and attributes have been checked for accuracy, some errors may remain. Polygons along state borders were reviewed and updated, May 2010.  ARC/INFO software is used to create and maintain topological relationships.</logic>
+		<complete>Unknown</complete>
+		<posacc>
+			<horizpa>
+				<horizpar>Data were collected using methods that have unknown accuracy (EPA National Geospatial Data Policy [NGDP] Accuracy Tier 10). For more information, please see EPA's NGDP at https://www.epa.gov/geospatial/epa-national-geospatial-data-policy</horizpar>
+			</horizpa>
+		</posacc>
+		<lineage>
+			<procstep>
+				<procdate>1995</procdate>
+				<procdesc>1) U.S.G.S. topographic maps, DEMs, and other base maps are used to delineate and digitize ecoregions to produce georeferenced electronic files.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>1995</procdate>
+				<procdesc>2) Digitized maps are joined together and errors along the edges are resolved.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>1995</procdate>
+				<procdesc>3) Topology is established and the maps are reviewed for accuracy and completeness. Corrections are made as needed and topology regenerated.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>1995</procdate>
+				<procdesc>4) Attributes are added.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>1995</procdate>
+				<procdesc>5) QA</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>2010</procdate>
+				<procdesc>6) Attributes and polygons updated to be consistent with seamless US geodatabase.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>2010</procdate>
+				<procdesc>7) Topology errors removed.</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>2010</procdate>
+				<procdesc>8) Final QA</procdesc>
+			</procstep>
+			<procstep>
+				<procdate>2012</procdate>
+				<procdesc>9) metadata</procdesc>
+			</procstep>
+		</lineage>
+	</dataqual>
+</metadata>

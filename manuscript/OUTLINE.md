@@ -122,17 +122,28 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
    (Slope 0.74° vs 3.92°; HND 1 m vs 17 m; Open Water 0.43 vs 0.04). Closes the loop to the §4.1 AOA:
    this gap is *why* reliability is a separate layer.
 
-### 4.3 Drivers of the susceptibility signal *(L6 — Figs 7–9)*
-1. **Emergent feature families (opens the section)** *(Fig 7a)* — 70 features collapse into coherent
-   families by correlation structure; framed as *establishing the analysis unit before attributing*
-   (inoculates against circularity). Dendrogram with leaf-aligned grouped-family importance.
-2. **Ranking** *(Fig 7a)* — Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%,
-   Thermal continentality 9%, … (OOF fold-refit SHAP).
-3. **Direction** *(Fig 7b)* — signed push per family (`>0` favors abrupt), abrupt-orientation stated.
-4. **Mechanism / dependence shapes** *(Fig 8)* — dependence-plot shapes for the top ~4 families;
-   *shapes reported as fact*, mechanistic reading reserved for §5.2.
-5. **Spatial variation of drivers** *(Fig 9, dominance map)* — per-cell dominant family across in-AOA
-   cells (all-data model, AOA-restricted); drivers vary regionally (evidence for the §5.2 proxy rebuttal).
+### 4.3 Drivers of the susceptibility signal *(L6 — Figs 7–10)*
+1. **Emergent feature families (opens the section)** *(Fig 7)* — 70 features collapse into 22
+   coherent families by feature-space correlation; framed as *establishing the analysis unit before
+   attributing* (inoculates against circularity). Dendrogram → Supplement.
+2. **Ranking, honest multi-factor** *(Fig 7)* — single-panel magnitude; family bars colored by
+   thematic domain + member counts + a **domain-aggregate inset** giving the correct feature-level
+   totals. Families: Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal
+   continentality 9%… At the domain level **Relief ≈ Temperature co-lead (~25% each)**, then snow /
+   land cover (14% each), precipitation (9%), seasonality (7%), soil (5%) — no single control.
+   Cross-family climate subtotals are invalid (families overlap); the inset preempts the bad sum.
+3. **Direction** — folded into Fig 8 (the standalone violin panel is dropped): abrupt-orientation
+   stated, but nearly all families lean abrupt only because the sample is 94% abrupt (prevalence, not
+   a per-feature finding); the prior-free reading is the log-evidence index + where SHAP crosses zero.
+4. **Mechanism / dependence shapes** *(Fig 8)* — 3×3 own-SHAP dependence for the top-9 individual
+   indicators (4 relief / 2 snow / 3 climate); *shapes reported as fact* (slope's flat-and-steep two
+   regimes; temperature's warm-edge cliff), mechanistic reading reserved for §5.2.
+5. **Land Cover mechanism** *(Fig 9)* — per-class decomposition of the Land Cover family SHAP (Open
+   Water → abrupt; Sedge/Herbaceous → non-abrupt); the categorical analog of the dependence shapes,
+   and the one family that discriminates in both directions.
+6. **Spatial variation of drivers** *(Fig 10, dominance map)* — per-cell dominant **domain** across
+   in-AOA cells (all-data model, AOA-restricted, hue-only + area-fraction inset); drivers vary
+   regionally (evidence for the §5.2 proxy rebuttal).
 
 ## §5 Discussion *(limitations lead — disarm the skeptic early)*
 
@@ -145,11 +156,11 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
   - **End on a pivot** ("with these bounds set, the surface supports the following…") to recover momentum.
 - **5.2 Interpreting the drivers** — reserved mechanism (alpine relief → ground-ice/drainage;
   temperature → thermal state) + **proxy-vs-mechanism defense** leaning on regional driver variation
-  (Fig 9) + LRO survival — **not partialling** (locked call).
-- **5.3 Landscape-scale pattern** — ecoregion breakdown *(Fig 10)*: abrupt-favoring fraction by
-  physiographic ecoregion (Alaska Unified Ecoregions); drop regions below a permafrost-coverage threshold;
+  (Fig 10) + LRO survival — **not partialling** (locked call).
+- **5.3 Landscape-scale pattern** — ecoregion breakdown *(Fig 11)*: abrupt-favoring fraction by
+  physiographic ecoregion (EPA Level III Ecoregions of Alaska); drop regions below a permafrost-coverage threshold;
   report per-region AOA coverage; in-AOA only.
-- **5.4 Positioning against incumbents** — Olefeldt-2016 thermokarst-landscape contrast *(Fig 11, Form B)*:
+- **5.4 Positioning against incumbents** — Olefeldt-2016 thermokarst-landscape contrast *(Fig 12, Form B)*:
   log-evidence spans a wide range within a single Olefeldt class → mode is an **orthogonal axis**.
   **Complementary/refining, never corrective** (states plainly what Olefeldt maps — landscape type +
   occurrence potential — as a valid different axis, to preempt the strawman concern). Positioning, NOT validation.

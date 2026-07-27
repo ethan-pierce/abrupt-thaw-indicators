@@ -81,8 +81,8 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
    `models/model.json`, mapped as the dominant grouped family per cell. Descriptive only
    (all-data model, restrict display to AOA). **Doubles as the proxy rebuttal** — if drivers
    vary regionally, the map isn't one smooth spatial trend.
-2. **Ecoregion breakdown**: abrupt-favoring fraction by **physiographic ecoregion** (Alaska
-   Unified Ecoregions), **dropping ecoregions below a permafrost-coverage threshold**;
+2. **Ecoregion breakdown**: abrupt-favoring fraction by **physiographic ecoregion** (EPA
+   Level III Ecoregions of Alaska), **dropping ecoregions below a permafrost-coverage threshold**;
    report per-region AOA coverage; in-AOA only.
 3. **Incumbent contrast — Form B, gated.** Against **Olefeldt et al. 2016** thermokarst
    landscape classes (the only Alaska-statewide comparable incumbent; wang2023 = lake

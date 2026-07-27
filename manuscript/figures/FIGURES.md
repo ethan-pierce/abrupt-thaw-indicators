@@ -66,8 +66,11 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Downstream (L7)
 
-11. **Ecoregion breakdown** — *L7* · new
-    - Abrupt-favoring fraction by physiographic ecoregion (Alaska Unified Ecoregions); drop ecoregions below a permafrost-coverage threshold; report per-region AOA coverage; in-AOA only.
+11. **Ecoregion breakdown** — *L7* · new · script `output/fig11_ecoregion_breakdown.py`
+    - Descriptive **translation** of the susceptibility surface into named physiographic regions (**EPA Level III Ecoregions of Alaska**, `data/ak_eco_l3/`); Fig 10 keeps the proxy-rebuttal duty. In-AOA cells only; **keep regions with ≥50% permafrost coverage → 14 regions** (drops 6 majority-non-permafrost maritime/Aleutian regions incl. Bristol Bay at 36%).
+    - **Two linked panels on one shared vik (log-evidence) scale.** (a) choropleth of the 14 kept regions filled by **median log-evidence**, edged by Level-I physiographic group, numbered 1–14. (b) ranked column of per-cell log-evidence **gradient-filled violins** (vik clipped to KDE body, pale centre at 0), sorted by **abrupt-favoring fraction** (share LE > 0), median as a white-haloed tick, fraction annotated per row; same 1–14 key + Level-I colour tab link row↔polygon.
+    - Story: clean **tundra → boreal → maritime** cascade — Seward 65% / Brooks Range 63% / Arctic Foothills 47% lead; interior boreal single-digits–teens; mountains ~0%. Area-weighted fraction reconciles to the 25.6% headline.
+    - AOA coverage **not drawn** (all kept regions ≥80% in-AOA); stated in the caption instead. Level-I group colours from `figstyle.QUALITATIVE` (Okabe-Ito, off the vik value axis), CVD-checked.
 
 12. **Olefeldt incumbent contrast** — *L7* · new, **GATED**
     - Against Olefeldt et al. 2016 thermokarst-landscape classes (the only Alaska-statewide comparable incumbent). Reproject to grid; show log-evidence spans a wide range within a single Olefeldt class → mode is an orthogonal axis the categorical map doesn't resolve. **Positioning, NOT validation** — complementary/refining, never corrective; state plainly what Olefeldt maps (landscape type + occurrence potential, a valid different axis) to preempt the strawman concern. Data acquired (`data/Circumpolar_Thermokarst_Landscapes/`) → **Form B is the plan**; Form A (qualitative paragraph) remains the fallback if alignment proves hard. Form C (divergence-hotspot map) ruled out.

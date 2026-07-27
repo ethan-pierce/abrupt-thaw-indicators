@@ -13,16 +13,22 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 ## Setup (L1 + methods)
 
-1. **Concept figure** — *L1* · hand-drawn + photos
-   - (a) schematic of abrupt vs non-abrupt thaw pathways + the mode vs stage vs occurrence distinction (the novelty hook: predicting *mode*, which no incumbent does).
-   - (b) field-photo plate of abrupt-thaw forms (thermokarst lakes, retrogressive thaw slumps, etc.). Presumes licensed/publishable photos.
-   - Not script-generated (Illustrator); a sub-agent specs/mocks it.
+1. **Concept figure** — *L1* · hand-drawn (Illustrator)
+   - **Hook-first, single conceptual diagram — no photo plate this draft.** One job: stake the novelty hook that thaw *mode* is a distinct, unmapped axis (predicting mode, which no incumbent does).
+   - **Horizontal trajectory, gate → fork → stage:** intact permafrost (small cross-section, continuous surface + excess ground ice) → **occurrence gate** (labeled passthrough node "does thaw begin?", no drawn dead-end) → **mode fork** (highlighted centerpiece, two arms) → **stage** (single "→ progression →" arrow per arm).
+   - **Two minimal cross-sections** at the advanced end of each arm carrying *only* the **excess-ground-ice contrast**: abrupt arm = ice loss → surface reorganization/subsidence (no pond needed); non-abrupt arm = continuous surface, deepening thaw front. Drop stratigraphy labels, zero-curtain thermal note, "vertical scale exaggerated."
+   - **Tags:** fork = "unmapped — this study"; occurrence + stage = "already mapped" (no paper citations on-figure — those live in the Intro). Geomorphic diversity ("lakes, slumps, gullies — unified by rapid ground-ice loss") → one caption line + downstream figures.
+   - Double-column width. Multi-form field-photo plate (lake + North Slope riverbank thermoerosion/slumping) parked for a future standalone figure, not this draft.
 
 2. **Study-area / sampling map** — *L1* · new (script)
    - Alaska permafrost domain + the 19,288 deduplicated model-training locations, shown as matched 25-km, shared-log-scale density hexagons for abrupt and non-abrupt classes. The clustering is explicit; add sourced roads/hydrography only if a citable statewide layer is acquired. The clean lead makes the bias story visible for L3/L4c.
 
-3. **Methods / pipeline schematic** — hand-drawn
-   - features → XGBoost → SHAP → log-evidence → map + AOA. Helps readers follow the unusual log-evidence framing. Not script-generated; sub-agent specs/mocks it.
+3. **Methods / pipeline schematic** — hand-drawn (Illustrator) · **KEEP, tagged most-cuttable release valve** (first to sacrifice under page/reviewer pressure; content degrades gracefully into Methods §3.5 + Fig 4 construction)
+   - **Refocused: make the *non-standard* pipeline legible — strip all results numbers and Fig cross-refs** (the prototype's graphical-TOC form is retired). **Product spine (main, horizontal) + SHAP tributary (secondary, above).**
+   - **Shared head:** biased sample (70 feat × 19,288, 93/7, lake/road) → **XGBoost** (spatial-block CV protocol named, *no metric numbers*).
+   - **Product spine:** score datacube → **P_model** (flagged: calibrated to the *sample* prior) → **log-evidence transform as a two-number-line device** (prob axis 0–1, prior-dependent → subtract `logit(π_sample)` → log-evidence axis, 0-centered, prior-free) → **× AOA gate** (drawn dropping in from a *feature-space dissimilarity* sub-branch, explicitly independent of P_model) → **Fig 4 map**.
+   - **SHAP tributary:** the **two-computation coherence** — OOF fold-refit SHAP → ranking; all-data model SHAP → dominance map; both under **shared family definitions** (feature-space correlation) → single "→ Figs 7–10" pointer. Results/rankings stay *off* this figure.
+   - Cut from prototype: all results numbers (AUC-PR, 25.6%, cell counts, DI), the credibility-checks band, per-figure cross-references. Shares Fig 1's left-to-right gate/fork/transform visual grammar.
 
 ## Headline
 

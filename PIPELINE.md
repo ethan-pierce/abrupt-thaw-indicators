@@ -2,8 +2,7 @@
 
 End-to-end provenance for the abrupt-thaw susceptibility pipeline: data sources,
 the script→artifact DAG in execution order, and the final outputs. Describes the
-**target** pipeline after the methods-cleanup rewrite (README to-do "Methods
-cleanup", 2026-07-10); items that differ from the current code are marked *(new)*.
+current pipeline as built by the methods-cleanup rewrite (complete 2026-07-13).
 The per-run **manifest** (git SHA, data hashes, seeds, hyperparameters) is stamped
 at run time beside `model.json` and is the reproducibility key for a specific run.
 
@@ -96,7 +95,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 
 ### Masks (prediction domain / reliability)
 - **Permafrost domain** — Obu et al. 2019 permafrost probability (PerProb 5.0),
-  `data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/` (PANGAEA). *(new — G17)*
+  `data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/` (PANGAEA).
 - **Categorical cross-check (optional)** — Brown et al. 1997 Circum-Arctic Permafrost
   and Ground-Ice map, `data/arctic-permafrost-map/` (NSIDC GGD318).
 
@@ -105,19 +104,17 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 1. **`data/build_feature_table.py`** *(GEE; needs `ee.Authenticate()`, project `abrupt-thaw-indicators` via `settings.EE_PROJECT`)*
    reads the v2.0.0 database + all §1 feature sources → **`data/features_dirty.csv`**.
 2. **`data/clean_feature_table.py`** reads `features_dirty.csv` → **`data/features_clean.csv`**.
-   Fire is now the MODIS MCD64A1 history pair (passes through untouched, T36 — no
-   fill/derive); carries `Latitude`/`Longitude` as non-model columns (B6); dedup
-   subset excludes coords (A3).
+   Fire is the MODIS MCD64A1 history pair (passes through untouched, T36 — no
+   fill/derive); carries `Latitude`/`Longitude` as non-model columns; the dedup
+   subset excludes coords.
 3. **`models/train_xgboost.py`** reads `features_clean.csv` → **`models/model.json`** +
-   **run manifest** + evaluation figures. *(new)* nested spatial CV over an equal-area
-   (EPSG:3338) km-grid block-size sweep, 1 km buffer (B4/B5); selects on pooled-OOF
-   AUC-PR (C8); `scale_pos_weight=1` (C9); logistic + dummy baseline diagnostics (D12);
-   persists CV config + seeds (B6).
+   **run manifest** + evaluation figures. Nested spatial CV over an equal-area
+   (EPSG:3338) km-grid block-size sweep (operative 10 km blocks, buffer 0.0 km);
+   selects on pooled-OOF AUC-PR (positive = Non-abrupt); `scale_pos_weight=1`;
+   logistic + dummy baseline diagnostics through the same folds; persists CV config + seeds.
 4. **`data/build_prediction_data.py`** *(GEE)* reads `roi.geojson` + §1 sources →
-   **`data/prediction_data.nc`** (statewide **1 km** datacube, feature-name-driven).
-   *(new — resolution 2026-07-14)* Upscaled from 4 km to 1 km (~975 k cells over
-   the ROI): 4 km was an efficiency choice in tension with abrupt thaw being a
-   fine-scale process. **Terrain is served natively (T37):** a coarse `reproject`
+   **`data/prediction_data.nc`** (statewide **1 km** datacube, feature-name-driven;
+   ~975 k cells over the ROI). **Terrain is served natively (T37):** a coarse `reproject`
    pyramid-aggregates the native derivative (the T37 probe measured slope
    collapsing to ~0.28× native at 4 km), so `sample_native` point-samples
    elevation/slope/aspect/curv-500 m at each 1 km cell centre via a chunked
@@ -131,10 +128,10 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    a heavy-tailed feature — the canonical set stays raw/physical and train/serve parity
    is exact by construction. Aspect is served as northness/eastness (T32).
 5. **`models/predict.py`** reads `prediction_data.nc`, `model.json`, Obu PerProb →
-   **continuous log-evidence susceptibility surface** only. Emits the log-evidence index
-   (E13), Obu-masked (G17); **no discrete classification** (G19). It does **not** emit the
-   AOA — reliability is a separate layer (T20/T21 design).
-5b. **`models/aoa.py`** (the AOA reliability layer, G18) runs *after* `predict.py` on the
+   **continuous log-evidence susceptibility surface** only. Emits the log-evidence index,
+   Obu-masked; **no discrete classification**. It does **not** emit the
+   AOA — reliability is a separate layer (T20/T21).
+5b. **`models/aoa.py`** (the AOA reliability layer) runs *after* `predict.py` on the
    identical Obu-domain pixels. It scores each grid cell's importance-weighted
    dissimilarity index (DI) over a rank→training-CDF coordinate (mean|SHAP| weights) and
    emits `data/aoa.nc` (`DI` continuous — the headline reliability surface — plus a derived
@@ -144,19 +141,19 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    whole tested DI range, so the boundary is the edge of that measured-skill envelope
    (only the small fraction of cells more novel than anything CV tested is flagged).
 6. **`models/shap_values.py`** reads `features_clean.csv` + CV config and **refits
-   per-fold** → **pooled out-of-fold SHAP** outputs (F14/F15). The all-data `model.json`
+   per-fold** → **pooled out-of-fold SHAP** outputs. The all-data `model.json`
    is deliberately **not** used here (OOF SHAP requires per-fold refits), so the
    *explained* model is **not the same fit** as the *mapped* model (`predict.py` maps
    all-data `model.json`) — both are correct, but Headline A (map) and Headline C (SHAP)
    do not come from one fit.
 
 *Archived:* the training-lands path (`build_prediction_data_traininglands.py`,
-`predict_traininglands.py`, `*_traininglands.*`) — README to-do #8.
+`predict_traininglands.py`, `*_traininglands.*`) — see `archive/TASKS.md` T26.
 
 ## 3. Final outputs
 
 - **`models/model.json`** + run manifest (git SHA, `features_clean.csv` hash, CV
-  config + seeds, Obu/Brown product versions, selected hyperparameters). *(H20.1)*
+  config + seeds, Obu/Brown product versions, selected hyperparameters).
 - **Performance**: AUC-PR (positive = Non-abrupt) vs. block-size curve with across-fold
   spread + prevalence floor; AUC-ROC secondary; baseline diagnostics. *(no accuracy)*
 - **Continuous log-evidence abrupt-thaw susceptibility surface** (statewide 1 km,
@@ -166,4 +163,4 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
   (`diagnostics/aoa_calibration.py`). Emitted by `models/aoa.py`, **not** `predict.py`.
 - **Pooled out-of-fold SHAP** — importance ranking, beeswarm, dependence plots.
 - **`diagnostics/` re-run** — updated `/verify-ml` suite + regenerated `FINDINGS.md`
-  verifying the new invariants (coord quarantine, buffer, OOF SHAP, baselines). *(H20.2)*
+  verifying the new invariants (coord quarantine, buffer, OOF SHAP, baselines).

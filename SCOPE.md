@@ -65,8 +65,8 @@ this project's target). No incumbent predicts *mode*.
 - **Data lineage — RESOLVED, now on v2.0.0.** This repo's Thaw Database *is*
   `webb2026-thawdb`, at the published **v2.0.0**
   (`Alaska_Permafrost_Thaw_Database_v2.0.0.csv`, wired into `build_feature_table.py`;
-  19,540 rows, 93.21%/6.79% abrupt/non-abrupt). v2.0.0 is the version the pipeline
-  is being rebuilt against — see README to-do #5/#6.
+  19,540 rows, 93.21%/6.79% abrupt/non-abrupt). The pipeline runs on v2.0.0; the
+  rebuild is complete (see `PIPELINE.md`).
 
 ## Objectives (north-star decomposed — target question: *"why is this point undergoing abrupt rather than non-abrupt thaw?"*)
 
@@ -89,17 +89,17 @@ se (already done for *occurrence* — see Key background). Two headlines:
    *why* half of the target question, and the part no incumbent (including the
    bivariate `webb2026-thawdb` analysis) has done multivariately and per-point.
    Caveat to carry: SHAP attributions inherit the DB's lake-dominance and may
-   encode "near a lake" as proxy for mechanism. **DEFERRED — this
-   mechanism-vs-spatial-proxy question belongs to the results-interpretation phase
-   (post-retrain-#2), NOT the pipeline rebuild. Do not re-litigate it until there
-   are SHAP results to interpret.** → `/analyze-system`
+   encode "near a lake" as proxy for mechanism. Addressed in the manuscript
+   discussion (§5.2): the proxy-vs-mechanism concern is answered descriptively via
+   regional driver variation + leave-region-out survival, not by a partialling /
+   spatial-CV-survival test (deliberately declined — see `manuscript/STRATEGY.md`).
 4. **Establish predictive credibility.** Honest performance under the ~93/7 class
    imbalance — headlined as AUC-PR (positive = Non-abrupt) with the prevalence floor,
    measured under **nested spatial cross-validation** across a block-size sweep
-   (interpolation→extrapolation, fixed 1 km buffer), not a random split. Calibrated
+   (interpolation→extrapolation, operative 10 km blocks, buffer 0.0 km), not a random split. Calibrated
    probabilities are explicitly *not* claimed (the deliverable is the log-evidence
-   susceptibility index — see glossary). See README to-do "Methods cleanup" for the
-   full protocol.
+   susceptibility index — see glossary). See `PIPELINE.md` and `diagnostics/FINDINGS.md`
+   for the full protocol and its verification.
 5. **Position against the incumbents.** Not "continuous vs. categorical" (that
    fight is settled) but "mode vs. occurrence/stage" and "explained vs. mapped":
    what predicting *which pathway* — and *why* — buys over Olefeldt categorical
@@ -149,10 +149,15 @@ se (already done for *occurrence* — see Key background). Two headlines:
   vs. the orphaned `model_calibrated.pkl`). The rebuild produces a single operative
   `model.json` via `train_xgboost.py`; the calibrated track is retired and not
   regenerated. Do not re-raise this comparison.
-- **Near-perfect discrimination — possible leakage/overfit.** Both models score
-  AUC-ROC ≈ 0.99 and AUC-PR ≈ 0.9999 (93% prevalence). Warrants a leakage /
-  feature-independence check before the numbers go in the manuscript. → `/verify-code`
-- **Metric "positive class" = Non-abrupt** — `train_xgboost*.py` report AUC-PR /
-  precision / recall / F1 for class `1` (Non-abrupt, minority) via `predict_proba[:, 1]`,
-  while `predict.py` maps P(Abrupt) = `predict_proba[:, 0]`. Coherent, but the
-  write-up must state which class each headline metric describes. → `/verify-code`
+- **Near-perfect discrimination — RESOLVED (was spatial leakage).** The old
+  random-split AUC-PR ≈ 0.90 was inflated by geographic interleaving (62% of points
+  within 1 km of another). Under spatial-block CV it settles to AUC-PR ≈ 0.85
+  (~15× the 0.0574 floor), AUC-ROC ≈ 0.98 — not a leakage *bug*: shuffle-label
+  collapses to chance and coordinates are quarantined from the model.
+  See `diagnostics/FINDINGS.md`.
+- **Metric "positive class" = Non-abrupt — SETTLED (convention documented).**
+  `train_xgboost.py` reports AUC-PR / precision / recall for class `1` (Non-abrupt,
+  minority) via `predict_proba[:, 1]`, while `predict.py` maps P(Abrupt) =
+  `predict_proba[:, 0]`. Coherent, and now stated consistently across
+  `diagnostics/FINDINGS.md` / `manuscript/STRATEGY.md` / `OUTLINE.md`; the manuscript
+  labels which class each headline metric describes.

@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520" role="img" aria-labelledby="title desc">
+  <title id="title">Intact ice-rich permafrost cross-section</title>
+  <desc id="desc">A continuous tundra surface and gently subparallel permafrost table over two broad-topped, downward-tapering ice wedges.</desc>
+
+  <defs>
+    <linearGradient id="activeLayer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8c49a"/>
+      <stop offset="1" stop-color="#c9b488"/>
+    </linearGradient>
+    <linearGradient id="permafrost" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6eef1"/>
+      <stop offset="1" stop-color="#d8e5ea"/>
+    </linearGradient>
+    <linearGradient id="wedgeIce" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbffff"/>
+      <stop offset="0.52" stop-color="#e9f7fa"/>
+      <stop offset="1" stop-color="#d5edf2"/>
+    </linearGradient>
+    <marker id="leaderArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#52646b"/>
+    </marker>
+    <clipPath id="sectionClip">
+      <rect x="90" y="112" width="720" height="304" rx="2"/>
+    </clipPath>
+    <style>
+      text {
+        font-family: "Source Sans 3", "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+      }
+      .heading {
+        fill: #1a1a1a;
+        font-size: 27px;
+        font-weight: 650;
+      }
+      .label {
+        fill: #34464d;
+        font-size: 18px;
+        font-weight: 550;
+      }
+      .ice-vein {
+        fill: none;
+        stroke: #a5d1da;
+        stroke-width: 1.4;
+        opacity: .72;
+      }
+    </style>
+  </defs>
+
+  <rect width="900" height="520" fill="#fffdf9"/>
+  <text x="90" y="63" class="heading">Intact ice-rich permafrost</text>
+
+  <!-- Frozen substrate. Its upper boundary is the permafrost table. -->
+  <path
+    d="M90 204
+       C160 201 216 201 250 205
+       C261 206 267 211 270 214
+       C274 211 280 206 291 205
+       C388 201 506 201 610 205
+       C621 206 627 211 630 214
+       C634 211 640 206 651 205
+       C703 201 756 201 810 204
+       L810 416 L90 416 Z"
+    fill="url(#permafrost)"
+    stroke="#9db3bd"
+    stroke-width="1.8"/>
+
+  <!-- Seasonally thawed active layer, bounded by the surface and permafrost table. -->
+  <path
+    d="M90 124
+       C158 119 216 119 250 123
+       C262 124 267 130 270 134
+       C274 130 280 124 292 123
+       C390 119 508 119 610 123
+       C622 124 627 130 630 134
+       C634 130 640 124 652 123
+       C704 119 757 120 810 124
+       L810 204
+       C756 201 703 201 651 205
+       C640 206 634 211 630 214
+       C627 211 621 206 610 205
+       C506 201 388 201 291 205
+       C280 206 274 211 270 214
+       C267 211 261 206 250 205
+       C216 201 160 201 90 204 Z"
+    fill="url(#activeLayer)"
+    stroke="#8a7a56"
+    stroke-width="1.5"/>
+
+  <!-- Ice wedges: broad at the top of permafrost and tapering downward. -->
+  <g clip-path="url(#sectionClip)">
+    <path
+      d="M222 209
+         C236 205 251 204 270 204
+         C289 204 305 206 319 210
+         C311 233 303 256 297 281
+         C289 315 281 351 271 391
+         C259 350 251 314 244 281
+         C238 255 230 232 222 209 Z"
+      fill="url(#wedgeIce)"
+      stroke="#73aebb"
+      stroke-width="2"/>
+    <path d="M241 211 C252 239 258 270 263 306 C266 329 269 352 271 378" class="ice-vein"/>
+    <path d="M299 211 C288 241 282 270 278 305 C275 329 273 351 271 378" class="ice-vein"/>
+    <path d="M258 207 C264 241 267 279 270 321" class="ice-vein"/>
+
+    <path
+      d="M584 210
+         C598 206 613 204 630 204
+         C649 204 665 206 678 210
+         C670 232 663 254 657 278
+         C649 311 641 348 631 386
+         C620 347 612 312 605 279
+         C599 254 592 232 584 210 Z"
+      fill="url(#wedgeIce)"
+      stroke="#73aebb"
+      stroke-width="2"/>
+    <path d="M603 211 C613 239 619 269 624 303 C627 328 630 350 631 374" class="ice-vein"/>
+    <path d="M659 211 C649 239 643 269 639 303 C636 327 633 350 631 374" class="ice-vein"/>
+    <path d="M620 207 C625 241 628 277 630 318" class="ice-vein"/>
+  </g>
+
+  <!-- Continuous ground surface; shallow troughs align with wedge axes. -->
+  <path
+    d="M90 124
+       C158 119 216 119 250 123
+       C262 124 267 130 270 134
+       C274 130 280 124 292 123
+       C390 119 508 119 610 123
+       C622 124 627 130 630 134
+       C634 130 640 124 652 123
+       C704 119 757 120 810 124"
+    fill="none"
+    stroke="#5f7f57"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+
+  <!-- Permafrost table, drawn slightly smoother than the surface. -->
+  <path
+    d="M90 204
+       C160 201 216 201 250 205
+       C261 206 267 211 270 214
+       C274 211 280 206 291 205
+       C388 201 506 201 610 205
+       C621 206 627 211 630 214
+       C634 211 640 206 651 205
+       C703 201 756 201 810 204"
+    fill="none"
+    stroke="#8a5638"
+    stroke-width="2"
+    stroke-dasharray="8 7"/>
+
+  <!-- Sparse annotation: the sole mechanism carried by this inset. -->
+  <text x="450" y="469" class="label" text-anchor="middle">excess ground ice</text>
+  <path d="M398 449 C365 432 321 421 282 397" fill="none" stroke="#52646b" stroke-width="1.5" marker-end="url(#leaderArrow)"/>
+  <path d="M502 449 C536 431 582 417 620 393" fill="none" stroke="#52646b" stroke-width="1.5" marker-end="url(#leaderArrow)"/>
+</svg>

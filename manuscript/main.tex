@@ -1,7 +1,10 @@
 \documentclass[draft]{agujournal2025}
 
-\usepackage{subfiles} % each section lives in sections/*.tex and compiles standalone
+\usepackage{subfiles}
 \let\citep\cite
+
+\usepackage{graphicx}
+\usepackage{booktabs}
 
 
 \begin{document}
@@ -69,7 +72,7 @@ Statement text.
 
 % Can repeat for each appendix.
 \section{Appendix 1}
-Appendix text.
+\subfile{tables/data-sources}
 
 
 \end{document}

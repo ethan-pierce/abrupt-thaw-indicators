@@ -1,0 +1,44 @@
+\documentclass[../main.tex]{subfiles}
+
+% Appendix table of geospatial data products.
+% Pull into the Appendix with: \subfile{tables/data-sources}
+% Requires \usepackage{booktabs} in the preamble (already in main.tex).
+% Column widths are set as fractions of \textwidth so the table fits the page
+% without tabularx (not loaded). All citation keys match bib.bib; the only key
+% you still need to add is dewitz2019national (NLCD 2016).
+
+\begin{document}
+
+\begin{table*}[htbp]
+\caption{Geospatial data products used to build the feature set. ``Cols'' gives
+the number of columns each product contributes to the 70-column model matrix,
+after one-hot encoding of the categorical land-cover and vegetation-mode sources
+and depth aggregation of the soil variables.}
+\label{tab:data-sources}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.155\textwidth}p{0.085\textwidth}p{0.40\textwidth}c p{0.185\textwidth}@{}}
+\toprule
+Data product & Native res. & Variables derived & Cols & Reference \\
+\midrule
+\multicolumn{5}{@{}l}{\textit{Remote sensing}} \\
+USGS 3DEP DEM          & 10 m               & Elevation, slope, aspect (northness, eastness), mean curvature (500 m, 2 km) & 6  & \citep{usgs3dep} \\
+MERIT Hydro v1.0.1     & \textasciitilde90 m  & Height above nearest drainage, upstream area & 2  & \citep{yamazaki2019merit} \\
+NLCD 2016 (Alaska)     & 30 m               & Land cover (one-hot)                        & 18 & \citep{dewitz2019national} \\
+MODIS MCD64A1          & \textasciitilde500 m & Time since last fire, burn count            & 2  & \citep{giglio2018collection} \\
+\addlinespace
+\multicolumn{5}{@{}l}{\textit{Community and modeled data products}} \\
+SoilGrids (ISRIC)      & 250 m              & Organic carbon, nitrogen, bulk density, sand, clay (two depths) & 10 & \citep{poggio2021soilgrids} \\
+ALFRESCO (SNAP)        & \textasciitilde1 km  & Flammability, vegetation mode (one-hot)     & 8  & \citep{alfresco} \\
+IRYP v2 (yedoma)       & Vector             & Confirmed yedoma presence                   & 1  & \citep{strauss2022database} \\
+\addlinespace
+\multicolumn{5}{@{}l}{\textit{Gridded climate}} \\
+WorldClim v1           & \textasciitilde1 km  & 19 bioclimatic variables                    & 19 & \citep{hijmans2005very} \\
+Daymet V4              & 1 km               & Mean annual SWE, and SWE, precipitation, and temperature trends (1991--2020) & 4 & \citep{thornton2022daymet} \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Total}} & 70 & \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\end{document}

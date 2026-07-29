@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="700" viewBox="0 0 1500 700">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arroww" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#a13c0b"/>
+    </marker>
+    <marker id="arrowc" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#044d87"/>
+    </marker>
+    <marker id="lead" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 Z" fill="#666"/>
+    </marker>
+    <style>
+      text { font-family: 'Source Sans 3','Source Sans Pro','Helvetica Neue',Arial,sans-serif; }
+      .title  { font-size: 27px; font-weight: 700; fill: #1a1a1a; }
+      .stateh { font-size: 17px; font-weight: 700; fill: #1a1a1a; }
+      .armh   { font-size: 16px; font-weight: 700; fill: #fff; letter-spacing:.3px; }
+      .qh     { font-size: 15px; font-weight: 700; fill: #1a1a1a; }
+      .q      { font-size: 14px; fill: #26343a; }
+      .lbl    { font-size: 13px; fill: #26343a; }
+      .lblw   { font-size: 13px; font-weight:700; fill: #a13c0b; }
+      .lblc   { font-size: 13px; font-weight:700; fill: #044d87; }
+      .tag    { font-size: 12.5px; font-weight:700; fill: #666; letter-spacing:.4px; }
+      .taghit { font-size: 13.5px; font-weight:700; fill: #b0730a; letter-spacing:.3px; }
+      .flow   { stroke:#1a1a1a; stroke-width:2.6; fill:none; marker-end:url(#arrow); }
+      .floww  { stroke:#a13c0b; stroke-width:2.6; fill:none; marker-end:url(#arroww); }
+      .flowc  { stroke:#044d87; stroke-width:2.6; fill:none; marker-end:url(#arrowc); }
+      .lead   { stroke:#666; stroke-width:1.3; fill:none; marker-end:url(#lead); }
+      .soil   { fill:#d8c49a; stroke:#8a7a56; stroke-width:1.5; }
+      .frozen { fill:#e2eaee; stroke:#9db3bd; stroke-width:1.5; }
+      .ice    { fill:#eaf6f8; stroke:#7fb0bc; stroke-width:1.4; }
+      .surf   { fill:none; stroke:#5f7f57; stroke-width:6; stroke-linecap:round; }
+      .front  { fill:none; stroke:#8a5638; stroke-width:2; stroke-dasharray:7 5; }
+    </style>
+  </defs>
+
+  <rect width="1500" height="700" fill="#fffdf9"/>
+  <text x="42" y="46" class="title">Thaw <tspan font-style="italic">mode</tspan> is a distinct, unmapped axis of permafrost thaw</text>
+
+  <!-- ============ STATE 0: INTACT ============ -->
+  <text x="60" y="300" class="stateh">Intact permafrost</text>
+  <rect x="60" y="315" width="190" height="150" class="frozen"/>
+  <rect x="60" y="315" width="190" height="30" class="soil"/>
+  <path d="M60 315 L250 315" class="surf"/>
+  <!-- excess ice wedges: broad at top, narrow down -->
+  <path d="M92 345 L128 345 L119 372 L110 430 L101 372 Z" class="ice"/>
+  <path d="M155 345 L191 345 L182 372 L173 430 L164 372 Z" class="ice"/>
+  <path d="M218 345 L246 345 L239 370 L232 420 L225 370 Z" class="ice"/>
+  <text x="155" y="492" class="lbl" text-anchor="middle">excess ground ice</text>
+  <path d="M148 480 L173 432" class="lead"/>
+
+  <!-- flow to gate -->
+  <path d="M250 390 L296 390" class="flow"/>
+
+  <!-- ============ OCCURRENCE GATE ============ -->
+  <rect x="300" y="352" width="150" height="76" rx="6" fill="#fff" stroke="#9db3bd" stroke-width="1.8"/>
+  <text x="375" y="382" class="qh" text-anchor="middle">Occurrence</text>
+  <text x="375" y="404" class="q" text-anchor="middle">does thaw begin?</text>
+  <text x="375" y="452" class="tag" text-anchor="middle">ALREADY MAPPED</text>
+
+  <!-- flow into fork -->
+  <path d="M450 390 L516 390" class="flow"/>
+
+  <!-- ============ MODE FORK (highlighted centerpiece) ============ -->
+  <rect x="512" y="300" width="150" height="180" rx="10" fill="#fdf7e6" stroke="#c98a1e" stroke-width="2.6"/>
+  <text x="587" y="332" class="qh" text-anchor="middle">Mode</text>
+  <text x="587" y="354" class="q" text-anchor="middle">which pathway?</text>
+  <circle cx="587" cy="390" r="7" fill="#c98a1e"/>
+  <text x="587" y="452" class="taghit" text-anchor="middle">UNMAPPED —</text>
+  <text x="587" y="470" class="taghit" text-anchor="middle">THIS STUDY</text>
+
+  <!-- branch up (non-abrupt) and down (abrupt) -->
+  <path d="M594 383 C 660 360, 660 210, 726 210" class="flowc"/>
+  <path d="M594 397 C 660 420, 660 560, 726 560" class="floww"/>
+
+  <!-- ============ NON-ABRUPT ARM (upper, cool) ============ -->
+  <rect x="732" y="150" width="230" height="30" fill="#044d87"/>
+  <text x="747" y="171" class="armh">NON-ABRUPT MODE</text>
+  <!-- stage progression arrow -->
+  <path d="M747 210 L980 210" class="flowc"/>
+  <text x="855" y="200" class="lblc" text-anchor="middle">increasing stage</text>
+  <!-- cross-section: continuous surface, deepened front, ice preserved -->
+  <rect x="1000" y="200" width="230" height="150" class="frozen"/>
+  <rect x="1000" y="200" width="230" height="28" class="soil"/>
+  <path d="M1000 200 L1230 200" class="surf"/>
+  <!-- deepened thaw front sits ABOVE preserved ice -->
+  <path d="M1000 262 L1230 262" class="front"/>
+  <path d="M1035 268 L1071 268 L1062 292 L1053 340 L1044 292 Z" class="ice"/>
+  <path d="M1110 268 L1146 268 L1137 292 L1128 340 L1119 292 Z" class="ice"/>
+  <path d="M1185 268 L1221 268 L1214 290 L1207 334 L1200 290 Z" class="ice"/>
+  <text x="1245" y="256" class="lbl">thaw front</text>
+  <text x="1245" y="272" class="lbl">deepens</text>
+  <text x="1000" y="372" class="lblc">Surface continuity maintained; ground ice preserved</text>
+
+  <!-- ============ ABRUPT ARM (lower, warm) ============ -->
+  <rect x="732" y="500" width="230" height="30" fill="#a13c0b"/>
+  <text x="747" y="521" class="armh">ABRUPT MODE</text>
+  <path d="M747 560 L980 560" class="floww"/>
+  <text x="855" y="550" class="lblw" text-anchor="middle">increasing stage</text>
+  <!-- cross-section: reorganized surface (subsidence), ground ice lost -->
+  <rect x="1000" y="470" width="230" height="150" fill="#e2eaee" stroke="#9db3bd" stroke-width="1.5"/>
+  <!-- collapsed / subsided surface line -->
+  <path d="M1000 470 L1030 470 Q1055 470 1058 500 Q1062 524 1090 524 Q1112 524 1116 498 L1120 470 L1150 470
+           Q1172 470 1176 500 Q1180 522 1205 522 Q1224 522 1228 496 L1230 470" fill="#d8c49a" stroke="none"/>
+  <path d="M1000 470 L1030 470 Q1055 470 1058 500 Q1062 524 1090 524 Q1112 524 1116 498 L1120 470 L1150 470
+           Q1172 470 1176 500 Q1180 522 1205 522 Q1224 522 1228 496 L1230 470" class="surf"/>
+  <!-- soil slumped into voids where wedges melted (downward tan wedges), no intact ice -->
+  <path d="M1058 500 L1090 522 L1074 560 L1066 528 Z" fill="#c9b489" stroke="#8a7a56" stroke-width="1.2"/>
+  <path d="M1176 500 L1205 520 L1191 558 L1183 526 Z" fill="#c9b489" stroke="#8a7a56" stroke-width="1.2"/>
+  <text x="1245" y="504" class="lbl">ground ice</text>
+  <text x="1245" y="520" class="lbl">lost;</text>
+  <text x="1245" y="536" class="lbl">subsidence</text>
+  <text x="1000" y="646" class="lblw">Ground-ice loss reorganizes the surface</text>
+
+  <!-- stage tag (shared, between arms near the progression arrows) -->
+  <text x="863" y="392" class="tag" text-anchor="middle">STAGE:  ALREADY MAPPED</text>
+  <line x1="792" y1="382" x2="934" y2="382" stroke="#d3d9d8" stroke-width="1"/>
+
+</svg>

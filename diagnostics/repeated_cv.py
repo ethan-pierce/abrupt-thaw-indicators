@@ -110,7 +110,7 @@ def main():
               f"{'OUTSIDE' if margin_stable else 'WITHIN'} 2σ of partition noise "
               f"({'stable signal' if margin_stable else 'not distinguishable from noise'}).")
 
-    # Cache results for the manuscript figure (output/fig05_spatial_performance.py).
+    # Cache results for the manuscript figure (output/fig04_spatial_performance.py).
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         'prevalence_floor': prevalence,

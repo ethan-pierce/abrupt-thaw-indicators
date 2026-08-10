@@ -1,4 +1,4 @@
-"""Figure 11 — Ecoregion breakdown (L7, §5.3 "Landscape-scale pattern").
+"""Figure 10 — Ecoregion breakdown (L7, §5.3 "Landscape-scale pattern").
 
 A descriptive translation of the abrupt-thaw susceptibility surface into named
 physiographic regions (EPA Level III Ecoregions of Alaska). NOT a validation and
@@ -38,7 +38,7 @@ from scipy.stats import gaussian_kde
 
 import figstyle
 from fig02_study_area import AK_OUTLINE, scale_bar
-import fig04_susceptibility_aoa as fig04
+import fig03_susceptibility_aoa as fig03
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
@@ -46,7 +46,7 @@ from settings import DATA  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 ECO_SHP = DATA / "ak_eco_l3" / "ak_eco_l3.shp"
-CACHE = HERE / "fig11_region_cache.npz"
+CACHE = HERE / "fig10_region_cache.npz"
 
 DST_CRS = "EPSG:3338"          # Alaska Albers, matches Figs 2/4/10
 PERM_COV_MIN = 0.50            # keep regions >= 50% permafrost coverage
@@ -81,7 +81,7 @@ def load_cell_regions():
     """Return (log_evidence, in_AOA mask, region-code raster, code->L3name map).
 
     The datacube is a regular EPSG:4326 grid carrying per-cell lon/lat; recover
-    its affine (fig04.source_transform) and rasterize the ecoregion polygons onto
+    its affine (fig03.source_transform) and rasterize the ecoregion polygons onto
     that exact grid, so each cell inherits the region whose polygon covers it.
     """
     le_ds = xr.open_dataset(DATA / "susceptibility.nc")
@@ -100,7 +100,7 @@ def load_cell_regions():
     if CACHE.exists():
         region = np.load(CACHE)["region"]
     else:
-        src_tf = fig04.source_transform(lon, lat, valid)
+        src_tf = fig03.source_transform(lon, lat, valid)
         eco4326 = eco.to_crs("EPSG:4326")
         shapes = [(g, code[n]) for g, n in zip(eco4326.geometry, eco4326["US_L3NAME"])]
         region = rasterize(shapes, out_shape=(ny, nx), transform=src_tf,
@@ -186,7 +186,7 @@ def build():
     ax_v = fig.add_axes([0.34, 0.05, 0.55, 0.42])         # bottom: violin column
 
     # -- (a) choropleth (fill = median LE; no L1 outlines) ---------------- #
-    ak = fig04.mainland_outline()
+    ak = fig03.mainland_outline()
     eco_alb.plot(ax=ax_map, facecolor=figstyle.DOMAIN_GRAY, edgecolor="white",
                  linewidth=0.3, zorder=1)
     for r in kept:
@@ -262,10 +262,10 @@ def build():
     fig.text(0.02, 0.60, "(b)", fontsize=11, fontweight="bold",
              color=figstyle.INK, va="top", ha="left")
 
-    figstyle.save(fig, "11_ecoregion_breakdown", tight=False)
+    figstyle.save(fig, "10_ecoregion_breakdown", tight=False)
     return fig
 
 
 if __name__ == "__main__":
     build()
-    print("wrote 11_ecoregion_breakdown.{pdf,png}")
+    print("wrote 10_ecoregion_breakdown.{pdf,png}")

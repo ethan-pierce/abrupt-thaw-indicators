@@ -30,12 +30,12 @@ figstyle.use()                                   # apply style + register fonts
 fig, ax = figstyle.figure("single", aspect=0.8)  # canvas at a real AGU width
 ax.scatter(x, y, color=figstyle.CLASS_COLORS[0]) # 0 = Abrupt = warm
 figstyle.panel_label(ax, "a")                    # -> (a), bold, top-left
-figstyle.save(fig, "04_susceptibility_map")      # 04_...pdf (canonical) + .png
+figstyle.save(fig, "03_susceptibility_map")      # 03_...pdf (canonical) + .png
 ```
 
 Scripts live in `output/`. When a render is ready, **copy** (never move) the
 final asset into `manuscript/figures/` with a two-digit order prefix
-(`04_susceptibility_map.pdf`); generation scripts stay in `output/`.
+(`03_susceptibility_map.pdf`); generation scripts stay in `output/`.
 
 Run `poetry run python figstyle.py` to self-check the palettes are CVD-safe.
 
@@ -48,7 +48,7 @@ Run `poetry run python figstyle.py` to self-check the palettes are CVD-safe.
 | 1 | Form | Code-first: shared module + `.mplstyle` + this prose guide. |
 | 2 | Venue | Bound to AGU/Wiley column widths (single 85 mm, full 170 mm, height ≤ 228 mm). |
 | 3 | Color constitution | CVD-safe + perceptually uniform, **mandatory & validated**. Continuous fields = Crameri Scientific Colour Maps. |
-| 4 | Categorical | Warm = Abrupt, cool = Non-abrupt (anchored to `vik`'s poles). Domain = neutral gray; out-of-AOA = **hatch**. Family cap (top-N + "Other") set at Fig 7/9. |
+| 4 | Categorical | Warm = Abrupt, cool = Non-abrupt (anchored to `vik`'s poles). Domain = neutral gray; out-of-AOA = **hatch**. Family cap (top-N + "Other") set at Fig 6/9. |
 | 5 | Log-evidence map | `vik`; normalized **symmetric about 0**; single shared fixed `vmax`. |
 | 6 | Typography | Source Sans 3 (vendored). Scale: tick 7 / axis 8 / subtitle 9 semibold / panel-letter 9 bold / annotation 6.5 pt. Panel letters `(a) (b) (c)`. |
 | 7 | Output | **PDF canonical + 300-dpi PNG companion**; rasterize heavy data layers at 300 dpi; embed TrueType fonts (`fonttype 42`). |
@@ -91,14 +91,14 @@ abrupt) — **not** a calibrated probability. The colorbar reads *log-evidence*.
   dissimilarity index. No `jet`, no `viridis`-by-habit, no bespoke gradients.
 - **Log-evidence is always symmetric about 0** — build the norm with
   `figstyle.symmetric_norm(vmax)` so the pale center sits exactly on 0. Use one
-  shared `vmax` across every figure that shows the field (Figs 4, 9, 10, 11) so
+  shared `vmax` across every figure that shows the field (Figs 3, 9, 10, 11) so
   color is comparable. The exact `vmax` (~99th pct of |log-evidence|) is fixed
-  when Fig 4 is built.
+  when Fig 3 is built.
 - **Out-of-AOA / masked cells are a hatch overlay** (`figstyle.MASK_HATCH`),
   never a color on the data scale — so "unreliable" survives grayscale and is
   never mistaken for a value. The product is never shown without its AOA mask.
-- **Family palette:** color only the top-N families (decision at Fig 7/9), rest
-  collapse to `figstyle.OTHER_GRAY`. Same legend for the importance bars (Fig 7)
+- **Family palette:** color only the top-N families (decision at Fig 6/9), rest
+  collapse to `figstyle.OTHER_GRAY`. Same legend for the importance bars (Fig 6)
   and the dominance map (Fig 9).
 
 ### Map furniture (every statewide map)

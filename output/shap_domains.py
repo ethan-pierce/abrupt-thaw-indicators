@@ -1,6 +1,6 @@
 """Single source of truth for SHAP *thematic domain* colors and membership.
 
-Both Figure 7 (family-importance bars + domain-aggregate inset) and Figure 9
+Both Figure 6 (family-importance bars + domain-aggregate inset) and Figure 9
 (the domain-dominance map) import this module, so the two figures cannot drift
 in either the palette or the feature-to-domain assignment.
 
@@ -31,7 +31,7 @@ so they ride inside Baseline rather than forming their own inert domain.
 
 Snow and Seasonality are feature-level domains only: their SWE / isothermality
 features sit *inside* the relief and thermal emergent families, so they carry no
-family bar but do get a domain aggregate (this is intentional — Fig 7 footnotes
+family bar but do get a domain aggregate (this is intentional — Fig 6 footnotes
 it). The family->domain map (for coloring the 22 family bars) is separate and
 covers the 7 domains that surface at family level.
 

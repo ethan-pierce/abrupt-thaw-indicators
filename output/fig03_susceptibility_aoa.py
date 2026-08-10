@@ -1,4 +1,4 @@
-"""Figure 4 — Abrupt-thaw susceptibility map + AOA reliability panel (L5 + L4b).
+"""Figure 3 — Abrupt-thaw susceptibility map + AOA reliability panel (L5 + L4b).
 
 EXPLORATORY VARIANT — deliberately departs from figstyle/STYLE.md's diverging
 vik + binary-AOA convention (2026-07-20 critique): (a) uses a single-hue
@@ -221,8 +221,8 @@ def main():
     n_valid = int(both_valid.sum())
     n_abrupt_favoring = int((le_warp[both_valid] > 0).sum())
     n_outside_aoa = int((di_warp[both_valid] > threshold).sum())
-    figstyle.save(fig, "04_susceptibility_aoa", tight=False)
-    print(f"wrote 04_susceptibility_aoa.pdf/.png  "
+    figstyle.save(fig, "03_susceptibility_aoa", tight=False)
+    print(f"wrote 03_susceptibility_aoa.pdf/.png  "
           f"(abrupt-favoring={n_abrupt_favoring/n_valid*100:.1f}%, "
           f"outside-AOA={n_outside_aoa/n_valid*100:.1f}% of displayed valid cells)")
 

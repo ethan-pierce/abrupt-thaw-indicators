@@ -8,7 +8,7 @@ Import this in every figure script so the whole paper reads as one system:
     fig, ax = figstyle.figure("single", aspect=0.8) # canvas at an AGU column width
     ax.scatter(..., color=figstyle.CLASS_COLORS[0]) # Abrupt = warm
     figstyle.panel_label(ax, "a")
-    figstyle.save(fig, "04_susceptibility_map")     # writes .pdf (canonical) + .png
+    figstyle.save(fig, "03_susceptibility_map")     # writes .pdf (canonical) + .png
 
 The prose rules (what code can't enforce — no in-figure titles, provenance in
 caption, mandatory map furniture, log-evidence language) live in STYLE.md.
@@ -73,7 +73,7 @@ INK = "#1a1a1a"                          # primary text / marks
 MUTED = "#666666"                        # secondary text
 
 # CVD-safe qualitative palette (Okabe-Ito) for incidental categoricals. The
-# SHAP family palette (top-N + "Other") is designed at Fig 7/9 time (decision 4c);
+# SHAP family palette (top-N + "Other") is designed at Fig 6/9 time (decision 4c);
 # use OTHER_GRAY for the collapsed bucket.
 QUALITATIVE = [
     "#E69F00", "#56B4E9", "#009E73", "#F0E442",

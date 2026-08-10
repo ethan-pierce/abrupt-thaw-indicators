@@ -1,6 +1,6 @@
-"""Per-feature OOF SHAP cache for Figure 8 (mechanism / dependence shapes).
+"""Per-feature OOF SHAP cache for Figure 7 (mechanism / dependence shapes).
 
-Figure 8 needs per-FEATURE SHAP paired with the underlying feature VALUES, so it
+Figure 7 needs per-FEATURE SHAP paired with the underlying feature VALUES, so it
 can draw family-summed dependence shapes (family-sum SHAP on y vs. the family's
 leading member's value on x) and decompose the Land Cover family per class.
 
@@ -10,10 +10,10 @@ feature data. So this script re-runs the SAME canonical OOF machinery
 (pooled_oof_shap: per-fold refit + held-out TreeSHAP, Abrupt-oriented margin)
 and persists the full per-feature arrays instead.
 
-Consistency guarantees (so Fig 8 lines up with Fig 7):
+Consistency guarantees (so Fig 7 lines up with Fig 6):
   * Same inputs (data/features_clean.csv), same CV config + selected hparams,
     same seed  -> identical `scored` set and identical SHAP values.
-  * Family memberships are NOT recomputed here; Fig 8 reads them from
+  * Family memberships are NOT recomputed here; Fig 7 reads them from
     output/shap_families.json (written by shap_groups.py), the single source of
     truth. This cache only supplies per-feature (values, data) so the family sums
     it forms downstream equal the columns of shap_grouped_matrix.npz exactly.
@@ -87,7 +87,7 @@ def main():
     )
     print(f"\nWrote {out}  "
           f"[values {expl.values.shape}, {int(scored.sum())} points explained out-of-fold]")
-    print("Family memberships are NOT stored here — Fig 8 reads them from "
+    print("Family memberships are NOT stored here — Fig 7 reads them from "
           "output/shap_families.json (source of truth); this cache supplies only "
           "per-feature (values, data) so family sums match shap_grouped_matrix.npz.")
 

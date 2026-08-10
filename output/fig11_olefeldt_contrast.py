@@ -1,4 +1,4 @@
-"""Figure 12 — Olefeldt incumbent contrast (L7, Form B).
+"""Figure 11 — Olefeldt incumbent contrast (L7, Form B).
 
 Positioning against the only Alaska-statewide comparable incumbent, Olefeldt
 et al. (2016) thermokarst-landscape classes. Our log-evidence index measures
@@ -26,9 +26,9 @@ Design (raincloud, one shared log-evidence axis, None dropped):
 
 The polygon->grid join (Olefeldt LAEA polygons rasterized onto the datacube's
 EPSG:4326 grid, restricted to in-AOA cells) is heavy, so it is cached to
-output/fig12_olefeldt_cache.npz on first run. Reads data/susceptibility.nc +
+output/fig11_olefeldt_cache.npz on first run. Reads data/susceptibility.nc +
 data/aoa.nc + data/Circumpolar_Thermokarst_Landscapes/. Writes
-output/fig12_olefeldt_contrast.{pdf,png}.
+output/11_olefeldt_contrast.{pdf,png}.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ DATA = REPO / "data"
 SUSCEPTIBILITY_NC = DATA / "susceptibility.nc"
 AOA_NC = DATA / "aoa.nc"
 OLEFELDT_SHP = DATA / "Circumpolar_Thermokarst_Landscapes/Circumpolar_Thermokarst_Landscapes.shp"
-CACHE = _HERE / "fig12_olefeldt_cache.npz"
+CACHE = _HERE / "fig11_olefeldt_cache.npz"
 
 # Olefeldt LAEA (ESRI:102017) -> datacube EPSG:4326.
 OLEFELDT_CRS = "ESRI:102017"
@@ -92,7 +92,7 @@ def build_cache() -> None:
         raise ValueError("susceptibility.nc and aoa.nc must share an identical valid mask")
     in_aoa = valid & (di <= thr)
 
-    # recover the datacube's regular EPSG:4326 affine (same fit as fig04)
+    # recover the datacube's regular EPSG:4326 affine (same fit as fig03)
     ys, xs = np.nonzero(valid)
     dlon, lon0 = np.polyfit(xs, lon[ys, xs], 1)
     dlat, lat0 = np.polyfit(ys, lat[ys, xs], 1)
@@ -210,12 +210,12 @@ def main():
     d = load_cache()
     # accessibility gate: the three type hues must stay distinct under CVD
     try:
-        figstyle.assert_cvd_safe([c for *_, c in TYPES], min_de=15, name="Fig12 type hues")
+        figstyle.assert_cvd_safe([c for *_, c in TYPES], min_de=15, name="Fig11 type hues")
         print("CVD check: type hues OK (min ΔE ≥ 15)")
     except Exception as exc:  # noqa: BLE001
         print(f"CVD check WARNING: {exc}")
     fig = render(d)
-    pdf = figstyle.save(fig, "fig12_olefeldt_contrast")
+    pdf = figstyle.save(fig, "11_olefeldt_contrast")
     print(f"wrote {pdf}")
 
 

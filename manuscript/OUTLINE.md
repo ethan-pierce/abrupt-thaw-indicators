@@ -33,7 +33,7 @@ are Discussion. Results is **one section with subsections** (not flat sections).
 **Anti-burial of the headline map:** the map is a dedicated Results subsection (§4.1),
 reinforced by amplifiers *outside* the body flow — graphical abstract = the map;
 first Key Point = the headline; PLS leads with the map; result-forward Intro closer;
-full-width Fig 4; Conclusions callback.
+full-width Fig 3; Conclusions callback.
 
 ---
 
@@ -99,7 +99,7 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 
 ## §4 Results *(concise, factual; figure-ordered)*
 
-### 4.1 The abrupt-thaw susceptibility map *(L5 + AOA/L4b — Fig 4, dedicated subsection)*
+### 4.1 The abrupt-thaw susceptibility map *(L5 + AOA/L4b — Fig 3, dedicated subsection)*
 1. **Map + headline** — 25.6% of the in-AOA permafrost domain has features more consistent with
    abrupt than non-abrupt thaw (710,882 / 2,773,804 cells, log-evidence > 0; + km² once cell size
    confirmed). Anchored to log-evidence = 0 only.
@@ -110,38 +110,38 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
    NW Alaska); mechanism deferred to §4.3/§5.2.
 5. **AOA panel** — product shown with its reliability mask; AOA flags only 2.7% of the valid domain.
 
-### 4.2 Model evaluation *(L2/L3/L4c — Figs 5–6)*
-1. **Performance + not-model-specific** *(Fig 5a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
+### 4.2 Model evaluation *(L2/L3/L4c — Figs 4–5)*
+1. **Performance + not-model-specific** *(Fig 4a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
    ≈15× the 0.0574 floor, across-partition σ 0.01–0.03 (20 reshuffles); laddered floor → logistic (0.776) → XGBoost (0.852);
    **margin +0.076 ± 0.019 framed as robustness, not superiority.** AUC-ROC ~0.98–0.99 once, minority-insensitive.
-2. **Generalization / not-a-location-proxy** *(Fig 5b)* — leave-region-out decays gracefully to
+2. **Generalization / not-a-location-proxy** *(Fig 4b)* — leave-region-out decays gracefully to
    AUC-PR 0.54 @ ~251 km (~9× floor).
 3. **Artifact controls** (a few sentences; details → Supplement) — shuffle → chance, dummies at floor,
    only 4 contradictory-label pairs: real, not an artifact.
-4. **Representativeness** *(Fig 6)* — training points flatter/wetter/lower-drainage than the grid
+4. **Representativeness** *(Fig 5)* — training points flatter/wetter/lower-drainage than the grid
    (Slope 0.74° vs 3.92°; HND 1 m vs 17 m; Open Water 0.43 vs 0.04). Closes the loop to the §4.1 AOA:
    this gap is *why* reliability is a separate layer.
 
-### 4.3 Drivers of the susceptibility signal *(L6 — Figs 7–10)*
-1. **Emergent feature families (opens the section)** *(Fig 7)* — 70 features collapse into 22
+### 4.3 Drivers of the susceptibility signal *(L6 — Figs 6–9)*
+1. **Emergent feature families (opens the section)** *(Fig 6)* — 70 features collapse into 22
    coherent families by feature-space correlation; framed as *establishing the analysis unit before
    attributing* (inoculates against circularity). Dendrogram → Supplement.
-2. **Ranking, honest multi-factor** *(Fig 7)* — single-panel magnitude; family bars colored by
+2. **Ranking, honest multi-factor** *(Fig 6)* — single-panel magnitude; family bars colored by
    thematic domain + member counts + a **domain-aggregate inset** giving the correct feature-level
    totals. Families: Alpine relief 23%, Annual/dry-season temperature 16%, Land Cover 12%, Thermal
    continentality 9%… At the domain level **Relief ≈ Temperature co-lead (~25% each)**, then snow /
    land cover (14% each), precipitation (9%), seasonality (7%), soil (5%) — no single control.
    Cross-family climate subtotals are invalid (families overlap); the inset preempts the bad sum.
-3. **Direction** — folded into Fig 8 (the standalone violin panel is dropped): abrupt-orientation
+3. **Direction** — folded into Fig 7 (the standalone violin panel is dropped): abrupt-orientation
    stated, but nearly all families lean abrupt only because the sample is 94% abrupt (prevalence, not
    a per-feature finding); the prior-free reading is the log-evidence index + where SHAP crosses zero.
-4. **Mechanism / dependence shapes** *(Fig 8)* — 3×3 own-SHAP dependence for the top-9 individual
+4. **Mechanism / dependence shapes** *(Fig 7)* — 3×3 own-SHAP dependence for the top-9 individual
    indicators (4 relief / 2 snow / 3 climate); *shapes reported as fact* (slope's flat-and-steep two
    regimes; temperature's warm-edge cliff), mechanistic reading reserved for §5.2.
-5. **Land Cover mechanism** *(Fig 9)* — per-class decomposition of the Land Cover family SHAP (Open
+5. **Land Cover mechanism** *(Fig 8)* — per-class decomposition of the Land Cover family SHAP (Open
    Water → abrupt; Sedge/Herbaceous → non-abrupt); the categorical analog of the dependence shapes,
    and the one family that discriminates in both directions.
-6. **Spatial variation of drivers** *(Fig 10, dominance map)* — per-cell dominant **domain** across
+6. **Spatial variation of drivers** *(Fig 9, dominance map)* — per-cell dominant **domain** across
    in-AOA cells (all-data model, AOA-restricted, hue-only + area-fraction inset); drivers vary
    regionally (evidence for the §5.2 proxy rebuttal).
 
@@ -156,11 +156,11 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
   - **End on a pivot** ("with these bounds set, the surface supports the following…") to recover momentum.
 - **5.2 Interpreting the drivers** — reserved mechanism (alpine relief → ground-ice/drainage;
   temperature → thermal state) + **proxy-vs-mechanism defense** leaning on regional driver variation
-  (Fig 10) + LRO survival — **not partialling** (locked call).
-- **5.3 Landscape-scale pattern** — ecoregion breakdown *(Fig 11)*: abrupt-favoring fraction by
+  (Fig 9) + LRO survival — **not partialling** (locked call).
+- **5.3 Landscape-scale pattern** — ecoregion breakdown *(Fig 10)*: abrupt-favoring fraction by
   physiographic ecoregion (EPA Level III Ecoregions of Alaska); drop regions below a permafrost-coverage threshold;
   report per-region AOA coverage; in-AOA only.
-- **5.4 Positioning against incumbents** — Olefeldt-2016 thermokarst-landscape contrast *(Fig 12, Form B)*:
+- **5.4 Positioning against incumbents** — Olefeldt-2016 thermokarst-landscape contrast *(Fig 11, Form B)*:
   log-evidence spans a wide range within a single Olefeldt class → mode is an **orthogonal axis**.
   **Complementary/refining, never corrective** (states plainly what Olefeldt maps — landscape type +
   occurrence potential — as a valid different axis, to preempt the strawman concern). Positioning, NOT validation.

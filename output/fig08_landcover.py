@@ -1,6 +1,6 @@
-"""Figure 8b — SHAP mechanism: Land Cover per class (L6b, categorical analog).
+"""Figure 8 — SHAP mechanism: Land Cover per class (L6b, categorical analog).
 
-Fig 8 shows the CONTINUOUS dependence shapes (own SHAP vs own value) for the top-9
+Fig 7 shows the CONTINUOUS dependence shapes (own SHAP vs own value) for the top-9
 interpretable features. Land Cover is the one important family a dependence plot
 cannot handle — a one-hot has no continuous axis — so it is split off here and
 DECOMPOSED per class: one horizontal box (median, IQR, 5-95 whiskers) of the Land
@@ -11,14 +11,14 @@ SHAP straddles zero): Open Water strongly favors Abrupt (lake/lowland thermokars
 and the most sampling-biased class, ~43% of points), while Sedge/Herbaceous and the
 forest/scrub classes favor Non-abrupt.
 
-Framing discipline (locked, matches Fig 8): shapes reported as FACT about the
+Framing discipline (locked, matches Fig 7): shapes reported as FACT about the
 model's response, never asserted mechanism; §5.2 carries interpretation.
 
 Data: output/shap_mechanism_cache.npz — per-feature OOF SHAP (Abrupt-oriented:
 positive => favors Abrupt) + feature VALUES + names, written by
 models/shap_mechanism_cache.py. The family SHAP formed here (sum over the 18 Land
 Cover one-hot columns) equals the Land Cover column of shap_grouped_matrix.npz by
-construction. Pure plotting. Writes output/08b_landcover_shap.{pdf,png}.
+construction. Pure plotting. Writes output/08_landcover_shap.{pdf,png}.
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ def main():
         ax.spines[s].set_visible(False)
 
     ax.set_xlabel("SHAP  (margin)", fontsize=9.5)
-    # direction on the x-axis ends (color + position carry "favors"), matching Fig 8
+    # direction on the x-axis ends (color + position carry "favors"), matching Fig 7
     ax.text(0.0, -0.175, "Non-abrupt", transform=ax.transAxes, ha="left", va="top",
             fontsize=8.5, color=COOL, fontweight="bold")
     ax.text(1.0, -0.175, "Abrupt", transform=ax.transAxes, ha="right", va="top",
@@ -129,8 +129,8 @@ def main():
     ax.set_title("Land Cover family SHAP, by class", fontsize=11, color=figstyle.INK,
                  pad=6)
 
-    figstyle.save(fig, "08b_landcover_shap", outdir=_HERE, tight=False)
-    print(f"Wrote 08b_landcover_shap.{{pdf,png}} | {len(rows)} classes (n≥{CLASS_N_MIN}); "
+    figstyle.save(fig, "08_landcover_shap", outdir=_HERE, tight=False)
+    print(f"Wrote 08_landcover_shap.{{pdf,png}} | {len(rows)} classes (n≥{CLASS_N_MIN}); "
           f"{om_classes} omitted ({om_share:.1f}% of points)")
     for lab, vals, n, med in reversed(rows):
         print(f"   {lab:34s} n={n:5d} ({n / n_total * 100:4.1f}%)  median SHAP={med:+.2f}")

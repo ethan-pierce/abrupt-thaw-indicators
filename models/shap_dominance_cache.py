@@ -1,24 +1,24 @@
-"""Per-cell dominant-domain cache for Figure 10 (SHAP dominant-domain map, L6c/L7).
+"""Per-cell dominant-domain cache for Figure 9 (SHAP dominant-domain map, L6c/L7).
 
 For every in-AOA grid cell we ask: *which thematic domain moves the model's
 prediction most at this location?* Concretely, per cell we run TreeSHAP over the
 all-data model, sum each domain's per-feature contributions to a domain net
 contribution, and take argmax over the eight domains of |net contribution|
 (unsigned — we want which KIND of driver dominates, not its direction; direction
-is Fig 4's job). This is the descriptive raster Fig 10 paints.
+is Fig 3's job). This is the descriptive raster Fig 9 paints.
 
 Why this is a separate cache script (mirrors models/shap_mechanism_cache.py):
 the compute is heavy (per-cell TreeSHAP over ~2.77M cells) and must run once when
-the model / datacube are final; the figure script (output/fig10_shap_dominance.py)
+the model / datacube are final; the figure script (output/fig09_shap_dominance.py)
 is then pure plotting and re-runs fast off the cache.
 
-Key differences from the Fig 7/8 caches:
+Key differences from the Fig 6/7 caches:
   * ALL-DATA model (models/model.json), scored over the prediction datacube —
-    NOT the OOF fold-refit machinery on training points. Coherence with Fig 7's
+    NOT the OOF fold-refit machinery on training points. Coherence with Fig 6's
     OOF SHAP is acceptable per STRATEGY.md; the DOMAIN DEFINITIONS are identical
     (both import output/shap_domains.py).
   * Orientation is IRRELEVANT here: we take |domain net SHAP|, so no Abrupt-
-    orientation sign flip is needed (unlike Fig 7/8). We drop the bias column.
+    orientation sign flip is needed (unlike Fig 6/7). We drop the bias column.
 
 Inputs (paths verified 2026-07-23):
   * data/prediction_data.nc  — feature_stack (y, x, 70), EPSG:4326 1 km grid,
@@ -109,7 +109,7 @@ def dominant_domain(X, feature_names, booster, domain_col_idx, n_domains):
 
 
 def main():
-    print(f"{'[SMOKE] ' if SMOKE else ''}Figure 10 dominant-domain cache")
+    print(f"{'[SMOKE] ' if SMOKE else ''}Figure 9 dominant-domain cache")
     arr, (ny, nx), feature_names = load_feature_stack()
     in_aoa = load_in_aoa((ny, nx))
     idx_in_aoa = np.nonzero(in_aoa)[0]

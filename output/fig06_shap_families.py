@@ -1,4 +1,4 @@
-"""Figure 7 — SHAP indicator-family importance, colored by thematic domain.
+"""Figure 6 — SHAP indicator-family importance, colored by thematic domain.
 
 A single magnitude panel: the 22 emergent feature *families* (feature-space
 Spearman clusters, NOT SHAP-space — the anti-circularity point), importance-
@@ -18,7 +18,7 @@ and shows Relief and Temperature co-leading at ~25% each, neither dominating.
 Direction is deliberately NOT shown here (the old panel (b) violins are dropped):
 the sample is ~94% Abrupt, so nearly every family leans warm relative to that
 abrupt-heavy average — prevalence, not a per-indicator claim. The prior-free
-reading is the log-evidence index and the Fig 8 dependence shapes (where SHAP
+reading is the log-evidence index and the Fig 7 dependence shapes (where SHAP
 crosses zero). Land Cover — the one genuinely bidirectional family — gets its own
 per-class figure.
 
@@ -170,10 +170,10 @@ def main():
     ax_in = ax.inset_axes([0.50, 0.045, 0.48, 0.35])
     aggregate_inset(ax_in, shares)
 
-    figstyle.save(fig, "07_shap_families")
+    figstyle.save(fig, "06_shap_families")
     plt.close(fig)
 
-    print(f"wrote output/07_shap_families.{{pdf,png}}  ({len(labels)} families)")
+    print(f"wrote output/06_shap_families.{{pdf,png}}  ({len(labels)} families)")
     print("\nfamily order (importance desc):")
     for l, i, k in zip(labels, importance, n_members):
         print(f"  {i:7.4f}  n={k:2d}  {sd.FAMILY_DOMAIN[l]:26s}  {l}")

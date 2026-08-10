@@ -14,7 +14,7 @@ internally consistent methodology, anchored only to the chance floor.
 
 Consumes models/spatial_cv.py + models/train_xgboost.py. Positive class = 1
 (Non-abrupt). Pooled OOF AUC-PR. Caches to output/extrapolation_range_results.json
-for the manuscript figure (output/fig05_spatial_performance.py).
+for the manuscript figure (output/fig04_spatial_performance.py).
 Run: poetry run python diagnostics/extrapolation_range.py
 """
 import sys

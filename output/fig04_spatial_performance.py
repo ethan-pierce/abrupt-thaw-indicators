@@ -1,4 +1,4 @@
-"""Figure 5 — Spatial out-of-sample performance (L2a, L2c, L3).
+"""Figure 4 — Spatial out-of-sample performance (L2a, L2c, L3).
 
 The credibility figure. Its single load-bearing claim: the thaw-mode signal is
 NOT a location proxy — it survives being forced to reach across space. Two panels,
@@ -139,10 +139,10 @@ def main():
     panel_a_blocksize(ax_a, rep)
     panel_b_extrapolation(ax_b, ext)
 
-    figstyle.save(fig, "05_spatial_performance")
+    figstyle.save(fig, "04_spatial_performance")
     op = rep["per_scale"][str(int(rep["operative_cell_km"]))]["xgb_mean"]
     far = sorted(ext["rows"], key=lambda r: r["med_dist_km"])[-1]
-    print(f"wrote 05_spatial_performance.pdf/.png  "
+    print(f"wrote 04_spatial_performance.pdf/.png  "
           f"(a: XGBoost {op:.3f} @ {rep['operative_cell_km']} km; "
           f"b: {far['ap']:.3f} @ {far['med_dist_km']:.0f} km / {far['regions']} regions)")
 

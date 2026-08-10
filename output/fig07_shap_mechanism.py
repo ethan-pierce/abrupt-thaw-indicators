@@ -1,10 +1,10 @@
-"""Figure 8 — SHAP mechanism: own-SHAP dependence for the top-9 indicators (L6b).
+"""Figure 7 — SHAP mechanism: own-SHAP dependence for the top-9 indicators (L6b).
 
-Fig 7 says WHICH families matter and HOW BIG each is. Fig 8 says HOW each of the
+Fig 6 says WHICH families matter and HOW BIG each is. Fig 7 says HOW each of the
 leading *individual* indicators pushes — the functional SHAPE of the model's
 response — the one thing a bar cannot show.
 
-Redesign (grill 2026-07-23; see output/fig08_redesign_spec.md). Each panel plots a
+Redesign (grill 2026-07-23; see output/fig07_redesign_spec.md). Each panel plots a
 feature's OWN SHAP (y) against its OWN value (x) — the standard dependence plot —
 for the top-9 continuous, individually interpretable features by own mean|SHAP|.
 This replaces the old family-sum-vs-one-member design, which contaminated the
@@ -17,12 +17,12 @@ Framing discipline (locked): shapes are reported as FACT about the model's
 response ("evidence for abrupt rises above ~12° slope"), NEVER asserted mechanism.
 Mechanistic reading + the proxy-vs-mechanism defense are reserved for §5.2 / Fig 9.
 
-Land Cover is NOT here — a one-hot has no continuous shape; it becomes Fig 8b
-(fig08b_landcover.py).
+Land Cover is NOT here — a one-hot has no continuous shape; it becomes Fig 8
+(fig08_landcover.py).
 
 Data: output/shap_mechanism_cache.npz — per-feature OOF SHAP (Abrupt-oriented:
 positive => favors Abrupt) + feature VALUES + names + labels, written by
-models/shap_mechanism_cache.py. Pure plotting. Writes output/08_shap_mechanism.{pdf,png}.
+models/shap_mechanism_cache.py. Pure plotting. Writes output/07_shap_mechanism.{pdf,png}.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ N_XBINS = 22                    # fixed-width trend bins across the displayed x-
 BIN_N_MIN = 40                  # min points per bin to draw a trend node (drops sparse tails)
 
 # Y-axis: per-panel robust range so each density cloud fills its panel and the
-# SHAPE is legible (Fig 8's whole job; magnitude lives in Fig 7). This is the
+# SHAPE is legible (Fig 7's whole job; magnitude lives in Fig 6). This is the
 # documented fallback from the shared-symmetric default — a shared ±ymax≈3.2 (set
 # by the temperature warm-edge cliff) crushed every cloud into an unreadable
 # strip. Magnitude comparability is preserved by the prominent per-panel
@@ -227,9 +227,9 @@ def main():
         ax.set_title(f"{j + 1}. {spec['title']}", fontsize=10.5, color=figstyle.INK,
                      pad=5)
 
-    figstyle.save(fig, "08_shap_mechanism", outdir=_HERE, tight=False)
+    figstyle.save(fig, "07_shap_mechanism", outdir=_HERE, tight=False)
     tag = f"shared y = ±{ymax:.2f}" if SHARED_Y else "per-panel y (fallback)"
-    print(f"Wrote 08_shap_mechanism.{{pdf,png}} | {tag}")
+    print(f"Wrote 07_shap_mechanism.{{pdf,png}} | {tag}")
     print("Roster (own mean|SHAP|, rank):")
     for j, spec in enumerate(ROSTER):
         print(f"  {j + 1}. {spec['name']:34s} {imps[j]:.3f}"

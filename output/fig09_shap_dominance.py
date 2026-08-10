@@ -1,9 +1,9 @@
-"""Figure 10 — SHAP dominant-domain map (L6c / L7).
+"""Figure 9 — SHAP dominant-domain map (L6c / L7).
 
 For every in-AOA grid cell, which thematic *domain* moves the model's prediction
 most? Per cell we summed each domain's per-feature SHAP to a net contribution and
 took the domain with the largest |net| (unsigned — which KIND of driver dominates,
-not its direction; direction is Fig 4's job). This map paints that dominant
+not its direction; direction is Fig 3's job). This map paints that dominant
 domain, hue only (winner-take-all; no saturation/alpha modulation).
 
 Its argumentative job is the PROXY REBUTTAL (§5.2): the dominant driver varies
@@ -18,10 +18,10 @@ in the cache script — here Temperature leads at 54%, so the map stays polychro
 
 Pure plotting. The heavy per-cell TreeSHAP lives in
 models/shap_dominance_cache.py -> output/shap_dominance_cache.npz. Domain palette
-+ feature->domain assignment come from output/shap_domains.py (shared with Fig 7).
-Map warp (EPSG:4326 -> Alaska Albers) reuses output/fig04_susceptibility_aoa.py.
++ feature->domain assignment come from output/shap_domains.py (shared with Fig 6).
+Map warp (EPSG:4326 -> Alaska Albers) reuses output/fig03_susceptibility_aoa.py.
 
-Writes output/10_shap_dominance.{pdf,png}.
+Writes output/09_shap_dominance.{pdf,png}.
 """
 
 from __future__ import annotations
@@ -41,10 +41,10 @@ sys.path.insert(0, str(_HERE))
 
 import figstyle  # noqa: E402
 import shap_domains as sd  # noqa: E402
-import fig04_susceptibility_aoa as fig04  # noqa: E402  (reuse the warp + basemap)
+import fig03_susceptibility_aoa as fig03  # noqa: E402  (reuse the warp + basemap)
 
 CACHE = _HERE / "shap_dominance_cache.npz"
-SUSCEPTIBILITY_NC = fig04.SUSCEPTIBILITY_NC   # same grid as the dominance raster
+SUSCEPTIBILITY_NC = fig03.SUSCEPTIBILITY_NC   # same grid as the dominance raster
 
 DISPLAY_MIN = 0.01          # domains below this in-AOA share fold into "Other"
 BACKDROP_GRAY = "#e1e4e6"   # in-permafrost-domain but out-of-AOA (Fig 2 domain fill)
@@ -113,7 +113,7 @@ def graticule_labels(ax, extent):
     parallels 60/65/70°N). Placed where each line crosses the frame — bottom for
     meridians, left for parallels — so the journal has its lon/lat reference."""
     xmin, xmax, ymin, ymax = extent
-    tf = Transformer.from_crs("EPSG:4326", fig04.DST_CRS, always_xy=True)
+    tf = Transformer.from_crs("EPSG:4326", fig03.DST_CRS, always_xy=True)
     lat_s = np.linspace(45.0, 78.0, 500)
     lon_s = np.linspace(-185.0, -125.0, 500)
     kw = dict(fontsize=5.5, color=figstyle.MUTED, zorder=6, clip_on=False)
@@ -178,19 +178,19 @@ def main():
 
     # CVD gate over the domains actually rendered as spatial fills (spec).
     figstyle.assert_cvd_safe([sd.DOMAIN_COLORS[d] for d in disp], min_de=15,
-                             name="Fig 10 displayed-domain palette")
+                             name="Fig 9 displayed-domain palette")
 
     coded = coded_raster(dom_raster, valid, dom_to_disp, mask_code)
 
-    # Warp the EPSG:4326 coded raster into Alaska Albers (reuse Fig 4's machinery);
+    # Warp the EPSG:4326 coded raster into Alaska Albers (reuse Fig 3's machinery);
     # NEAREST is mandatory — these are class codes, not a continuous field.
-    src_tf = fig04.source_transform(lon, lat, coord_ok)
-    extent_box, (th, tw), dst_tf = fig04.dest_grid(lon, lat, coord_ok)
-    codes_warp = fig04.warp_to_albers(coded, src_tf, (th, tw), dst_tf,
+    src_tf = fig03.source_transform(lon, lat, coord_ok)
+    extent_box, (th, tw), dst_tf = fig03.dest_grid(lon, lat, coord_ok)
+    codes_warp = fig03.warp_to_albers(coded, src_tf, (th, tw), dst_tf,
                                       resampling=Resampling.nearest)
     rgba = to_rgba(codes_warp, disp, other_code, mask_code)
 
-    ak = fig04.mainland_outline()
+    ak = fig03.mainland_outline()
     fig = figstyle.figure("full", height=4.35, subplots=False)
     # Two gridspecs so the bar panel can sit lower (headroom for its two-line
     # title) while the map still uses the full figure height.
@@ -199,10 +199,10 @@ def main():
     ax_map = fig.add_subplot(gs_map[0, 0])
     ax_bar = fig.add_subplot(gs_bar[0, 0])
 
-    fig04.setup_map(ax_map, ak, extent_box)
+    fig03.setup_map(ax_map, ak, extent_box)
     ax_map.imshow(rgba, extent=extent_box, origin="upper", interpolation="nearest",
                   zorder=2, rasterized=True)
-    fig04.scale_bar(ax_map, extent_box)
+    fig03.scale_bar(ax_map, extent_box)
     figstyle.north_arrow(ax_map, x=0.95, y=0.84, size=0.07)
     graticule_labels(ax_map, extent_box)
 
@@ -215,8 +215,8 @@ def main():
 
     area_fraction_panel(ax_bar, disp, disp_idx, fracs, domains, order)
 
-    figstyle.save(fig, "10_shap_dominance", outdir=_HERE, tight=False)
-    print(f"wrote 10_shap_dominance.{{pdf,png}}  | displayed domains: {disp} "
+    figstyle.save(fig, "09_shap_dominance", outdir=_HERE, tight=False)
+    print(f"wrote 09_shap_dominance.{{pdf,png}}  | displayed domains: {disp} "
           f"(+Other) | gate: {gate_dom} {gate_frac*100:.1f}% "
           f"{'PASS' if gate_ok else 'FAIL'}")
 

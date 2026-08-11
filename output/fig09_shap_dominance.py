@@ -14,7 +14,7 @@ calibrated-probability or causal claim.
 The companion area-fraction bars quantify the map (% of in-AOA area each domain
 dominates) and carry the honesty about near-ties (winner-take-all hides how close
 the runner-up was); the VALIDATION GATE (a single domain > 60% of area) is checked
-in the cache script — here Temperature leads at 54%, so the map stays polychrome.
+in the cache script — here Baseline temperature leads at 45%, so the map stays polychrome.
 
 Pure plotting. The heavy per-cell TreeSHAP lives in
 models/shap_dominance_cache.py -> output/shap_dominance_cache.npz. Domain palette

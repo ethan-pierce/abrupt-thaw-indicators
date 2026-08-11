@@ -52,6 +52,12 @@ Concepts only — one-line meanings. Symbols, units, and values live downstream.
   only the figure asset into `manuscript/figures/` and name it with a two-digit manuscript
   order prefix: `01_figure_name.ext`, `02_figure_name.ext`, and so on. Never put generation
   scripts or unnumbered figure files in `manuscript/figures/`.
+- **Never copy a render into `manuscript/figures/` until the user explicitly approves that
+  figure.** Regenerating and showing a figure in `output/` is fine without asking, but
+  promoting it into the manuscript is a separate, user-gated step. The figure-judgment call
+  is the user's — a render looking finished to you is not approval. Wait for an explicit
+  go-ahead on that specific figure before copying, and do not batch the copy in with the
+  render.
 - **Commit messages: one concise subject line, nothing else.** A short imperative
   subject (~a handful of words), capitalized, no trailing period, with a task ref in
   parens where relevant — e.g. `Fix datacube categorical double-flip (T31)`. **No body**

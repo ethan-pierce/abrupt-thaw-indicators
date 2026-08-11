@@ -132,10 +132,13 @@ in systematically flatter, wetter, lower-drainage, more-open-water locations tha
 statewide grid (Slope 0.74° vs 3.92°, HND 1 m vs 17 m, Open Water active 0.43 vs 0.04).
 This is why sample prevalence ≠ landscape prevalence, why calibrated probabilities are
 not defensible, and why reliability is a **separate** layer: the Area-of-Applicability.
-The AOA uses a rank-CDF SHAP-weighted dissimilarity index; OOF AUC-PR stayed ~15× the
-prevalence floor across the entire *sampled* DI range (no decay), so the threshold
-(DI = 0.506) is set at the edge of the measured-skill envelope — cells beyond it are
-flagged as genuine extrapolation, not scored. Spearman(DI, |residual|) = 0.489.
+The AOA uses a rank-CDF SHAP-weighted dissimilarity index. Prevalence-invariant OOF skill
+(AUC-ROC) stays ~0.97–0.99 with **no decay** across the sampled DI range, so the threshold
+is **not** a skill limit but a feature-space envelope: the **99.9th percentile of the CV
+training DI (DI = 0.27)**, beyond which cells are flagged as extrapolation (9.1% of the
+in-domain grid). Spearman(DI, |residual|) = 0.489 (DI tracks OOF error). The earlier
+"~15× the floor, no decay, DI = 0.506" reading was an AUC-PR-vs-global-floor artifact —
+see `aoa_threshold_decision.md`.
 Leave-region-out (case B, 3 km buffer), scoring the **operative model** (spw=1, selected
 hparams — identical to the Fig 5a curve), degrades gracefully rather than collapsing:
 AUC-PR ~0.84 at ~17 km reach (50 regions) down to **0.54 at ~251 km** median distance-to-train

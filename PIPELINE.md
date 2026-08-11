@@ -136,10 +136,11 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
    dissimilarity index (DI) over a rank→training-CDF coordinate (mean|SHAP| weights) and
    emits `data/aoa.nc` (`DI` continuous — the headline reliability surface — plus a derived
    `inside_aoa` flag), `output/aoa_map.png`, `output/aoa_di_map.png`. Its threshold is
-   anchored to CV performance by `diagnostics/aoa_calibration.py`
-   (→ `models/aoa_threshold.json`): OOF AUC-PR holds ~15× the prevalence floor across the
-   whole tested DI range, so the boundary is the edge of that measured-skill envelope
-   (only the small fraction of cells more novel than anything CV tested is flagged).
+   set by `diagnostics/aoa_calibration.py` (→ `models/aoa_threshold.json`) to the **99.9th
+   percentile of the CV training-DI distribution (DI = 0.27)** — a feature-space envelope,
+   not a skill limit: OOF AUC-ROC stays ~0.97–0.99 with no decay across the sampled DI
+   range, so the threshold marks the extent of the training feature envelope (the ~9% of
+   in-domain cells more dissimilar than that are flagged as extrapolation).
 6. **`models/shap_values.py`** reads `features_clean.csv` + CV config and **refits
    per-fold** → **pooled out-of-fold SHAP** outputs. The all-data `model.json`
    is deliberately **not** used here (OOF SHAP requires per-fold refits), so the

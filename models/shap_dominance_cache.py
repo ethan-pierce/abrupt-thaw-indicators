@@ -26,7 +26,7 @@ Inputs (paths verified 2026-07-23):
   * models/model.json        — all-data XGBoost; feature order = learner.feature_names.
   * data/aoa.nc              — inside_aoa (1 = reliable, 0 = extrapolating,
     NaN = off-domain); == 1 already encodes the Obu domain AND the DI<=threshold
-    AOA cut (2,773,804 cells).
+    AOA cut (2,589,808 cells @ DI<=0.27).
 
 Run once when the model / features are final:
     poetry run python models/shap_dominance_cache.py

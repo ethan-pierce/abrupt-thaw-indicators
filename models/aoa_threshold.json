@@ -1,15 +1,17 @@
 {
   "metric": "rank_cdf",
-  "threshold": 0.5061258854334418,
-  "rule": "edge of the measured-skill envelope = maximum DI the operative spatial-CV OOF verified. OOF AUC-PR stayed ~15x the prevalence floor across the ENTIRE tested DI range (no degradation), so reliability is demonstrated everywhere the sample reaches; cells with DI beyond this are flagged as genuine extrapolation.",
-  "source": "measured_skill_envelope",
+  "threshold": 0.26728563615173656,
+  "rule": "99.9th percentile of the cross-validated training DI distribution (feature-space envelope). A cell is inside the AOA iff no more dissimilar from the training data than all but 0.1% of training points. NOT a skill limit: OOF AUC-ROC stayed 0.97-1.00 with no decay across the whole sampled DI range.",
+  "source": "training_envelope_quantile",
+  "envelope_pctl": 99.9,
   "prevalence_floor": 0.05739319784321858,
-  "skill_band_factor": 2.0,
+  "oof_aucroc_min": 0.9669190771871372,
+  "oof_aucroc_max": 0.9963881748071979,
   "boxplot_fence": 0.17869445889741295,
   "dbar": 0.11554657459174965,
   "spearman_di_resid_rank_cdf": 0.48915284703872675,
   "spearman_di_resid_raw_z": 0.5319694412417205,
   "cv_protocol": "albers_grid 10km, 5 folds, buffer 0.0km, seed 42",
-  "note": "OOF skill did NOT decay within the sampled DI range; threshold set at the edge of the tested envelope rather than the box-plot fence (the fence would flag a large region where OOF skill is directly demonstrated). Performance-vs-DI is measured only over the DI range the biased training sample spans; the region far beyond the sample is uncertain by definition -- the AOA flags it, this calibration cannot score it.",
-  "caveat": "Performance-vs-DI is measured only over the DI range the biased training sample spans; the region far beyond the sample is uncertain by definition -- the AOA flags it, this calibration cannot score it."
+  "note": "Threshold set to the training feature-space envelope (p99.9 of CV training DI), not a skill boundary: OOF ranking skill (AUC-ROC) does not decay within the sample. Skill is measurable only over the DI range the biased training sample spans (to ~0.25); the envelope threshold sits just past that. Beyond it the AOA flags, this calibration cannot score.",
+  "caveat": "Skill is measurable only over the DI range the biased training sample spans (to ~0.25); the envelope threshold sits just past that. Beyond it the AOA flags, this calibration cannot score."
 }

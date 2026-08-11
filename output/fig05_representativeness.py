@@ -146,11 +146,20 @@ def _median_mark(ax, raw_median, lt, baseline, color, span):
 def continuous_panel(ax, col, xlabel, lt, ticks, train_vals, grid_vals, letter):
     tv = np.asarray(train_vals, float); tv = tv[np.isfinite(tv)]
     gv = np.asarray(grid_vals, float); gv = gv[np.isfinite(gv)]
-    if gv.size > GRID_SUBSAMPLE:
-        gv = RNG.choice(gv, GRID_SUBSAMPLE, replace=False)
+
+    # Medians describe the FULL populations — compute them before any subsampling.
+    grid_median = float(np.median(gv))
+    train_median = float(np.median(tv))
+
+    # Subsampling exists only to keep the grid KDE tractable; it must never feed a
+    # reported statistic (a 150k draw put the HAND median at 14.5 -> "14" while the
+    # 2.58M-cell population is 14.6 -> "15").
+    gv_kde = gv
+    if gv_kde.size > GRID_SUBSAMPLE:
+        gv_kde = RNG.choice(gv_kde, GRID_SUBSAMPLE, replace=False)
 
     t_train = _asinh(tv, lt)
-    t_grid = _asinh(gv, lt)
+    t_grid = _asinh(gv_kde, lt)
     lo = min(t_train.min(), t_grid.min())
     hi = max(t_train.max(), t_grid.max())
     pad = 0.05 * (hi - lo)
@@ -159,8 +168,8 @@ def continuous_panel(ax, col, xlabel, lt, ticks, train_vals, grid_vals, letter):
     # grid ridge at the axis, train ridge raised clear of it — a two-group ridgeline.
     _ridge(ax, t_grid, GRID_BASE, GRID_COLOR, span=span)
     _ridge(ax, t_train, TRAIN_BASE, TRAIN_COLOR, span=span)
-    _median_mark(ax, float(np.median(gv)), lt, GRID_BASE, GRID_COLOR, span)
-    _median_mark(ax, float(np.median(tv)), lt, TRAIN_BASE, TRAIN_COLOR, span)
+    _median_mark(ax, grid_median, lt, GRID_BASE, GRID_COLOR, span)
+    _median_mark(ax, train_median, lt, TRAIN_BASE, TRAIN_COLOR, span)
 
     ax.set_xlim(*span)
     ax.set_ylim(-0.05, TRAIN_BASE + RIDGE_H + 0.2)

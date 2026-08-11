@@ -63,11 +63,12 @@ def interp_pr(y, proba, scored):
     return out, ap
 
 
-def block_median_distances(lat, lon):
-    """Median great-circle distance (km) from each held-out point to nearest train
-    point, pooled across folds, for each block scale (seed-42 partition)."""
+def block_distance_stats(lat, lon):
+    """Great-circle distance (km) from each held-out point to its nearest train point,
+    pooled across folds, per block scale (seed-42 partition). Returns median + IQR so
+    the figure can show the DISTRIBUTION each configuration spans, not just its median."""
     scales = tx.SWEEP_CELL_KM
-    meds = []
+    meds, q25s, q75s = [], [], []
     for s in scales:
         blocks = scv.assign_blocks(lat, lon, method=tx.BLOCK_METHOD, cell_km=s)
         folds = list(scv.buffered_block_folds(
@@ -78,8 +79,11 @@ def block_median_distances(lat, lon):
                             metric="haversine")
             d, _ = tree.query(np.radians(np.column_stack([lat[te], lon[te]])), k=1)
             d_all.append(d.ravel() * scv.EARTH_KM)
-        meds.append(float(np.median(np.concatenate(d_all))))
-    return list(scales), meds
+        d_all = np.concatenate(d_all)
+        meds.append(float(np.median(d_all)))
+        q25s.append(float(np.percentile(d_all, 25)))
+        q75s.append(float(np.percentile(d_all, 75)))
+    return list(scales), meds, q25s, q75s
 
 
 def main():
@@ -109,8 +113,8 @@ def main():
     xgb_aps = np.array(xgb_aps)
     logit_aps = np.array(logit_aps)
 
-    # ---- Panel (b): block-CV median distances --------------------------------
-    b_scales, b_dist = block_median_distances(lat, lon)
+    # ---- Panel (b): block-CV distance distribution ---------------------------
+    b_scales, b_dist, b_q25, b_q75 = block_distance_stats(lat, lon)
 
     rep = json.loads(REPCV_JSON.read_text())
     b_ap = [rep["per_scale"][str(int(s))]["xgb_mean"] for s in b_scales]
@@ -118,6 +122,8 @@ def main():
     ext = json.loads(EXTRAP_JSON.read_text())
     ext_rows = sorted(ext["rows"], key=lambda r: r["med_dist_km"])
     r_dist = [r["med_dist_km"] for r in ext_rows]
+    r_q25 = [r["q25_km"] for r in ext_rows]
+    r_q75 = [r["q75_km"] for r in ext_rows]
     r_ap = [r["ap"] for r in ext_rows]
     r_cnt = [r["regions"] for r in ext_rows]
 
@@ -131,9 +137,11 @@ def main():
         logit_ap_mean=float(logit_aps.mean()), logit_ap_std=float(logit_aps.std()),
         op_km=OP_KM, n_repeats=N_REPEATS,
         block_scales=np.array(b_scales, float), block_dist=np.array(b_dist, float),
+        block_q25=np.array(b_q25, float), block_q75=np.array(b_q75, float),
         block_ap=np.array(b_ap, float),
-        region_dist=np.array(r_dist, float), region_ap=np.array(r_ap, float),
-        region_count=np.array(r_cnt, int),
+        region_dist=np.array(r_dist, float),
+        region_q25=np.array(r_q25, float), region_q75=np.array(r_q75, float),
+        region_ap=np.array(r_ap, float), region_count=np.array(r_cnt, int),
     )
     print("\n=== cached to", OUT.name, "===")
     print(f"panel a  XGB AUC-PR {xgb_aps.mean():.3f} +/- {xgb_aps.std():.3f}  "

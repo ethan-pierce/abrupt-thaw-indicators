@@ -79,12 +79,28 @@ def panel_b_distance(ax, d):
     """Skill vs distance-to-training: block-CV and region-out on one axis, two hues."""
     floor = float(d["prevalence"])
     bd, ba = d["block_dist"], d["block_ap"]
+    bq25, bq75 = d["block_q25"], d["block_q75"]
     rd, ra = d["region_dist"], d["region_ap"]
+    rq25, rq75 = d["region_q25"], d["region_q75"]
 
-    ax.axhline(floor, color=figstyle.OTHER_GRAY, linestyle=":", linewidth=1.0, zorder=1)
-    ax.annotate(f"prevalence floor ({floor:.3f})", xy=(rd.max(), floor),
-                xytext=(-2, 4), textcoords="offset points", ha="right", va="bottom",
-                fontsize=6.8, color=figstyle.MUTED)
+    # Each marker is the MEDIAN nearest-train distance a configuration spans; the strip is
+    # its 25-75th percentile. The AUC-PR is pooled over that whole spread, not read at a
+    # point, so the strip keeps the reader from misreading a dot as an exact coordinate.
+    # Strips also show the TRUE method overlap (block's coarse tiles reach into region's
+    # fine clusters) that a median-only band understates. Same hue as the series, behind.
+    for x0, y0, lo, hi in zip(bd, ba, bq25, bq75):
+        ax.plot([lo, hi], [y0, y0], color=BLOCK_COLOR, linewidth=3.4, alpha=0.35,
+                solid_capstyle="round", zorder=2)
+    for x0, y0, lo, hi in zip(rd, ra, rq25, rq75):
+        ax.plot([lo, hi], [y0, y0], color=REGION_COLOR, linewidth=3.4, alpha=0.35,
+                solid_capstyle="round", zorder=2)
+
+    # y is zoomed to the data band (skill never approaches the floor), so the floor
+    # sits off-scale and is noted rather than drawn.
+    ax.annotate(f"prevalence floor {floor:.3f} (off-scale below)", xy=(1.0, 0.005),
+                xycoords=("data", "axes fraction"), xytext=(0, 2),
+                textcoords="offset points", ha="left", va="bottom",
+                fontsize=6.5, color=figstyle.MUTED)
 
     # Same operative XGBoost under two holdout geometries — split by hue AND marker.
     ax.plot(bd, ba, color=BLOCK_COLOR, linestyle="-", linewidth=1.7, marker="o",
@@ -93,14 +109,24 @@ def panel_b_distance(ax, d):
             markersize=4.2, markerfacecolor="white", markeredgecolor=REGION_COLOR,
             markeredgewidth=1.3, zorder=4, label="Leave-region-out")
 
+    # Anchor the story at its two ends: near-field skill and the extrapolation floor.
+    i_near = int(np.argmin(bd))
+    ax.annotate(f"{ba[i_near]:.2f}", xy=(bd[i_near], ba[i_near]), xytext=(2, 7),
+                textcoords="offset points", ha="left", va="bottom",
+                fontsize=7.0, color=BLOCK_COLOR)
+    i_far = int(np.argmax(rd))
+    ax.annotate(f"{ra[i_far]:.2f}", xy=(rd[i_far], ra[i_far]), xytext=(-4, -8),
+                textcoords="offset points", ha="right", va="top",
+                fontsize=7.0, color=REGION_COLOR)
+
     ax.set_xscale("log")
-    ax.set_xlim(1.5, 320)
-    ax.set_xticks([2, 5, 10, 20, 50, 100, 200])
-    ax.set_xticklabels(["2", "5", "10", "20", "50", "100", "200"])
+    ax.set_xlim(0.9, 360)
+    ax.set_xticks([1, 2, 5, 10, 20, 50, 100, 200])
+    ax.set_xticklabels(["1", "2", "5", "10", "20", "50", "100", "200"])
     ax.tick_params(axis="x", which="minor", length=0)
-    ax.set_ylim(0, 1.08)
-    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    ax.set_xlabel("Median distance to nearest training point (km)")
+    ax.set_ylim(0.4, 1.0)
+    ax.set_yticks([0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    ax.set_xlabel("Distance to nearest training point (km)")
     ax.set_ylabel("AUC-PR")
     ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.8,
               borderaxespad=0.4)

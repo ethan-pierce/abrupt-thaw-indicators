@@ -1,150 +1,127 @@
 """Figure 4 — Spatial out-of-sample performance (L2a, L2c, L3).
 
-The credibility figure. Its single load-bearing claim: the thaw-mode signal is
-NOT a location proxy — it survives being forced to reach across space. Two panels,
-each refuting a distinct form of the proxy objection, both scoring the SAME
-operative model (`models/selected_hparams.json`, spw=1) so the figure reads as one
-model under progressively harder spatial regimes:
+The credibility figure, redesigned to two panels that answer two orthogonal
+questions and carry two non-overlapping uncertainties:
 
-  (a) block-size ladder — refutes SHORT-RANGE leakage. Repeated spatial block-CV
-      (20 partition reshuffles/scale, `diagnostics/repeated_cv.py`): XGBoost holds
-      as blocks grow 5->200 km, over a logistic floor, far above the prevalence
-      floor. Error band = across-partition sigma (the honest uncertainty, not one
-      partition's fold luck). Caveat (caption): hyperparameters held fixed here, so
-      the per-fold selection cost is not re-paid.
+  (a) pooled out-of-fold PRECISION-RECALL curve at the operative 10 km block scale.
+      XGBoost (hero) over the logistic baseline over the prevalence floor. Band =
+      +/-1 sigma ACROSS 20 partition reshuffles (partition robustness). The classic
+      ML artifact, in the threshold-free idiom the product actually uses.
 
-  (b) leave-region-out extrapolation — refutes REGION MEMORIZATION. AUC-PR vs how
-      far the model must reach (median distance from a held-out point to its nearest
-      training point, `diagnostics/extrapolation_range.py`); graceful decay toward
-      the floor as held-out regions coarsen from 50 to 3.
+  (b) AUC-PR vs median distance-to-nearest-training-point, both spatial-holdout
+      geometries on ONE axis: block-CV (square tiles, 5..200 km) and leave-region-out
+      (contiguous clusters, 50..3 regions). They trace a single decay curve and AGREE
+      where they overlap -> distance-to-training governs skill, not the holdout shape.
+      This panel IS the spatial-heterogeneity uncertainty, so (a) needn't repeat it.
 
-House rules: monochrome value ladder (INK hero / MUTED baseline / gray floor) — hue
-is reserved for class semantics, never model identity. Floor is the only reference
-anchor; no leaky-random-split ceiling. Numbers annotated on-figure are read live
-from the cached JSON, so they can never drift from the plotted points.
+House rules: one model = one color (XGBoost blue throughout; the two (b) series are the
+SAME model under two geometries, split by marker/line, never by hue). Floor is the only
+reference anchor. All annotated numbers are read live from output/fig04_cache.npz.
+
+Rebuild the cache first: poetry run python output/fig04_cache_build.py
 """
 from __future__ import annotations
 
-import json
-import sys
 from pathlib import Path
 
 import numpy as np
 
 import figstyle
 
-REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO))
-
 HERE = Path(__file__).resolve().parent
-REPCV_JSON = HERE / "repeated_cv_results.json"
-EXTRAP_JSON = HERE / "extrapolation_range_results.json"
+CACHE = HERE / "fig04_cache.npz"
 
-# Model-series colors from the house Okabe-Ito qualitative palette (the sanctioned
-# choice for incidental, non-class categoricals). Deliberately NOT the warm/cool
-# class poles — these encode model identity, not thaw class. XGBoost is the operative
-# model shown in BOTH panels, so it keeps one color throughout to read as one model.
-XGB_COLOR = figstyle.QUALITATIVE[4]     # blue   #0072B2
-LOGIT_COLOR = figstyle.QUALITATIVE[0]   # orange #E69F00
+XGB_COLOR = figstyle.QUALITATIVE[4]     # blue   #0072B2 — the operative model
+LOGIT_COLOR = figstyle.QUALITATIVE[0]   # orange #E69F00 — the linear baseline
+# Panel (b) encodes holdout GEOMETRY (both series are the same operative XGBoost),
+# so it needs two hues distinct from each other AND from (a)'s blue/orange/yellow.
+BLOCK_COLOR = figstyle.QUALITATIVE[2]   # bluish green #009E73
+REGION_COLOR = figstyle.QUALITATIVE[6]  # reddish purple #CC79A7
 
 
-def panel_a_blocksize(ax, d):
-    """Repeated block-CV ladder: XGBoost (hero) over logistic over the chance floor."""
-    scales = np.array(d["scales_km"], dtype=float)
-    ps = d["per_scale"]
-    xgb_m = np.array([ps[str(int(s))]["xgb_mean"] for s in scales])
-    xgb_sd = np.array([ps[str(int(s))]["xgb_std"] for s in scales])
-    logit_m = np.array([ps[str(int(s))]["logit_mean"] for s in scales])
-    floor = d["prevalence_floor"]
-    op_km = d["operative_cell_km"]
+def panel_a_prcurve(ax, d):
+    """Pooled-OOF PR curve at 10 km: XGBoost hero + across-partition band, logistic, floor."""
+    rec = d["recall_grid"]
+    floor = float(d["prevalence"])
+    xm, xs = d["xgb_prec_mean"], d["xgb_prec_std"]
+    lm = d["logit_prec_mean"]
 
-    # chance floor (only reference anchor)
+    # no-skill PR baseline is horizontal at the positive prevalence
     ax.axhline(floor, color=figstyle.OTHER_GRAY, linestyle=":", linewidth=1.0,
                zorder=1, label=f"prevalence floor ({floor:.3f})")
-    # logistic baseline — orange, dashed, no markers (below the hero in hierarchy)
-    ax.plot(scales, logit_m, color=LOGIT_COLOR, linestyle="--", linewidth=1.4,
-            zorder=2, label="Logistic (baseline)")
-    # XGBoost hero — blue, solid, markers, across-partition sigma band
-    ax.fill_between(scales, xgb_m - xgb_sd, xgb_m + xgb_sd, color=XGB_COLOR,
-                    alpha=0.18, linewidth=0, zorder=2.5)
-    ax.plot(scales, xgb_m, color=XGB_COLOR, linestyle="-", linewidth=1.8,
-            marker="o", markersize=4.5, zorder=3, label="XGBoost (operative)")
+    # logistic baseline (mean curve only — the hero carries the band)
+    ax.plot(rec, lm, color=LOGIT_COLOR, linestyle="--", linewidth=1.4, zorder=2,
+            label="Logistic")
+    # XGBoost hero + across-partition sigma band
+    ax.fill_between(rec, xm - xs, xm + xs, color=XGB_COLOR, alpha=0.18,
+                    linewidth=0, zorder=2.5)
+    ax.plot(rec, xm, color=XGB_COLOR, linestyle="-", linewidth=1.8, zorder=3,
+            label="XGBoost")
 
-    # annotate the operative 10 km value, exact from JSON
-    op_val = ps[str(int(op_km))]["xgb_mean"]
-    ax.annotate(f"{op_val:.2f}", xy=(op_km, op_val), xytext=(op_km, op_val + 0.11),
-                ha="center", va="bottom", fontsize=7.5, color=figstyle.INK,
-                arrowprops=dict(arrowstyle="-", color=figstyle.INK, lw=0.6,
-                                shrinkA=0, shrinkB=2))
+    xap, xsd = float(d["xgb_ap_mean"]), float(d["xgb_ap_std"])
+    lap, lsd = float(d["logit_ap_mean"]), float(d["logit_ap_std"])
+    ax.text(0.05, 0.34, f"XGBoost AUC-PR\n{xap:.2f} $\\pm$ {xsd:.2f}",
+            transform=ax.transAxes, fontsize=7.5, color=XGB_COLOR, va="top")
+    ax.text(0.05, 0.16, f"Logistic AUC-PR\n{lap:.2f} $\\pm$ {lsd:.2f}",
+            transform=ax.transAxes, fontsize=7.5, color=LOGIT_COLOR, va="top")
 
-    ax.set_xscale("log")
-    ax.set_xticks(scales)
-    ax.set_xticklabels([str(int(s)) for s in scales])
-    ax.tick_params(axis="x", which="minor", length=0)  # no minor log ticks between our scales
-    ax.set_xlabel("Spatial block size (km)")
-    ax.set_ylabel("AUC-PR")
-    ax.set_ylim(0, 1.0)
-    ax.legend(loc="lower left", bbox_to_anchor=(0.005, 0.13), fontsize=6.8,
-              frameon=False, handlelength=1.8, borderaxespad=0.0)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.08)
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.8,
+              borderaxespad=0.4)
     figstyle.panel_label(ax, "a")
 
 
-def panel_b_extrapolation(ax, d):
-    """Leave-region-out decay: single INK curve vs distance, region-count labels."""
-    rows = sorted(d["rows"], key=lambda r: r["med_dist_km"])  # ascending distance
-    dist = np.array([r["med_dist_km"] for r in rows])
-    ap = np.array([r["ap"] for r in rows])
-    regions = [r["regions"] for r in rows]
-    floor = d["prevalence_floor"]
+def panel_b_distance(ax, d):
+    """Skill vs distance-to-training: block-CV and region-out on one axis, two hues."""
+    floor = float(d["prevalence"])
+    bd, ba = d["block_dist"], d["block_ap"]
+    rd, ra = d["region_dist"], d["region_ap"]
 
     ax.axhline(floor, color=figstyle.OTHER_GRAY, linestyle=":", linewidth=1.0, zorder=1)
-    ax.annotate(f"prevalence floor ({floor:.3f})", xy=(dist.max(), floor),
+    ax.annotate(f"prevalence floor ({floor:.3f})", xy=(rd.max(), floor),
                 xytext=(-2, 4), textcoords="offset points", ha="right", va="bottom",
                 fontsize=6.8, color=figstyle.MUTED)
 
-    ax.plot(dist, ap, color=XGB_COLOR, linestyle="-", linewidth=1.8,
-            marker="o", markersize=4.5, zorder=3)
+    # Same operative XGBoost under two holdout geometries — split by hue AND marker.
+    ax.plot(bd, ba, color=BLOCK_COLOR, linestyle="-", linewidth=1.7, marker="o",
+            markersize=4.5, zorder=3, label="Block-CV")
+    ax.plot(rd, ra, color=REGION_COLOR, linestyle="--", linewidth=1.7, marker="s",
+            markersize=4.2, markerfacecolor="white", markeredgecolor=REGION_COLOR,
+            markeredgewidth=1.3, zorder=4, label="Leave-region-out")
 
-    # region-count labels, fanned up-right of each point (small, muted) so the
-    # crowded fine-granularity cluster on the left doesn't overlap.
-    for x, yv, g in zip(dist, ap, regions):
-        ax.annotate(str(g), xy=(x, yv), xytext=(4, 5), textcoords="offset points",
-                    ha="left", va="bottom", fontsize=6.5, color=figstyle.MUTED)
-
-    # annotate the farthest-reach endpoint value, exact from JSON
-    xe, ye = dist[-1], ap[-1]
-    ax.annotate(f"{ye:.2f}", xy=(xe, ye), xytext=(-6, -12), textcoords="offset points",
-                ha="right", va="top", fontsize=7.5, color=figstyle.INK,
-                arrowprops=dict(arrowstyle="-", color=figstyle.INK, lw=0.6,
-                                shrinkA=0, shrinkB=2))
-
-    ax.set_xlim(0, dist.max() * 1.06)
-    ax.set_xlabel("Distance to nearest training point (km)")
-    ax.set_ylim(0, 1.0)
-    ax.tick_params(axis="y", labelleft=False)   # shared y — labels on panel (a) only
-    # name what the point labels mean, up in the empty top-right (clear of the floor note)
-    ax.text(0.97, 0.95, "labels = # of held-out regions", transform=ax.transAxes,
-            ha="right", va="top", fontsize=6.5, color=figstyle.MUTED)
+    ax.set_xscale("log")
+    ax.set_xlim(1.5, 320)
+    ax.set_xticks([2, 5, 10, 20, 50, 100, 200])
+    ax.set_xticklabels(["2", "5", "10", "20", "50", "100", "200"])
+    ax.tick_params(axis="x", which="minor", length=0)
+    ax.set_ylim(0, 1.08)
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_xlabel("Median distance to nearest training point (km)")
+    ax.set_ylabel("AUC-PR")
+    ax.legend(loc="upper right", fontsize=6.8, frameon=False, handlelength=1.8,
+              borderaxespad=0.4)
     figstyle.panel_label(ax, "b")
 
 
 def main():
     figstyle.use()
-    rep = json.loads(REPCV_JSON.read_text())
-    ext = json.loads(EXTRAP_JSON.read_text())
+    d = dict(np.load(CACHE, allow_pickle=False))
 
-    fig, (ax_a, ax_b) = figstyle.figure("full", height=2.9, ncols=2, sharey=True)
-    fig.subplots_adjust(left=0.075, right=0.985, top=0.965, bottom=0.145, wspace=0.06)
+    fig, (ax_a, ax_b) = figstyle.figure("full", height=2.9, ncols=2)
+    fig.subplots_adjust(left=0.075, right=0.985, top=0.965, bottom=0.145, wspace=0.20)
 
-    panel_a_blocksize(ax_a, rep)
-    panel_b_extrapolation(ax_b, ext)
+    panel_a_prcurve(ax_a, d)
+    panel_b_distance(ax_b, d)
 
     figstyle.save(fig, "04_spatial_performance")
-    op = rep["per_scale"][str(int(rep["operative_cell_km"]))]["xgb_mean"]
-    far = sorted(ext["rows"], key=lambda r: r["med_dist_km"])[-1]
     print(f"wrote 04_spatial_performance.pdf/.png  "
-          f"(a: XGBoost {op:.3f} @ {rep['operative_cell_km']} km; "
-          f"b: {far['ap']:.3f} @ {far['med_dist_km']:.0f} km / {far['regions']} regions)")
+          f"(a: XGBoost AUC-PR {float(d['xgb_ap_mean']):.3f} ± {float(d['xgb_ap_std']):.3f} "
+          f"@ {int(d['op_km'])} km; b: {float(d['region_ap'][np.argmax(d['region_dist'])]):.3f} "
+          f"@ {float(d['region_dist'].max()):.0f} km)")
 
 
 if __name__ == "__main__":

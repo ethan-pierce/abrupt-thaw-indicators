@@ -29,7 +29,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 3. **Susceptibility map + AOA mask panel** — *L5 + L4b*
    - Assets: `output/susceptibility_log_evidence_map.png` + `output/aoa_map.png`.
-   - The product. Headline: ~25.6% of the in-AOA permafrost domain has features more consistent with abrupt than non-abrupt thaw (710,882 of 2,773,804 in-AOA cells, log-evidence > 0). Anchored only to log-evidence = 0. AOA merged as a panel so the product is never shown without its reliability mask (AOA flags 2.7% of the valid domain).
+   - The product. Headline: ~26.6% of the in-AOA permafrost domain has features more consistent with abrupt than non-abrupt thaw (688,804 of 2,589,808 in-AOA cells, log-evidence > 0). Anchored only to log-evidence = 0. AOA merged as a panel so the product is never shown without its reliability mask (AOA flags 9.1% of the valid domain; feature-space envelope DI = 0.27). Panel b: continuous DI graded inside the AOA, solid red beyond the threshold.
 
 ## Credibility
 
@@ -41,7 +41,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 5. **Representativeness / sampling-bias honesty gate** — *L4c* · script: `output/fig05_representativeness.py`
    - The honesty gate, framed as *scope not defect*: the training sample is lake-/road-biased (flatter/lower/wetter/valley-bottom than the statewide grid), which forbids prevalence / calibrated-probability / single-threshold claims (hence the prior-free log-evidence index, L4a) while the discriminative signal itself generalizes across space (Fig 4 / L3). **Coverage (the AOA, Fig 3b) vs density (this figure) are different things** — a sample can span every covariate's full range (so every cell is in-AOA) while wildly over-representing part of it; the AOA can't see that, this figure shows it.
-   - Marginal distributions, **training sample vs in-AOA statewide grid** (2,773,804 cells — the full in-AOA distribution, *not* the matched-cell parity sample), for 7 cherry-picked features. (a–d) train-over-grid ridgelines on an arcsinh (symlog-consistent) x, median-annotated: Slope (0.74° vs 3.7°), Height Above Nearest Drainage (1.0 m vs 16 m), Elevation (61 m vs 280 m), Upstream Area (0.023 vs 0.0099 km²). (e–g) paired bars: Open Water (0.43 vs 0.039), Emergent Herbaceous Wetland (0.076 vs 0.037), Deciduous Forest (0.010 vs 0.036).
+   - Marginal distributions, **training sample vs in-AOA statewide grid** (2,589,808 cells — the full in-AOA distribution, *not* the matched-cell parity sample), for 7 cherry-picked features. (a–d) train-over-grid ridgelines on an arcsinh (symlog-consistent) x, median-annotated: Slope (0.74° vs 3.7°), Height Above Nearest Drainage (1.0 m vs 16 m), Elevation (61 m vs 280 m), Upstream Area (0.023 vs 0.0099 km²). (e–g) paired bars: Open Water (0.43 vs 0.039), Emergent Herbaceous Wetland (0.076 vs 0.037), Deciduous Forest (0.010 vs 0.036).
    - Green = training, purple = in-AOA grid (deliberately off the warm/cool class axis, CVD-checked); quantitative annotations only (distributions + medians, no fold-change or semi-qualitative text); invariance argument kept lean (conceptual in text; `s(x)`-cancellation parked in Methods/Supplement).
 
 ## Interpretation (SHAP)
@@ -70,7 +70,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 10. **Ecoregion breakdown** — *L7* · new · script `output/fig10_ecoregion_breakdown.py`
     - Descriptive **translation** of the susceptibility surface into named physiographic regions (**EPA Level III Ecoregions of Alaska**, `data/ak_eco_l3/`); Fig 9 keeps the proxy-rebuttal duty. In-AOA cells only; **keep regions with ≥50% permafrost coverage → 14 regions** (drops 6 majority-non-permafrost maritime/Aleutian regions incl. Bristol Bay at 36%).
     - **Two linked panels on one shared vik (log-evidence) scale.** (a) choropleth of the 14 kept regions filled by **median log-evidence**, edged by Level-I physiographic group, numbered 1–14. (b) ranked column of per-cell log-evidence **gradient-filled violins** (vik clipped to KDE body, pale centre at 0), sorted by **abrupt-favoring fraction** (share LE > 0), median as a white-haloed tick, fraction annotated per row; same 1–14 key + Level-I colour tab link row↔polygon.
-    - Story: clean **tundra → boreal → maritime** cascade — Seward 65% / Brooks Range 63% / Arctic Foothills 47% lead; interior boreal single-digits–teens; mountains ~0%. Area-weighted fraction reconciles to the 25.6% headline.
+    - Story: clean **tundra → boreal → maritime** cascade — Seward 65% / Brooks Range 63% / Arctic Foothills 47% lead; interior boreal single-digits–teens; mountains ~0%. Area-weighted fraction reconciles to the 26.6% headline. (Per-region fractions to be regenerated against the new AOA mask, DI = 0.27.)
     - AOA coverage **not drawn** (all kept regions ≥80% in-AOA); stated in the caption instead. Level-I group colours from `figstyle.QUALITATIVE` (Okabe-Ito, off the vik value axis), CVD-checked.
 
 11. **Olefeldt incumbent contrast** — *L7* · new, **GATED**
@@ -90,7 +90,7 @@ abrupt thaw" — never "% susceptible" / "% will thaw" / probability.
 
 70 features × 19,288 rows; prevalence 93.21/6.79 (positive = Non-abrupt, floor 0.0574);
 model `models/model.json`; CV = albers_grid 10 km, buffer 0.0, 5×5 nested, seed 42;
-grid 3229×2087, 2,849,807 valid cells (42.3% of grid), 2,773,804 in-AOA.
+grid 3229×2087, 2,849,807 valid cells (42.3% of grid), 2,589,808 in-AOA.
 
 ## Cut
 
@@ -102,8 +102,8 @@ un-renumbered) as a record of the spec in case it's revived.
    - **Shared head:** biased sample (70 feat × 19,288, 93/7, lake/road) → **XGBoost** (spatial-block CV protocol named, *no metric numbers*).
    - **Product spine:** score datacube → **P_model** (flagged: calibrated to the *sample* prior) → **log-evidence transform as a two-number-line device** (prob axis 0–1, prior-dependent → subtract `logit(π_sample)` → log-evidence axis, 0-centered, prior-free) → **× AOA gate** (drawn dropping in from a *feature-space dissimilarity* sub-branch, explicitly independent of P_model) → **Fig 4 map**.
    - **SHAP tributary:** the **two-computation coherence** — OOF fold-refit SHAP → ranking; all-data model SHAP → dominance map; both under **shared family definitions** (feature-space correlation) → single "→ Figs 7–10" pointer. Results/rankings stay *off* this figure.
-   - Cut from prototype: all results numbers (AUC-PR, 25.6%, cell counts, DI), the credibility-checks band, per-figure cross-references. Shares Fig 1's left-to-right gate/fork/transform visual grammar.
+   - Cut from prototype: all results numbers (AUC-PR, 26.6%, cell counts, DI), the credibility-checks band, per-figure cross-references. Shares Fig 1's left-to-right gate/fork/transform visual grammar.
 
 ## TODO
 
-- Confirm datacube cell size to convert 25.6% → absolute km² for the abstract.
+- Confirm datacube cell size to convert 26.6% → absolute km² for the abstract.

@@ -70,7 +70,7 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
   NaN structure surfaced (SoilGrids ~16% train-missing; MODIS fire-QA gap >70°N).
   Coordinates carried as **metadata only, quarantined from `X`**.
 - **2.3 Prediction datacube.** Statewide grid 3229×2087; 2,849,807 valid cells (42.3%); Obu
-  permafrost mask; 2,773,804 in-AOA.
+  permafrost mask; 2,589,808 in-AOA.
 
 ## §3 Methods *(grouped to mirror the paper's arc)*
 
@@ -86,7 +86,8 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 *Product block:*
 - **3.5 Log-evidence index** — `logit(P_model(abrupt|x)) − logit(π_sample)`; rationale sample≠landscape
   prevalence (payoff of priming ¶2). Kept in narrative order, not elevated.
-- **3.6 AOA** — rank-CDF SHAP-weighted dissimilarity index; CV-calibrated threshold DI = 0.506;
+- **3.6 AOA** — rank-CDF SHAP-weighted dissimilarity index; feature-space envelope threshold
+  DI = 0.27 (99.9th pct of CV training DI, not a skill limit — AUC-ROC ~0.97–0.99 flat with DI);
   Spearman(DI, |residual|) = 0.489.
 - **3.7 Train/serve parity gate** — *method here*; the *result* lands in §4.2.
 
@@ -100,15 +101,15 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 ## §4 Results *(concise, factual; figure-ordered)*
 
 ### 4.1 The abrupt-thaw susceptibility map *(L5 + AOA/L4b — Fig 3, dedicated subsection)*
-1. **Map + headline** — 25.6% of the in-AOA permafrost domain has features more consistent with
-   abrupt than non-abrupt thaw (710,882 / 2,773,804 cells, log-evidence > 0; + km² once cell size
+1. **Map + headline** — 26.6% of the in-AOA permafrost domain has features more consistent with
+   abrupt than non-abrupt thaw (688,804 / 2,589,808 cells, log-evidence > 0; + km² once cell size
    confirmed). Anchored to log-evidence = 0 only.
 2. **Immediate guardrail** — brief predisposition≠occurrence note (1–2 sentences; full argument → §5.1).
-3. **Coherence counterweight** — median in-AOA log-evidence = −2.50: the *typical* cell favors
+3. **Coherence counterweight** — median in-AOA log-evidence = −2.46: the *typical* cell favors
    non-abrupt; abrupt is the minority mode.
 4. **Spatial pattern, descriptive only** — where abrupt-favoring concentrates (ice-rich lowlands,
    NW Alaska); mechanism deferred to §4.3/§5.2.
-5. **AOA panel** — product shown with its reliability mask; AOA flags only 2.7% of the valid domain.
+5. **AOA panel** — product shown with its reliability mask; AOA flags 9.1% of the valid domain.
 
 ### 4.2 Model evaluation *(L2/L3/L4c — Figs 4–5)*
 1. **Performance + not-model-specific** *(Fig 4a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
@@ -149,7 +150,7 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 
 - **5.1 Caveats & how to read the surface** *(leads)* — the honest reckoning up front:
   - **Reading the fraction (first caveat):** predisposition≠occurrence; feature-consistency expected to
-    exceed realized occurrence; why log-evidence not probability; −2.50 median as counterweight.
+    exceed realized occurrence; why log-evidence not probability; −2.46 median as counterweight.
   - static/undated (no thaw timing/rate; labels undated, `ImageryDates` dropped);
   - representativeness bounded by AOA; no statewide mode ground truth; soil-missingness unaudited (flag #6);
     descriptive-not-causal.
@@ -188,5 +189,5 @@ static→dynamic).
 - **Deferred to post-writing (author's call):** Key Points (3), Abstract, Plain-language summary — written
   as distillations once the body exists.
 - **Title:** kept as-is — *"Susceptibility and Spatial Signature of Abrupt Thaw Across Alaska's Permafrost Landscapes."*
-- **TODO:** confirm datacube cell size to convert 25.6% → absolute km² for the abstract/§4.1.
+- **TODO:** confirm datacube cell size to convert 26.6% → absolute km² for the abstract/§4.1.
 - **TODO:** DOIs for the Open Research statement.

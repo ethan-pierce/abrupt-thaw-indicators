@@ -20,7 +20,7 @@ Design (raincloud, one shared log-evidence axis, None dropped):
   * per class: a half-violin "cloud" (KDE of log-evidence), a subsampled point
     "rain" (actual in-AOA cells), and a single median marker. No box-and-whisker
     (redundant with the cloud, and it hides the very data this figure shows);
-  * dashed reference at the all-cell in-AOA median (-2.50): every class median
+  * dashed reference at the all-cell in-AOA median (-2.46): every class median
     clings to it -> class barely moves mode;
   * warm above 0 / cool below (house law: warm = abrupt).
 

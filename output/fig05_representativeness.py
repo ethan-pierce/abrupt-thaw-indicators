@@ -4,7 +4,7 @@ The training sample is lake-/road-biased: points sit systematically in flatter,
 lower, wetter, more valley-bottom locations than the statewide grid the model
 scores. This figure states that plainly, per feature, as the marginal
 distribution of the **training sample** against the **in-AOA statewide grid**
-(2,773,804 cells) — the surface the product actually reports on.
+(2,589,808 cells @ DI<=0.27) — the surface the product actually reports on.
 
 It is a *scope* statement, not a defect: the marginal shift forbids prevalence /
 calibrated-probability / single-threshold claims (hence the prior-free

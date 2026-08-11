@@ -32,7 +32,7 @@ import numpy as np
 import xarray as xr
 from affine import Affine
 from cmcrameri import cm as cmc
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, LinearSegmentedColormap, to_rgba
 from rasterio.enums import Resampling
 from rasterio.transform import from_bounds
 from rasterio.warp import reproject
@@ -62,6 +62,12 @@ LAND_EDGE = "#666666"
 # the Brooks Range reads as graded rather than "all equally blue".
 SUSCEPTIBILITY_CMAP = cmc.lajolla_r    # reversed: pale = non-abrupt-favoring, dark = abrupt-favoring
 DI_CMAP = cmc.oslo_r           # mono-hued blue: pale = reliable, dark = extrapolating
+
+# Panel b grades the continuous DI inside the AoA and paints a single solid red beyond the
+# applicability threshold read from aoa.nc (the 99.9th percentile of the CV training DI =
+# 0.27, a feature-space envelope, NOT a skill limit -- OOF AUC-ROC stays 0.97-0.99 with no
+# decay across the whole in-sample DI range; see diagnostics/aoa_threshold_decision.md).
+OUTSIDE_AOA_COLOR = "#e34a33"
 
 
 def load_grids():
@@ -167,16 +173,35 @@ def panel_a_susceptibility(fig, ax, cax, le_warp, extent):
 
 
 def panel_b_di(fig, ax, cax, di_warp, extent, threshold):
-    di_vmax = float(np.nanpercentile(di_warp, 99))
-    norm = Normalize(vmin=0.0, vmax=di_vmax)
+    """Continuous DI graded inside the AoA; a single solid red beyond `threshold`.
+
+    Above the applicability threshold the model is extrapolating past the training
+    feature envelope, so the DI magnitude there is not a reliability the reader should
+    grade -- it collapses to one 'outside AoA' colour. Inside, the oslo_r ramp still
+    shows how close each cell sits to the training data. A single colormap carries both
+    (a blue ramp for [0, threshold], then a flat red for everything above), so the
+    colorbar communicates the design without any per-pixel contour to over-read.
+    """
+    # Colorbar geometry only: seat the threshold at ~62% of the bar so the red "outside"
+    # block has room for its label. `vmax` sets the ramp scale, not a data cap -- every
+    # cell with DI > threshold is solid red regardless of how large its DI actually is.
+    vmax = threshold / 0.62
+    n = 256
+    cut = int(round(threshold / vmax * n))
+    colours = list(DI_CMAP(np.linspace(0.0, 1.0, cut))) + [to_rgba(OUTSIDE_AOA_COLOR)] * (n - cut)
+    cmap = LinearSegmentedColormap.from_list("di_aoa", colours, N=n)
+    cmap.set_bad(alpha=0.0)
+    norm = Normalize(vmin=0.0, vmax=vmax)
     im = ax.imshow(di_warp, extent=extent, origin="upper", interpolation="nearest",
-                   cmap=DI_CMAP, norm=norm, zorder=2, rasterized=True)
-    xs, ys = xy_grid(extent, di_warp.shape)
-    ax.contour(xs, ys, np.where(np.isfinite(di_warp), di_warp, np.nan), levels=[threshold],
-               colors="#e34a33", linewidths=0.35, alpha=0.85, zorder=2.5)
+                   cmap=cmap, norm=norm, zorder=2, rasterized=True)
+
     cbar = fig.colorbar(im, cax=cax, orientation="horizontal")
-    cbar.set_ticks([0.0, threshold, di_vmax])
-    cbar.set_ticklabels(["0", f"{threshold:.2f}", f"{di_vmax:.1f}+"])
+    cbar.set_ticks([0.0, threshold])
+    cbar.set_ticklabels(["0", f"{threshold:.2f}"])
+    cbar.ax.axvline(threshold, color="white", linewidth=0.8, zorder=3)  # inside/outside break
+    cbar.ax.text((threshold + vmax) / 2.0, 0.5, "outside\nAoA", ha="center", va="center",
+                 fontsize=6, color="white", fontweight="bold",
+                 transform=cbar.ax.get_xaxis_transform())
     cbar.ax.tick_params(labelsize=7, length=2.5, width=0.6, color=figstyle.INK)
     cbar.outline.set_edgecolor(figstyle.MUTED)
     cbar.outline.set_linewidth(0.35)
@@ -186,7 +211,7 @@ def panel_b_di(fig, ax, cax, di_warp, extent, threshold):
 
 def main():
     figstyle.use()
-    log_evidence, di, threshold, lon, lat, valid = load_grids()
+    log_evidence, di, threshold, lon, lat, valid = load_grids()  # threshold from aoa.nc (0.27)
     src_tf = source_transform(lon, lat, valid)
     extent_box, (th, tw), dst_tf = dest_grid(lon, lat, valid)
 

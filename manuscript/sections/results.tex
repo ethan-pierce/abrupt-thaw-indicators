@@ -4,7 +4,7 @@
 
 \section{Results}
 
-\subsection{Abrupt Thaw Susceptibility Map}
+\subsection{Alaska's susceptibility to abrupt thaw}
 
 \begin{figure}[hbtp]
 	\centering
@@ -12,6 +12,24 @@
 	\caption{}
 	\label{fig:susceptibility-map}
 \end{figure}
+
+Figure \ref{fig:susceptibility-map}a maps the log-evidence index of thaw mode across Alaska's permafrost domain. Within the area of applicability (AoA), 24.7\% of the landscape exhibits features that are more consistent with abrupt thaw than with non-abrupt thaw, corresponding to an area of roughly 264,000 km$^2$ out of the 1.07 million km$^2$ of the in-AoA permafrost domain. We denote a log-evidence of zero as the neutral boundary, where features favor neither abrupt nor non-abrupt thaw. The log-evidence map describes the current characteristics of the landscape, based on the input features and our model's interpretation, rather than a deterministic prediction of where abrupt thaw has occurred, is occurring, or will occur across the state.
+
+Most of the domain is more consistent with non-abrupt thaw than abrupt thaw. The median in-AoA log-evidence is $-2.46$, so at the typical grid cell, the model favors the non-abrupt thaw mode by roughly a factor of $10$. However, thaw mode is not evenly spread across the state. Abrupt-favored terrain concentrates in the tundra lowlands of western and northern Alaska, including the Seward Peninsula, the Brooks Range foothills, and the Arctic coastal plain. Conversely, the boreal interior and southern mountains primarily favor non-abrupt thaw. We investigate the spatial patterns of thaw mode in more detail in $\S 4.3$.
+
+Figure \ref{fig:susceptibility-map}b shows the dissimilarity index, which we use to determine the AoA for our model. Given the threshold set in $\S 3.3$, the mask flags 9.7\% of the mapped domain as extrapolation beyond the envelope of the training features. The out-of-AoA cells are mostly due to features with long-tailed distributions, such as snow water equivalent (mean and trend), which accounts for nearly half of the dissimilarity score for flagged cells. Over the range we can measure, the model skill does not degrade with dissimilarity, so the bound of AoA shows where the input features are no longer represented by the training data, rather than where the model begins to fail.
+
+\subsection{Evaluating out-of-sample skill}
+
+Producing a trustworthy map of thaw mode depends entirely on the deployed model's ability to generalize outside of its training sample. For this task, our training dataset is not representative of the state of Alaska as a whole. Figure \ref{fig:training-bias} compares the distribution of seven features between the training dataset and the in-AoA grid. These features were selected by hand to illustrate several known biases in the Alaska Permafrost Thaw Database, in addition to the geographic clustering shown in Figure \ref{fig:thawdb-map} \citep{webb2026comprehensive}. Training points are flatter (median slope of $0.74$ versus $3.4$ degrees), closer to the nearest drainage (median height of $1$ versus $15$ m), and overall lower elevation (median height of $61$ versus $260$ m) than the rest of the state. They are much more likely to be open water ($43\%$ versus $3.8\%$) or emergent herbaceous wetlands ($7.6\%$ versus $3.9\%$), and much less likely to be deciduous forest ($1\%$ versus $3.7$\%), among other land cover indicators. This divergence motivates our decision to elevate area-of-applicability as a first-class model output alongside our log-evidence index, as well as a need for careful spatial cross-validation.
+
+To evaluate how effectively the model can generalize outside of this geographically biased sample, we use spatial cross-validation, which holds out entire blocks of terrain so that nearby points cannot straddle the test-train splits. Figure \ref{fig:spatial-bias}a shows the full precision-recall curve for the operative 10 km block size, pooled across all splits, testing out-of-sample model skill. The model reaches an area under the precision-recall curve (AUC-PR) of $0.852\pm 0.011$ across $20$ reshuffles of the block assignments, which is approximately fifteen times greater than the floor associated with random chance. The area under the receiver operating characteristic (ROC) curve, which measures false positives against true positives, is $0.98$ over the same folds. However, because ROC is insensitive the rare class, we do not use it as our primary metric.
+
+Our baseline regression model recovers most of this performance. Logistic regression on the same folds achieves an AUC-PR of $0.776\pm 0.017$ (Figure \ref{fig:spatial-bias}a). We view this as the metric floor that a model must clear in order to provide useful predictive capability. The gradient-boosted model outperforms logistic regression across the full recall range, by a margin of $0.076\pm 0.019$, stable across reshuffles.
+
+Because the training points are concentrated regionally, we further investigate the model's robustness across space. Figure \ref{fig:spatial-bias}b tracks the AUC-PR against how far away the nearest training point typically lies from a given prediction. First, we construct block sizes of $5$ to $200$ km, corresponding to a median distance to the nearest training point of $1.8$ to $30.8$ km. To test larger distances, we cluster points using a k-means clustering algorithm on location only, producing between $3$ and $50$ larger approximate geographic regions, and perform the same hold-out analysis. The two methods overlap in the $20$ to $30$ km operational range, indicating an underlying pattern in model skill that is relatively insensitive to our choice in hold-out method. Skill decays gently from $0.88$ when generalizing at a few kilometers to $0.54$ at a median distance of $251$ km. This AUC-PR would indicate a poor classifier on a balanced problem, but for our dataset is still roughly nine times greater than the chance floor. The predictions therefore survive extrapolation across hundreds of kilometers, rather than relying on a model that memorizes the feature space of specific neighborhoods.
+
+Additional controls confirm the signal is robust rather than an artifact of our software pipeline. Randomly permuting the training labels collapses skill to chance, giving an AUC-PR of $0.062$ against the $0.057$ floor. Trivial baseline models score at the floor. Only four pairs of training points share identical features while disagreeing on their label, so label noise imparts no meaningful ceiling on separation. Longitude and latitude are excluded from the feature table, so the model does not ever use location directly as a predictor.
 
 \begin{figure}[hbtp]
 	\centering

@@ -42,11 +42,12 @@ Algorithm (importance-weighted dissimilarity index, DI):
      of the in/out flag (both the grid DI and the CV-DI threshold divide by it) -- it only
      sets the DI's absolute scale, not the classification.
   4. DI(cell) = (distance from the cell to its NEAREST training point) / dbar.
-  5. Threshold: anchored to CV performance where possible (diagnostics/aoa_calibration.py
-     writes models/aoa_threshold.json = the DI at which pooled-OOF AUC-PR for Non-abrupt
-     falls toward the prevalence floor). If that file is absent we fall back to the
-     box-plot outlier fence Q75 + 1.5*IQR of the CV training-DI distribution (same-fold
-     neighbours excluded), and say so in the provenance.
+  5. Threshold: the feature-space envelope written by diagnostics/aoa_calibration.py to
+     models/aoa_threshold.json = the 99.9th percentile of the CV training-DI distribution.
+     This is NOT a skill limit -- OOF AUC-ROC does not decay within the sampled DI range
+     (see aoa_threshold_decision.md); it marks the extent of the training feature envelope.
+     If that file is absent we fall back to the box-plot outlier fence Q75 + 1.5*IQR of the
+     CV training-DI distribution (same-fold neighbours excluded), and say so in the provenance.
   6. A cell is INSIDE the AOA (reliable) iff DI(cell) <= threshold, else it is flagged as
      extrapolating beyond the training feature distribution.
 

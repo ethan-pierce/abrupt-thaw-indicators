@@ -1,4 +1,4 @@
-"""Figure 4 — Spatial out-of-sample performance (L2a, L2c, L3).
+"""Figure 5 — Spatial out-of-sample performance (L2a, L2c, L3).
 
 The credibility figure, redesigned to two panels that answer two orthogonal
 questions and carry two non-overlapping uncertainties:
@@ -16,9 +16,9 @@ questions and carry two non-overlapping uncertainties:
 
 House rules: one model = one color (XGBoost blue throughout; the two (b) series are the
 SAME model under two geometries, split by marker/line, never by hue). Floor is the only
-reference anchor. All annotated numbers are read live from output/fig04_cache.npz.
+reference anchor. All annotated numbers are read live from output/fig05_cache.npz.
 
-Rebuild the cache first: poetry run python output/fig04_cache_build.py
+Rebuild the cache first: poetry run python output/fig05_cache_build.py
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ import numpy as np
 import figstyle
 
 HERE = Path(__file__).resolve().parent
-CACHE = HERE / "fig04_cache.npz"
+CACHE = HERE / "fig05_cache.npz"
 
 XGB_COLOR = figstyle.QUALITATIVE[4]     # blue   #0072B2 — the operative model
 LOGIT_COLOR = figstyle.QUALITATIVE[0]   # orange #E69F00 — the linear baseline
@@ -143,8 +143,8 @@ def main():
     panel_a_prcurve(ax_a, d)
     panel_b_distance(ax_b, d)
 
-    figstyle.save(fig, "04_spatial_performance")
-    print(f"wrote 04_spatial_performance.pdf/.png  "
+    figstyle.save(fig, "05_spatial_performance")
+    print(f"wrote 05_spatial_performance.pdf/.png  "
           f"(a: XGBoost AUC-PR {float(d['xgb_ap_mean']):.3f} ± {float(d['xgb_ap_std']):.3f} "
           f"@ {int(d['op_km'])} km; b: {float(d['region_ap'][np.argmax(d['region_dist'])]):.3f} "
           f"@ {float(d['region_dist'].max()):.0f} km)")

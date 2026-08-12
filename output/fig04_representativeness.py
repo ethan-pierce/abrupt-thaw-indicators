@@ -1,4 +1,4 @@
-"""Figure 5 — Representativeness / sampling-bias honesty gate (L4c).
+"""Figure 4 — Representativeness / sampling-bias honesty gate (L4c).
 
 The training sample is lake-/road-biased: points sit systematically in flatter,
 lower, wetter, more valley-bottom locations than the statewide grid the model
@@ -9,7 +9,7 @@ distribution of the **training sample** against the **in-AOA statewide grid**
 It is a *scope* statement, not a defect: the marginal shift forbids prevalence /
 calibrated-probability / single-threshold claims (hence the prior-free
 log-evidence index, L4a), while the discriminative signal itself generalizes
-across space (Fig 4 / L3). Coverage (the AOA, Fig 3b) and density
+across space (Fig 5 / L3). Coverage (the AOA, Fig 3b) and density
 (this figure) are different things — a sample can span the full range of every
 covariate (so every cell is in-AOA) while wildly over-representing part of that
 range. The AOA cannot see that; this figure is where it is shown.
@@ -22,7 +22,7 @@ Train side: features_clean.csv (exact model input) via diagnostics/_data.load.
 Grid side: the FULL in-AOA distribution from prediction_data.nc masked by
 aoa.nc (DI <= threshold) — not the matched-cell sample of the parity gate.
 
-Writes output/05_representativeness.{pdf,png}.
+Writes output/04_representativeness.{pdf,png}.
 """
 
 from __future__ import annotations
@@ -242,9 +242,9 @@ def main():
     fig.legend(handles=handles, loc="upper center", ncol=2, frameon=False,
                fontsize=8.5, bbox_to_anchor=(0.5, 0.985))
 
-    figstyle.save(fig, "05_representativeness")
+    figstyle.save(fig, "04_representativeness")
     plt.close(fig)
-    print("wrote output/05_representativeness.{pdf,png}")
+    print("wrote output/04_representativeness.{pdf,png}")
 
 
 if __name__ == "__main__":

@@ -112,14 +112,14 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 5. **AOA panel** — product shown with its reliability mask; AOA flags 9.1% of the valid domain.
 
 ### 4.2 Model evaluation *(L2/L3/L4c — Figs 4–5)*
-1. **Performance + not-model-specific** *(Fig 4a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
+1. **Performance + not-model-specific** *(Fig 5a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
    ≈15× the 0.0574 floor, across-partition σ 0.01–0.03 (20 reshuffles); laddered floor → logistic (0.776) → XGBoost (0.852);
    **margin +0.076 ± 0.019 framed as robustness, not superiority.** AUC-ROC ~0.98–0.99 once, minority-insensitive.
-2. **Generalization / not-a-location-proxy** *(Fig 4b)* — leave-region-out decays gracefully to
+2. **Generalization / not-a-location-proxy** *(Fig 5b)* — leave-region-out decays gracefully to
    AUC-PR 0.54 @ ~251 km (~9× floor).
 3. **Artifact controls** (a few sentences; details → Supplement) — shuffle → chance, dummies at floor,
    only 4 contradictory-label pairs: real, not an artifact.
-4. **Representativeness** *(Fig 5)* — training points flatter/wetter/lower-drainage than the grid
+4. **Representativeness** *(Fig 4)* — training points flatter/wetter/lower-drainage than the grid
    (Slope 0.74° vs 3.92°; HND 1 m vs 17 m; Open Water 0.43 vs 0.04). Closes the loop to the §4.1 AOA:
    this gap is *why* reliability is a separate layer.
 

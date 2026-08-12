@@ -314,7 +314,7 @@ def write_grouped_matrix(order, labels, G, importance, out_dir):
     (needed for the Fig 6 violins) are otherwise discarded when this script ends.
     Store them column-reordered by descending importance so downstream plotting is
     a pure load (mirrors the diagnostics -> cached-artifact -> figure pattern used
-    by Fig 4). Labels are saved in the SAME (importance-sorted) column order as G.
+    by Fig 5). Labels are saved in the SAME (importance-sorted) column order as G.
     """
     order = np.asarray(order, dtype=int)
     np.savez(

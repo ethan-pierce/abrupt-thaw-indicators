@@ -1,4 +1,4 @@
-"""Compute + cache the arrays for Figure 4 (redesigned two-panel).
+"""Compute + cache the arrays for Figure 5 (redesigned two-panel).
 
 Panel (a) — pooled out-of-fold precision-recall CURVE at the operative 10 km block
 scale. For each of N_REPEATS block->fold reshuffles we pool the OOF predictions and
@@ -16,7 +16,7 @@ albers tiles, 5..200 km) and the leave-region-out sweep (contiguous k-means clus
 (distance + AUC-PR) from extrapolation_range_results.json. Only the block-CV median
 distances are computed here (they were never cached), from the seed-42 partition.
 
-Writes output/fig04_cache.npz. Run: poetry run python output/fig04_cache_build.py
+Writes output/fig05_cache.npz. Run: poetry run python output/fig05_cache_build.py
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ from _data import load            # noqa: E402
 HERE = Path(__file__).resolve().parent
 REPCV_JSON = HERE / "repeated_cv_results.json"
 EXTRAP_JSON = HERE / "extrapolation_range_results.json"
-OUT = HERE / "fig04_cache.npz"
+OUT = HERE / "fig05_cache.npz"
 
 OP_KM = tx.OPERATIVE_CELL_KM       # 10
 N_REPEATS = 20

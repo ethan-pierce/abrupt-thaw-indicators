@@ -146,28 +146,77 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
    in-AOA cells (all-data model, AOA-restricted, hue-only + area-fraction inset); drivers vary
    regionally (evidence for the §5.2 proxy rebuttal).
 
-## §5 Discussion *(limitations lead — disarm the skeptic early)*
+## §5 Discussion *(paragraph-level outline from the 2026-08-13 grilling session)*
 
-- **5.1 Caveats & how to read the surface** *(leads)* — the honest reckoning up front:
-  - **Reading the fraction (first caveat):** predisposition≠occurrence; feature-consistency expected to
-    exceed realized occurrence; why log-evidence not probability; −2.46 median as counterweight.
-  - static/undated (no thaw timing/rate; labels undated, `ImageryDates` dropped);
-  - representativeness bounded by AOA; no statewide mode ground truth; soil-missingness unaudited (flag #6);
-    descriptive-not-causal.
-  - **End on a pivot** ("with these bounds set, the surface supports the following…") to recover momentum.
-- **5.2 Interpreting the drivers** — reserved mechanism (alpine relief → ground-ice/drainage;
-  temperature → thermal state) + **proxy-vs-mechanism defense** leaning on regional driver variation
-  (Fig 9) + LRO survival — **not partialling** (locked call).
-- **5.3 Landscape-scale pattern** — ecoregion breakdown *(Fig 10)*: abrupt-favoring fraction by
-  physiographic ecoregion (EPA Level III Ecoregions of Alaska); drop regions below a permafrost-coverage threshold;
-  report per-region AOA coverage; in-AOA only.
-- **5.4 Positioning against incumbents** — Olefeldt-2016 thermokarst-landscape contrast *(Fig 11, Form B)*:
-  log-evidence spans a wide range within a single Olefeldt class → mode is an **orthogonal axis**.
-  **Complementary/refining, never corrective** (states plainly what Olefeldt maps — landscape type +
-  occurrence potential — as a valid different axis, to preempt the strawman concern). Positioning, NOT validation.
-  Data present: `data/Circumpolar_Thermokarst_Landscapes/`.
-- **5.5 Implications & outlook** — what the surface enables (targeting, monitoring); **bookend to the
-  carbon + infrastructure stakes**; static → dynamic (timing/rate) as future work.
+**Flow (locked):** read-the-surface opener → interpret drivers (4 ¶, ending on the proxy
+defense) → the proxy defense *hinges* into limitations → landscape pattern → Olefeldt
+positioning → implications → outlook. Limitations sit **after** the drivers, not first: the
+opener carries the *reading-the-number* guidance, and the proxy defense sets up the honest
+"here are the real limits" turn. ~10 paragraphs, ~2,925 words (budget per ¶ below); the lever
+is per-¶ word count, not cutting content. Numbers stamped from the locked Results §4.
+
+- **¶1 · How to read the surface** *(~150 w, no fig)* — the index is a reading instrument, not a
+  forecast. Predisposition ≠ occurrence (features *consistent with* abrupt thaw, not area that
+  *will* thaw). Log-evidence not probability; anchored only at 0 (likelihood ratio 1); prior-free.
+  Counterweight: median −2.46 → typical cell favors non-abrupt ~10×, abrupt is the minority mode
+  even at 24.7%. One clause: read only within the AoA.
+- **¶2 · Drivers — mechanistic synthesis** *(~400 w, Figs 7–8)* — topic: the model recovers known
+  abrupt-thaw pathways from features alone, unsupervised. **Relief / water-routing, two-regime
+  slope:** flat / low HND / negative curvature / high flow accumulation → lowland *lake/wetland*
+  thermokarst; steep slopes >10° → *hillslope* failure (slumps, detachments) — one family, two
+  pathways. Anchor: 37% of points at slope 0° (open water); Open Water & Emergent Herbaceous
+  Wetlands → abrupt, Sedge/Herbaceous strongest non-abrupt (Fig 8). **Thermal state:** cold MAAT →
+  abrupt = cold, ice-rich terrain that collapses abruptly. Reserved mechanistic language only where
+  a physical prior backs it (ground-ice/drainage; thermal state).
+- **¶3 · Drivers — weaker signals as associations** *(~250 w, Fig 7)* — snow and precipitation
+  contribute but lack a clean physical prior. High/declining SWE → abrupt; low isothermality, low
+  precip trend → abrupt. State plainly these are correlational; a thermal-insulation reading is
+  flagged, not asserted. The "distinguish, not cause" reminder lives here.
+- **¶4 · Drivers — expected-but-absent** *(~350 w, Fig 6)* — drivers the field expects to lead
+  (fire, yedoma, soil ice) rank below topography and temperature. Two explanations: (i) **data
+  gaps** (MODIS fire-QA gap >70°N; SoilGrids ~16% NaN); (ii) **collinearity** — topography and
+  temperature already carry the ice-rich/yedoma signal. Guardrail: low SHAP ≠ mechanistically
+  unimportant; do not read this as "ice content doesn't matter." Tie-back: this is *why* we grouped
+  SHAP by feature correlation before attributing.
+- **¶5 · Drivers — proxy-vs-mechanism defense** *(~200 w, Fig 9)* — you might suspect the model just
+  learned the Thaw Database's lake/road sampling bias; it didn't. (a) generalizes hundreds of km
+  from any training point (LRO 0.54 @ 251 km, ~9× floor) — a pure sampling-proxy collapses
+  off-sample; (b) dominant driver switches by region (Fig 9) — not one proxy everywhere. Honest
+  concession: bias and mechanism aren't fully separable; we did not partial. **Hinge sentence** →
+  into limitations. **Not partialling is a locked call.**
+- **¶6 · Limitations** *(~250 w, no fig)* — hinge: real limits do bind. **Main — static/undated:** a
+  snapshot of present predisposition, not when / where / how-fast; labels undated, `ImageryDates`
+  dropped. Brief: no statewide mode ground truth — point-level evaluation only (one sentence).
+  **Close on descriptive-not-causal** → pivot into the interpretive reading that follows.
+  *(AoA/representativeness and soil-missingness deliberately dropped here — covered in Results /
+  opener; not re-litigated.)*
+- **¶7 · Landscape pattern** *(~400 w, Fig 10)* — **primary finding:** abrupt-favoring *dominates*
+  the tundra, is *present* in the taiga, *rare* elsewhere. **Second finding:** the 24.7%
+  de-averages sharply — Brooks Range 67%, Seward Peninsula 66%, Arctic Foothills 47%, down to ~1% in
+  the southern mountains; the headline masks strong regional concentration. **Then tentatively:** the
+  two-regime picture may manifest as two abrupt regions with different mechanisms (northern mountains
+  hillslope vs coastal lowlands lake/wetland); within-region spread is wide → sub-regional variation
+  too. One clause: in-AoA only, low-permafrost ecoregions dropped, per-region AoA reported.
+- **¶8 · Positioning vs Olefeldt** *(~275 w, Fig 11)* — purpose up front: compared to Olefeldt not to
+  validate our map, but to find the *new* information the mode axis adds. Quantitative: log-evidence
+  spans nearly the full range within every Olefeldt class; class explains only 1–7% of variance
+  (η²: Hillslope 7%, Lake 3%, Wetland 1%) → mode is a **nearly orthogonal axis**. Affirm Olefeldt's
+  validity (landform type + occurrence potential — a different, valid question). **Complementary,
+  never corrective.** Bridge: the two are combinable layers → into implications.
+- **¶9 · Implications** *(~325 w, no fig)* — bookend the Intro's dual stakes: **carbon** (mode
+  governs quantity/form/timing; a spatial prior for the feedback's largest uncertainty) +
+  **infrastructure/communities** (screening layer for high-predisposition regions, incl. remote /
+  Indigenous communities). **Multimodal risk assessment:** overlay mode with Olefeldt / other layers
+  for richer products.
+- **¶10 · Outlook** *(~325 w, no fig — ends the section)* — **reflexive targeting (bridge):** the map
+  + AoA guides new field sampling / monitoring, including into out-of-AoA terrain — a way to break the
+  lake/road bias that bounds the model. **More detailed / specific data:** better fire, soil,
+  ground-ice layers (callback to ¶4) may promote currently-masked drivers. **Static → dynamic:** add
+  timing/rate → trajectory; framed as one of this paper's biggest challenges and a **grand challenge
+  for the field**. End here.
+
+**Draft-time fix (needs author permission — `.tex` edit):** Results §4.1 points spatial-pattern
+discussion to "§4.3," but the ecoregion pattern now lives in §5 (¶7); update that cross-ref.
 
 ## §6 Conclusions
 

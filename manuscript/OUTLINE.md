@@ -2,7 +2,7 @@
 
 Section-by-section outline for the map-led *Earth's Future* draft, from the
 2026-07-20 outlining session. Sits downstream of `STRATEGY.md` (argument spine +
-committed framing) and `figures/FIGURES.md` (figure spec). This file is the
+committed framing). This file is the
 **prose skeleton**: section skeleton, per-section beats, and each beat's L-chain
 and figure mapping. Numbers are stamped from `STRATEGY.md` / `diagnostics/FINDINGS.md`.
 
@@ -101,15 +101,16 @@ Stakes-first funnel, then concept→gap paired, then the two priming paragraphs,
 ## §4 Results *(concise, factual; figure-ordered)*
 
 ### 4.1 The abrupt-thaw susceptibility map *(L5 + AOA/L4b — Fig 3, dedicated subsection)*
-1. **Map + headline** — 26.6% of the in-AOA permafrost domain has features more consistent with
-   abrupt than non-abrupt thaw (688,804 / 2,589,808 cells, log-evidence > 0; + km² once cell size
-   confirmed). Anchored to log-evidence = 0 only.
+1. **Map + headline** — 24.7% of the in-AOA permafrost domain has features more consistent with
+   abrupt than non-abrupt thaw (roughly 264,000 of 1.07 million km², area basis; equal-count over
+   the 2,589,808 in-AOA cells with log-evidence > 0 gives 26.6% = 688,804 cells). Anchored to
+   log-evidence = 0 only.
 2. **Immediate guardrail** — brief predisposition≠occurrence note (1–2 sentences; full argument → §5.1).
 3. **Coherence counterweight** — median in-AOA log-evidence = −2.46: the *typical* cell favors
    non-abrupt; abrupt is the minority mode.
 4. **Spatial pattern, descriptive only** — where abrupt-favoring concentrates (ice-rich lowlands,
    NW Alaska); mechanism deferred to §4.3/§5.2.
-5. **AOA panel** — product shown with its reliability mask; AOA flags 9.1% of the valid domain.
+5. **AOA panel** — product shown with its reliability mask; AOA flags 9.7% of the valid domain (area basis).
 
 ### 4.2 Model evaluation *(L2/L3/L4c — Figs 4–5)*
 1. **Performance + not-model-specific** *(Fig 5a)* — spatial-block-CV AUC-PR ≈ 0.85 (10 km 0.852),
@@ -238,5 +239,5 @@ static→dynamic).
 - **Deferred to post-writing (author's call):** Key Points (3), Abstract, Plain-language summary — written
   as distillations once the body exists.
 - **Title:** kept as-is — *"Susceptibility and Spatial Signature of Abrupt Thaw Across Alaska's Permafrost Landscapes."*
-- **TODO:** confirm datacube cell size to convert 26.6% → absolute km² for the abstract/§4.1.
+- **DONE:** reported on an area basis in §4.1 — 24.7% ≈ 264,000 km² of the 1.07 million km² in-AOA domain.
 - **TODO:** DOIs for the Open Research statement.

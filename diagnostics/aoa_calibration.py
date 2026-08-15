@@ -220,6 +220,25 @@ def main():
     (MODELS / 'aoa_threshold.json').write_text(json.dumps(payload, indent=2, default=float))
     print(f"Wrote threshold: {MODELS / 'aoa_threshold.json'}")
 
+    # Per-bin skill table for the manuscript figure (output/). Carries the same
+    # rows the diagnostic prints, so the figure script needs no OOF recompute.
+    bins_payload = {
+        'metric': 'rank_cdf',
+        'prevalence_floor': float(floor),
+        'threshold': float(threshold),
+        'envelope_pctl': ENVELOPE_PCTL,
+        'boxplot_fence': float(fence),
+        'dbar_rank': float(dbar_rank),
+        'sampled_di_max': float(max(r['hi'] for r in rows_rank)),
+        'spearman_di_resid_rank_cdf': float(rho_rank),
+        'spearman_di_resid_raw_z': float(rho_z),
+        'bins_rank': rows_rank,
+        'bins_raw_z': rows_z,
+    }
+    bins_path = ROOT / 'output' / 'aoa_calibration_bins.json'
+    bins_path.write_text(json.dumps(bins_payload, indent=2, default=float))
+    print(f"Wrote per-bin skill table: {bins_path}")
+
     make_figure(rows_rank, rows_z, fence, threshold, rho_rank, rho_z)
 
 

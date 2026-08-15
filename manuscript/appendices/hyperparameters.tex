@@ -2,6 +2,10 @@
 
 \begin{document}
 
+We selected the XGBoost hyperparameters by grid search within the inner loop of the nested cross-validation of $\S$ 3.2. The outer loop holds out spatial blocks to estimate skill, and within each outer training set we run a second five-fold spatial split to score every candidate configuration. We use $10$-km equal-area blocks with no buffer. The search grid crosses five hyperparameters for $32$ combinations in total: maximum tree depth ($3$, $5$), minimum child weight ($5$, $20$), L2 regularization ($1$, $10$), learning rate ($0.05$, $0.1$), and number of trees ($200$, $400$). For each candidate, we measure the area under the precision-recall curve on the held-out inner folds and keep the highest scoring configuration.
 
+This grid is deliberately narrow. Earlier exploration on previous versions of the labeled dataset searched a wider space that included deeper trees and row and column subsampling, but we set that aside in favor of spatially-blocked evaluation, given how costly nested cross-validation is.
+
+The selection is not identical across folds, but consistently favors shallow and strongly regularized trees with a slow learning rate. The final configuration has a maximum depth of $3$, minimum child weight of $5$, L2 penalty of $1$, a learning rate of $0.05$, and $200$ trees. For the logistic regression baseline model, we only tune the inverse regularization strength over $0.01$, $0.1$, and $1.0$ in the same nested loop.
 
 \end{document}

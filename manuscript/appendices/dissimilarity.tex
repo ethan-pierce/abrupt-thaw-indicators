@@ -1,0 +1,15 @@
+\documentclass[../main.tex]{subfiles}
+
+\begin{document}
+
+\begin{figure}[!hbpt]
+\centering
+\includegraphics[width=\linewidth]{figures/12_aoa_skill_vs_di.pdf}
+\caption{
+    \textbf{Model performance against dissimilarity index.}
+    Out-of-fold model skill does not degrade as dissimilarity in feature space rises. We plot pooled out-of-fold AUC-PR from the operative model, computed under spatial cross-validation and binned into twelve equal-count bins by dissimilarity index, using non-abrupt as the positive class. Points sit at each bin's median dissimilarity and the grey band is the per-bin prevalence floor. Across the sampled range, the rank-CDF AUC-PR stays between $0.72$ and $0.92$, well above the floor, and does not trend downward as dissimilarity grows. The green curve uses the operative rank-CDF dissimilarity index, while the orange curve repeats that analysis with the Meyer-Pebesma raw-z coordinate. Dissimilarity does still track the magnitude of the model's error, with a Spearman correlation of $0.49$ between the rank-CDF index and the absolute out-of-fold residual.
+}
+\label{fig:dissimilarity-index}
+\end{figure}
+
+\end{document}

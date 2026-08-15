@@ -2,6 +2,14 @@
 
 \begin{document}
 
-
+\begin{figure}[hbtp]
+	\centering
+	\includegraphics[width=\textwidth]{figures/13_family_dendrogram.pdf}
+	\caption{
+	    \textbf{Emergent feature families from correlation structure.}
+		We group the $70$ environmental variables into $22$ families before computing any SHAP values, so that the groupings stay independent of the importance attribution. Continuous variables are clustered on feature-space rank correlation. The distance between two variables is $1$ minus their absolute Spearman correlation, so perfectly correlated (or perfectly anti-correlated) variables sit at a distance of $0$ from one another. Clusters are merged by complete linkage, meaning that two clusters join on the distance of their farthest members. The number of families is not fixed in advance: we cut the tree at the midpoint of the largest gap in merge heights, marked by the dashed line at a distance of $0.449$. The absolute correlation within every family is thus at or above $0.55$. Each shaded band delimits one emergent family and carries the name used in Figure \ref{fig:shap-families}. Categorical variables are not included here, but are collapsed to one family per data source, yielding three additional families for land cover, vegetation mode, and yedoma extent.
+	}
+	\label{fig:family-dendrogram}
+\end{figure}
 
 \end{document}

@@ -229,17 +229,45 @@ def within_family_min_abs_rho(members, signed_corr):
 # --------------------------------------------------------------------------
 # figures + report
 # --------------------------------------------------------------------------
-def plot_dendrogram(meta, out_dir):
-    """Emergent continuous-family dendrogram with the gap-cut line drawn."""
+def plot_dendrogram(meta, families, labels_by_key, out_dir):
+    """Emergent continuous-family dendrogram: gap-cut line plus a named band per family.
+
+    Every continuous family (singletons included) gets an alternating-shade horizontal band
+    spanning the full width, so its name reads straight across from its member leaves. The
+    band, not a distant bracket, carries the leaf -> family tie. Categorical one-hot families
+    (Land Cover, Vegetation Mode) collapse by source and are not leaves; the caption names
+    them. Metadata (linkage, cut value, within-family rho floor) lives in the caption too.
+    """
     Z, cont, t = meta['linkage'], meta['continuous'], meta['threshold']
-    fig, ax = plt.subplots(figsize=(12, max(6, 0.22 * len(cont))))
-    dendrogram(Z, labels=cont, orientation='right', color_threshold=t,
-               leaf_font_size=7, ax=ax)
-    ax.axvline(t, color='k', ls='--', lw=1)
-    rho = 1 - t
-    ax.set_xlabel(f"distance = 1 - |Spearman|   (cut at {t:.3f} -> within-family |rho| >= {rho:.2f})")
-    ax.set_title("Emergent feature families (complete linkage, |Spearman| distance)")
-    plt.tight_layout()
+    fig, ax = plt.subplots(figsize=(15, max(6, 0.30 * len(cont))))
+    dn = dendrogram(Z, labels=cont, orientation='right', color_threshold=t,
+                    leaf_font_size=8, ax=ax)
+
+    # scipy lays leaves out at data-y = 5, 15, 25, ... in `ivl` (bottom-to-top) order.
+    ypos = {lab: 5 + 10 * i for i, lab in enumerate(dn['ivl'])}
+    bands = []
+    for key, members in families.items():
+        if not key.startswith('cont_'):
+            continue  # categoricals collapse by source -> not leaves in this tree
+        ys = [ypos[m] for m in members if m in ypos]
+        if ys:
+            bands.append((min(ys), max(ys), labels_by_key[key]))
+    bands.sort()
+    for i, (lo, hi, name) in enumerate(bands):
+        if i % 2 == 0:  # every other family shaded, so adjacent bands stay distinct
+            ax.axhspan(lo - 5, hi + 5, facecolor='0.93', edgecolor='none', zorder=0)
+        ax.text(1.02, (lo + hi) / 2, name, va='center', ha='left',
+                fontsize=9, fontweight='bold', color='0.15')
+
+    ax.axvline(t, color='k', ls='--', lw=1, zorder=1)
+    ax.set_xlim(0, 1.42)
+    ax.set_xticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    ax.set_xlabel("distance = 1 − |Spearman|")
+    for side in ('top', 'right'):
+        ax.spines[side].set_visible(False)
+    ax.spines['bottom'].set_bounds(0.0, 1.0)  # axis line stops at the last tick, not the labels
+    fig.subplots_adjust(left=0.21, right=0.99, top=0.99, bottom=0.07)
+    plt.savefig(out_dir / 'shap_family_dendrogram.pdf')  # vector, canonical for the manuscript
     plt.savefig(out_dir / 'shap_family_dendrogram.png', dpi=300)
     plt.close()
 
@@ -378,7 +406,7 @@ def main():
     # so they can never be mistaken for the deliverable.
     out_dir = OUTPUT / '_smoke' if SMOKE else OUTPUT
     out_dir.mkdir(parents=True, exist_ok=True)
-    plot_dendrogram(meta, out_dir)
+    plot_dendrogram(meta, families, dict(zip(keys, labels)), out_dir)
     plot_grouped_importance(order, labels, importance, out_dir)
     plot_grouped_contribution_box(order, labels, G, out_dir)
     write_families_json(order, keys, labels, families, importance, meta,

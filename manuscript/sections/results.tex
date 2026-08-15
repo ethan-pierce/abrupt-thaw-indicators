@@ -9,7 +9,10 @@
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/03_susceptibility_aoa.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Statewide evidence of thaw mode and area-of-applicability.}
+		(a) Prior-free log-evidence index of thaw mode across Alaska's permafrost domain. Positive values correspond to environmental features that favor abrupt thaw, negative values similarly favor non-abrupt thaw, and zero log-evidence is considered neutral. The index characterizes similarity to observed thaw mode in the training dataset, not a probability of occurrence. (b) Dissimilarity between each grid cell and the nearest training observation in feature space, with features weighted by model-assigned importance, following the area-of-applicability (AoA) approach from \citeA{meyer2021predicting}. Cells with a dissimilarity index at or below $0.27$ fall within the AoA, while cells shaded in red represent extrapolation beyond the training data.
+	}
 	\label{fig:susceptibility-map}
 \end{figure}
 
@@ -24,7 +27,10 @@ Figure \ref{fig:susceptibility-map}b shows the dissimilarity index, which we use
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/04_representativeness.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Representativeness of the training sample.}
+		Marginal distributions of selected environmental features in the training sample (green) and across the statewide grid within the area-of-applicability (pink). Continuous variables shown are slope (a), height above nearest drainage (b), elevation (c), and upstream drainage area (d). Densities are independently normalized, with vertical lines and annotations denoting the median of each respective distribution. Note that the horizontal axes use an inverse-hyperbolic-sine transform, approximately linear near zero and logarithmic at large values. Categorical variables shown are the land cover fraction of open water (e), emergent herbaceous wetlands (f), and deciduous forest (g).
+	}
 	\label{fig:training-bias}
 \end{figure}
 
@@ -37,7 +43,10 @@ Our baseline regression model recovers most of this performance. Logistic regres
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/05_spatial_performance.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Model performance under spatial hold-out.}
+		(a) Pooled out-of-fold precision-recall curves for XGBoost and logistic regression models under cross-validation, using $10$-km blocks. Curves show the mean across $20$ shuffles of the block assignments, the blue ribbon denotes $\pm 1$ standard deviation for XGBoost, the dotted line marks the prevalence floor of $0.057$, and annotations report the mean and standard deviation of the area under the precision-recall curve (AUC-PR). (b) XGBoost AUC-PR plotted against the distance from each observation to its nearest training point under block cross-validation (green) and leave-region-out cross-validation (pink). Markers indicate the median distance to the nearest training point for each holdout configuration, horizontal bars span the corresponding interquartile range, and the distance axis is logarithmic. Non-abrupt thaw is the positive class in both panels.
+	}
 	\label{fig:spatial-bias}
 \end{figure}
 
@@ -49,8 +58,11 @@ Additional controls confirm the signal is robust rather than an artifact of our 
 
 \begin{figure}[hbtp]
 	\centering
-	\includegraphics[width=\textwidth]{figures/06_shap_families.pdf}
-	\caption{}
+	\includegraphics[width=0.9\textwidth]{figures/06_shap_families.pdf}
+	\caption{
+	    \textbf{Grouped SHAP importance of environmental variables.}
+		Environmental variables are organized into $22$ feature families based on their correlation structure and ranked by their SHAP importance on held-out observations under spatial cross-validation. Mean contribution to log-evidence is calculated by summing the SHAP values of member variables and taking the absolute value. Inset shows SHAP importance aggregated across thematic domains, denoted also by the color of bars on both plots, with percentages showing the share of total importance.
+	}
 	\label{fig:shap-families}
 \end{figure}
 
@@ -59,7 +71,10 @@ Rather than attempt to attribute importance across 70 variables, many of which a
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/07_shap_mechanism.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Individual SHAP response plots for leading indicators.}
+		SHAP values for the nine most influential continuous variables on held-out observations, ranked by mean absolute importance, ordered from top-left to bottom-right. Grey shading shows observation density, while binned median responses show where each variable favors abrupt (orange, positive y) or non-abrupt (blue, negative y) thaw. Note that vertical and horizontal scales vary among panels.
+	}
 	\label{fig:shap-mechanisms}
 \end{figure}
 
@@ -70,7 +85,10 @@ To examine the direction that features push the model, we turn from aggregate gr
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/08_landcover_shap.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Land-cover SHAP contributions.}
+		Distributions land-cover family SHAP values under held-out observations for classes with at least $100$ points. Boxes show the median and interquartile range, whiskers span the $5$th-$95$th percentiles, and labels give each class's share of observations. Positive values (orange) favor abrupt thaw and negative values (blue) favor non-abrupt thaw.
+	}
 	\label{fig:shap-landcover}
 \end{figure}
 
@@ -79,7 +97,10 @@ Land cover is encoded as one-hot columns, so we look at its contribution to the 
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=\textwidth]{figures/09_shap_dominance.pdf}
-	\caption{}
+	\caption{
+	    \textbf{Spatial distribution of dominant indicators.}
+		Each in-AoA grid cell is colored by the thematic feature group with the largest-magnitude net SHAP contribution from the operational model. Bars show the percentage of in-AoA area dominated by each group. Grey shading marks terrain within the permafrost domain but outside AoA.
+	}
 	\label{fig:shap-alaska-map}
 \end{figure}
 

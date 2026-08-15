@@ -16,13 +16,14 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
 
 ## Headline result & its framing constraints
 
-- **~a quarter (26.6%) of the in-AOA permafrost domain has geospatial features more
-  consistent with abrupt than non-abrupt thaw.** (Computed: 688,804 of 2,589,808 in-AOA
-  cells with log-evidence > 0.)
+- **~a quarter (24.7%) of the in-AOA permafrost domain has geospatial features more
+  consistent with abrupt than non-abrupt thaw** — roughly 264,000 of the 1.07 million km²
+  in-AOA permafrost domain (area basis, as reported in the manuscript; equal-count over the
+  2,589,808 in-AOA grid cells with log-evidence > 0 gives 26.6% = 688,804 cells).
 - Anchored **only** to the prior-free **log-evidence = 0** boundary (likelihood ratio = 1).
   Any other threshold is arbitrary and indefensible — do not introduce one.
-- **AOA-restricted**: AOA masks 9.1% of the valid domain (still a good story — applicable
-  across ~91% of the state where it has data). Report the masked fraction; compute the % inside AOA only.
+- **AOA-restricted**: AOA masks 9.7% of the valid domain by area (still a good story — applicable
+  across ~90% of the domain where it has data; 9.1% on an equal-count cell basis). Report the masked fraction; compute the % inside AOA only.
 - **Language discipline**: "features more consistent with abrupt thaw" / feature-consistency —
   **never** "% susceptible", "% will thaw abruptly", or probability. The index is log-evidence,
   not a calibrated probability, not a class.
@@ -31,7 +32,7 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
   This is the strongest argument for the log-evidence framing over a probability.
 - Median in-AOA log-evidence = −2.46 (typical cell favors non-abrupt) — the coherent
   counterweight; abrupt is the minority mode.
-- TODO: confirm datacube cell size to convert 26.6% → absolute km² for the abstract.
+- DONE: reported on an area basis — 24.7% ≈ 264,000 km² of the 1.07 million km² in-AOA domain (manuscript abstract/§4.1).
 
 ## Credibility framing
 
@@ -67,9 +68,9 @@ argument spine + committed decisions; figures fall out of the chain, not vice ve
 | **L2c** | Not model-specific | logistic floor 0.78; XGBoost earns place via NaN handling + SHAP |
 | **L3** | Signal generalizes across space (not memorized neighborhoods) | graceful decay to 0.54 @ 251 km; block-size ladder. *(The link the lake/road bias most threatens.)* |
 | **L4a** | Why an index, not a probability | sample ≠ landscape prevalence; prior-free log-evidence |
-| **L4b** | AOA bounds where it's trustworthy | AOA mask (9.1% flagged, feature-space envelope DI = 0.27) |
+| **L4b** | AOA bounds where it's trustworthy | AOA mask (9.7% flagged by area, feature-space envelope DI = 0.27) |
 | **L4c** | Representativeness stated honestly | parity gate: training points flatter/wetter/lower-drainage than statewide grid |
-| **L5** | Headline number — 26.6% abrupt-favoring; physically coherent (ice-rich lowlands, NW) | the map |
+| **L5** | Headline number — 24.7% abrupt-favoring (area basis); physically coherent (ice-rich lowlands, NW) | the map |
 | **L6a** | Ranked family importance | grouped SHAP |
 | **L6b** | Direction — which way each family pushes (distinguishes *how*) | SHAP direction/contribution |
 | **L6c** | Drivers vary in space (which family dominates where) | → L7 SHAP-dominance map |

@@ -94,13 +94,14 @@ not demonstrated model failure.
   AoA, single solid red for `DI > 0.27`, colorbar shows the ramp ending in an "outside AoA" red
   block. The earlier hatch + per-pixel contour rendering visually inflated the flagged area and is
   gone.
-- **Pending reconciliation (step 4):** `models/aoa_threshold.json`, the `aoa.nc` `aoa_threshold`
-  attr and `inside_aoa` layer, `models/aoa.py`, `diagnostics/aoa_calibration.py`
-  (`choose_threshold`), FINDINGS.md flag 7, PIPELINE.md, and memory still carry 0.506 / the old
-  wording. The continuous DI raster in `aoa.nc` is **unchanged** (DI does not depend on the
-  threshold); only the flag layer + attrs + the figure's constant need updating.
-- **Headline to recompute (step 4):** the in-AoA abrupt-favoring fraction (recorded ~25.6% under the
-  old 0.506 mask) must be recomputed under the 0.27 mask before it is used in prose.
+- **Reconciliation (step 4, DONE):** `models/aoa_threshold.json` (0.267), `models/aoa.py` (loads the
+  threshold from that JSON — no hardcode), `diagnostics/aoa_calibration.py` (`choose_threshold`,
+  `ENVELOPE_PCTL = 99.9`), FINDINGS.md flag 7, PIPELINE.md, and memory all now carry 0.27; the
+  `aoa.nc` `aoa_threshold` attr and `inside_aoa` layer follow from `aoa.py` on regeneration. The
+  continuous DI raster in `aoa.nc` was **unchanged** (DI does not depend on the threshold).
+- **Headline recomputed (step 4, DONE):** the in-AoA abrupt-favoring fraction is reported under the
+  0.27 mask as 24.7% on an area basis (≈264,000 km² of 1.07 million km²) in the manuscript; the
+  ~25.6% under the old 0.506 mask is superseded.
 
 ## Reproduce
 

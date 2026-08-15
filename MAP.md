@@ -22,5 +22,5 @@ their own artifacts.
 | `output/` | Figure-generation scripts and rendered figure assets (plus the `figstyle.py`/`STYLE.md` style guide). |
 | `diagnostics/` | `/verify-ml` suite: re-runnable baseline, shuffle-label, spatial-leakage, and feature-provenance probes, plus the stamped findings report. |
 | `diagnostics/FINDINGS.md` | Stamped `/verify-ml` findings for the current pipeline: invariants that hold + the honest-generalization flags. |
-| `manuscript/` | Earth's Future draft: `main.tex` (+ `sections/`, `figures/`), with `STRATEGY.md` (argument spine), `OUTLINE.md` (prose skeleton), and `figures/FIGURES.md` (figure spec). |
+| `manuscript/` | Earth's Future draft: `main.tex` (+ `sections/`, `figures/`), with `STRATEGY.md` (argument spine) and `OUTLINE.md` (prose skeleton). |
 | `archive/` | Legacy code, older data, and experimental work. |

@@ -38,7 +38,7 @@ from scipy.stats import gaussian_kde
 
 import figstyle
 from fig02_study_area import AK_OUTLINE, scale_bar
-import fig03_susceptibility_aoa as fig03
+import fig03_thaw_mode_and_aoa as fig03
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))

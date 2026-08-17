@@ -90,7 +90,7 @@ not demonstrated model failure.
 
 ## Consequences / follow-ups
 
-- **Fig 3b** rewritten (`output/fig03_susceptibility_aoa.py`): continuous DI graded blue inside the
+- **Fig 3b** rewritten (`output/fig03_thaw_mode_and_aoa.py`): continuous DI graded blue inside the
   AoA, single solid red for `DI > 0.27`, colorbar shows the ramp ending in an "outside AoA" red
   block. The earlier hatch + per-pixel contour rendering visually inflated the flagged area and is
   gone.

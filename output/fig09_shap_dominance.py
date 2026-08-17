@@ -19,7 +19,7 @@ in the cache script — here Baseline temperature leads at 45%, so the map stays
 Pure plotting. The heavy per-cell TreeSHAP lives in
 models/shap_dominance_cache.py -> output/shap_dominance_cache.npz. Domain palette
 + feature->domain assignment come from output/shap_domains.py (shared with Fig 6).
-Map warp (EPSG:4326 -> Alaska Albers) reuses output/fig03_susceptibility_aoa.py.
+Map warp (EPSG:4326 -> Alaska Albers) reuses output/fig03_thaw_mode_and_aoa.py.
 
 Writes output/09_shap_dominance.{pdf,png}.
 """
@@ -41,7 +41,7 @@ sys.path.insert(0, str(_HERE))
 
 import figstyle  # noqa: E402
 import shap_domains as sd  # noqa: E402
-import fig03_susceptibility_aoa as fig03  # noqa: E402  (reuse the warp + basemap)
+import fig03_thaw_mode_and_aoa as fig03  # noqa: E402  (reuse the warp + basemap)
 
 CACHE = _HERE / "shap_dominance_cache.npz"
 SUSCEPTIBILITY_NC = fig03.SUSCEPTIBILITY_NC   # same grid as the dominance raster

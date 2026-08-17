@@ -16,10 +16,12 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / 'models'))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # output/ for the Fig 6 label map
 
 from settings import DATA, OUTPUT  # noqa: E402
 from shap_values import load_inputs  # noqa: E402
 from shap_groups import build_families, plot_dendrogram, MANUSCRIPT_LABELS  # noqa: E402
+from fig06_shap_families import DISPLAY_LABEL  # noqa: E402  reuse Fig 6 names so the two can't drift
 
 
 def scored_members(fam_json):
@@ -49,14 +51,15 @@ def main():
         if not key.startswith('cont_'):
             continue
         if len(mem) == 1:
-            labels_by_key[key] = mem[0]
+            label = mem[0]
         else:
             label = MANUSCRIPT_LABELS.get(frozenset(mem))
             if label is None:
                 raise SystemExit(
                     f"cluster {sorted(mem)} has no MANUSCRIPT_LABELS entry -- the cut changed; "
                     "reconcile models/shap_groups.py before re-rendering.")
-            labels_by_key[key] = label
+        # Present the family band under the same name Fig 6 gives its bar.
+        labels_by_key[key] = DISPLAY_LABEL.get(label, label)
 
     plot_dendrogram(meta, families, labels_by_key, OUTPUT)
     n_cont_fam = sum(1 for k in families if k.startswith('cont_'))

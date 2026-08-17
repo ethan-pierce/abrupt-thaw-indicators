@@ -168,7 +168,7 @@ def panel_a_susceptibility(fig, ax, cax, le_warp, extent):
     cbar.ax.tick_params(labelsize=7, length=2.5, width=0.6, color=figstyle.INK)
     cbar.outline.set_edgecolor(figstyle.MUTED)
     cbar.outline.set_linewidth(0.35)
-    cbar.set_label("Log-likelihood of abrupt thaw", fontsize=7.5, labelpad=3)
+    cbar.set_label("Log-evidence for abrupt thaw", fontsize=7.5, labelpad=3)
     return im
 
 
@@ -246,8 +246,8 @@ def main():
     n_valid = int(both_valid.sum())
     n_abrupt_favoring = int((le_warp[both_valid] > 0).sum())
     n_outside_aoa = int((di_warp[both_valid] > threshold).sum())
-    figstyle.save(fig, "03_susceptibility_aoa", tight=False)
-    print(f"wrote 03_susceptibility_aoa.pdf/.png  "
+    figstyle.save(fig, "03_thaw_mode_and_aoa", tight=False)
+    print(f"wrote 03_thaw_mode_and_aoa.pdf/.png  "
           f"(abrupt-favoring={n_abrupt_favoring/n_valid*100:.1f}%, "
           f"outside-AOA={n_outside_aoa/n_valid*100:.1f}% of displayed valid cells)")
 

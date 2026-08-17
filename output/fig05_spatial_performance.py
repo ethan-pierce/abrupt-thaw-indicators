@@ -4,7 +4,7 @@ The credibility figure, redesigned to two panels that answer two orthogonal
 questions and carry two non-overlapping uncertainties:
 
   (a) pooled out-of-fold PRECISION-RECALL curve at the operative 10 km block scale.
-      XGBoost (hero) over the logistic baseline over the prevalence floor. Band =
+      XGBoost (hero) over the logistic baseline over the chance floor. Band =
       +/-1 sigma ACROSS 20 partition reshuffles (partition robustness). The classic
       ML artifact, in the threshold-free idiom the product actually uses.
 
@@ -48,7 +48,7 @@ def panel_a_prcurve(ax, d):
 
     # no-skill PR baseline is horizontal at the positive prevalence
     ax.axhline(floor, color=figstyle.OTHER_GRAY, linestyle=":", linewidth=1.0,
-               zorder=1, label=f"prevalence floor ({floor:.3f})")
+               zorder=1, label=f"chance floor ({floor:.3f})")
     # logistic baseline (mean curve only — the hero carries the band)
     ax.plot(rec, lm, color=LOGIT_COLOR, linestyle="--", linewidth=1.4, zorder=2,
             label="Logistic")
@@ -77,7 +77,6 @@ def panel_a_prcurve(ax, d):
 
 def panel_b_distance(ax, d):
     """Skill vs distance-to-training: block-CV and region-out on one axis, two hues."""
-    floor = float(d["prevalence"])
     bd, ba = d["block_dist"], d["block_ap"]
     bq25, bq75 = d["block_q25"], d["block_q75"]
     rd, ra = d["region_dist"], d["region_ap"]
@@ -95,12 +94,9 @@ def panel_b_distance(ax, d):
         ax.plot([lo, hi], [y0, y0], color=REGION_COLOR, linewidth=3.4, alpha=0.35,
                 solid_capstyle="round", zorder=2)
 
-    # y is zoomed to the data band (skill never approaches the floor), so the floor
-    # sits off-scale and is noted rather than drawn.
-    ax.annotate(f"prevalence floor {floor:.3f} (off-scale below)", xy=(1.0, 0.005),
-                xycoords=("data", "axes fraction"), xytext=(0, 2),
-                textcoords="offset points", ha="left", va="bottom",
-                fontsize=6.5, color=figstyle.MUTED)
+    # y is zoomed to the data band — skill never approaches the chance floor, which sits
+    # far off-scale below. Panel (a) carries the floor anchor; repeating it here would
+    # only label an edge of the axis the data never visits.
 
     # Same operative XGBoost under two holdout geometries — split by hue AND marker.
     ax.plot(bd, ba, color=BLOCK_COLOR, linestyle="-", linewidth=1.7, marker="o",

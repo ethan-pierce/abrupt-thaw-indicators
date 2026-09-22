@@ -40,5 +40,5 @@ output/*_600dpi.png
 # Office lock/temp files
 ~$*
 
-# Manuscript files
-manuscript/
+# Feedback from co-authors
+manuscript/feedback

@@ -7,6 +7,7 @@ __pycache__/
 .DS_Store
 # Scratchpad run logs (build/train `tee` output) — transient, never tracked
 scratchpad_*.log
+build_*.log
 data/Obu2019
 # ALFRESCO historical rasters — regenerate with data/fetch_alfresco.py
 data/alfresco/*.tif

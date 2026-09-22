@@ -95,7 +95,7 @@ at run time beside `model.json` and is the reproducibility key for a specific ru
 
 ### Masks (prediction domain / reliability)
 - **Permafrost domain** — Obu et al. 2019 permafrost probability (PerProb 5.0),
-  `data/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH/` (PANGAEA).
+  `data/Obu2019/UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif` (PANGAEA).
 - **Categorical cross-check (optional)** — Brown et al. 1997 Circum-Arctic Permafrost
   and Ground-Ice map, `data/arctic-permafrost-map/` (NSIDC GGD318).
 

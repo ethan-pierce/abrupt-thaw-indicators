@@ -15,10 +15,10 @@ statements and, selected by raw influence, yields a multi-domain roster
 
 Framing discipline (locked): shapes are reported as FACT about the model's
 response ("evidence for abrupt rises above ~12° slope"), NEVER asserted mechanism.
-Mechanistic reading + the proxy-vs-mechanism defense are reserved for §5.2 / Fig 9.
+Mechanistic reading + the proxy-vs-mechanism defense are reserved for §5.2 / Fig 8.
 
-Land Cover is NOT here — a one-hot has no continuous shape; it becomes Fig 8
-(fig08_landcover.py).
+Land Cover is NOT here — a one-hot has no continuous shape; it is Fig 6b
+(fig06_shap_families.py).
 
 Data: output/shap_mechanism_cache.npz — per-feature OOF SHAP (Abrupt-oriented:
 positive => favors Abrupt) + feature VALUES + names + labels, written by

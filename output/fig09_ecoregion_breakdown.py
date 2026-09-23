@@ -1,4 +1,4 @@
-"""Figure 10 — Ecoregion breakdown (L7, §5.3 "Landscape-scale pattern").
+"""Figure 9 — Ecoregion breakdown (L7, §5.3 "Landscape-scale pattern").
 
 A descriptive translation of the abrupt-thaw susceptibility surface into named
 physiographic regions (EPA Level III Ecoregions of Alaska). NOT a validation and
@@ -46,7 +46,7 @@ from settings import DATA  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 ECO_SHP = DATA / "ak_eco_l3" / "ak_eco_l3.shp"
-CACHE = HERE / "fig10_region_cache.npz"
+CACHE = HERE / "fig09_region_cache.npz"
 
 DST_CRS = "EPSG:3338"          # Alaska Albers, matches Figs 2/4/10
 PERM_COV_MIN = 0.50            # keep regions >= 50% permafrost coverage
@@ -262,10 +262,10 @@ def build():
     fig.text(0.02, 0.60, "(b)", fontsize=11, fontweight="bold",
              color=figstyle.INK, va="top", ha="left")
 
-    figstyle.save(fig, "10_ecoregion_breakdown", tight=False)
+    figstyle.save(fig, "09_ecoregion_breakdown", tight=False)
     return fig
 
 
 if __name__ == "__main__":
     build()
-    print("wrote 10_ecoregion_breakdown.{pdf,png}")
+    print("wrote 09_ecoregion_breakdown.{pdf,png}")

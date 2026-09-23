@@ -38,6 +38,7 @@ from matplotlib.gridspec import GridSpec
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
 import figstyle  # noqa: E402
+import shap_family_display as fd  # noqa: E402
 
 CACHE = _HERE / "shap_mechanism_cache.npz"
 
@@ -60,7 +61,7 @@ SHARED_Y = False
 ROSTER = [
     dict(name="Slope", title="Slope", unit="°",
          scale=1.0, floor0=True, slope_mass=True),
-    dict(name="Annual Mean Temperature", title="Annual Mean Temperature", unit="°C",
+    dict(name="Annual Mean Temperature", title="Mean Annual Air Temperature", unit="°C",
          scale=0.1, warm_cliff=-4.0),                 # WorldClim V1 stores tenths of °C
     dict(name="Trend in SWE", title="Trend in SWE", unit="mm yr$^{-1}$",
          scale=1.0),
@@ -179,6 +180,7 @@ def main():
         return col, float(np.mean(np.abs(col[np.isfinite(col)])))
 
     imps = [own(s["name"])[1] for s in ROSTER]
+    families = fd.family_of_features([s["name"] for s in ROSTER])
 
     # shared symmetric y from robust extremes across the 9 own-SHAP arrays
     cols = [values[:, names.index(s["name"])] for s in ROSTER]
@@ -187,9 +189,9 @@ def main():
     shared_ylim = (-ymax, ymax)
 
     w = figstyle.WIDTHS_IN["full"]
-    fig = plt.figure(figsize=(w, 7.2))
-    gs = GridSpec(3, 3, figure=fig, wspace=0.14 if SHARED_Y else 0.30, hspace=0.40,
-                  left=0.165, right=0.985, top=0.955, bottom=0.065)
+    fig = plt.figure(figsize=(w, 7.7))
+    gs = GridSpec(3, 3, figure=fig, wspace=0.14 if SHARED_Y else 0.30, hspace=0.62,
+                  left=0.165, right=0.985, top=0.925, bottom=0.06)
 
     for j, spec in enumerate(ROSTER):
         r, c = divmod(j, 3)
@@ -224,8 +226,11 @@ def main():
                     ha="center", va="bottom", fontsize=8.5, color=COOL, fontweight="bold")
         ax.set_xlabel(spec["unit"], fontsize=9)
         # rank lives in the title (panels are laid out in importance order)
+        family = families[j]
         ax.set_title(f"{j + 1}. {spec['title']}", fontsize=10.5, color=figstyle.INK,
-                     pad=5)
+                     pad=16)
+        ax.text(0.5, 1.03, fd.NAMES[family], transform=ax.transAxes, ha="center",
+                va="bottom", fontsize=8, color=figstyle.MUTED)
 
     figstyle.save(fig, "07_shap_mechanism", outdir=_HERE, tight=False)
     tag = f"shared y = ±{ymax:.2f}" if SHARED_Y else "per-panel y (fallback)"

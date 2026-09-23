@@ -69,7 +69,8 @@ CATEGORICAL_PREFIXES = ('Land Cover', 'Vegetation Mode')
 # alpine-relief four stay fused (all pairwise |rho| 0.69-0.81, no 2+2 seam) and Trend in SWE
 # stays in thermal continentality (|rho| 0.66-0.76 to the thermal block vs -0.29 to Trend in
 # temperature). A cluster whose membership isn't a key here keeps the auto-tag + a warning,
-# so a future re-cluster surfaces instead of silently mislabelling.
+# so a future re-cluster surfaces instead of silently mislabelling. These labels are stable
+# cache IDs; figure display names live in output/shap_family_display.py.
 MANUSCRIPT_LABELS = {
     frozenset({'Elevation', 'Slope', 'Height Above Nearest Drainage',
                'Mean Annual SWE'}): 'Alpine relief',

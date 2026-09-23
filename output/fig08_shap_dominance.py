@@ -1,4 +1,4 @@
-"""Figure 9 — dominant SHAP family per in-AOA cell, with area-fraction bars."""
+"""Figure 8 — dominant SHAP family per in-AOA cell, with area-fraction bars."""
 
 from __future__ import annotations
 
@@ -151,7 +151,7 @@ def main():
         build_display_codes(fam_raster, families, fracs)
 
     figstyle.assert_cvd_safe([fd.COLORS[d] for d in disp], min_de=15,
-                             name="Fig 9 displayed-family palette")
+                             name="Fig 8 displayed-family palette")
 
     coded = coded_raster(fam_raster, valid, fam_to_disp, mask_code)
 
@@ -188,8 +188,8 @@ def main():
 
     area_fraction_panel(ax_bar, disp, disp_idx, fracs, families, order)
 
-    figstyle.save(fig, "09_shap_dominance", outdir=_HERE, tight=False)
-    print(f"wrote 09_shap_dominance.{{pdf,png}}  | displayed families: {disp} "
+    figstyle.save(fig, "08_shap_dominance", outdir=_HERE, tight=False)
+    print(f"wrote 08_shap_dominance.{{pdf,png}}  | displayed families: {disp} "
           f"(+Other) | gate: {gate_fam} {gate_frac*100:.1f}% "
           f"{'PASS' if gate_ok else 'FAIL'}")
 

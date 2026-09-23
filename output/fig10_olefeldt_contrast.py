@@ -1,4 +1,4 @@
-"""Figure 11 — Olefeldt incumbent contrast (L7, Form B).
+"""Figure 10 — Olefeldt incumbent contrast (L7, Form B).
 
 Positioning against the only Alaska-statewide comparable incumbent, Olefeldt
 et al. (2016) thermokarst-landscape classes. Our log-evidence index measures
@@ -26,9 +26,9 @@ Design (raincloud, one shared log-evidence axis, None dropped):
 
 The polygon->grid join (Olefeldt LAEA polygons rasterized onto the datacube's
 EPSG:4326 grid, restricted to in-AOA cells) is heavy, so it is cached to
-output/fig11_olefeldt_cache.npz on first run. Reads data/susceptibility.nc +
+output/fig10_olefeldt_cache.npz on first run. Reads data/susceptibility.nc +
 data/aoa.nc + data/Circumpolar_Thermokarst_Landscapes/. Writes
-output/11_olefeldt_contrast.{pdf,png}.
+output/10_olefeldt_contrast.{pdf,png}.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ DATA = REPO / "data"
 SUSCEPTIBILITY_NC = DATA / "susceptibility.nc"
 AOA_NC = DATA / "aoa.nc"
 OLEFELDT_SHP = DATA / "Circumpolar_Thermokarst_Landscapes/Circumpolar_Thermokarst_Landscapes.shp"
-CACHE = _HERE / "fig11_olefeldt_cache.npz"
+CACHE = _HERE / "fig10_olefeldt_cache.npz"
 
 # Olefeldt LAEA (ESRI:102017) -> datacube EPSG:4326.
 OLEFELDT_CRS = "ESRI:102017"
@@ -215,7 +215,7 @@ def main():
     except Exception as exc:  # noqa: BLE001
         print(f"CVD check WARNING: {exc}")
     fig = render(d)
-    pdf = figstyle.save(fig, "11_olefeldt_contrast")
+    pdf = figstyle.save(fig, "10_olefeldt_contrast")
     print(f"wrote {pdf}")
 
 

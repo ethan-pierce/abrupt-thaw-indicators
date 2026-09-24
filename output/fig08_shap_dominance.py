@@ -1,4 +1,4 @@
-"""Figure 8 — dominant SHAP family per in-AOA cell, with area-fraction bars."""
+"""Figure 8 — dominant SHAP family per in-AOA cell, with cell-fraction bars."""
 
 from __future__ import annotations
 
@@ -113,7 +113,7 @@ def graticule_labels(ax, extent):
 
 
 def area_fraction_panel(ax, disp, disp_idx, fracs, families, order):
-    """Horizontal bars: % of in-AOA area each displayed family (+ Other) dominates."""
+    """Horizontal bars: % of in-AoA cells each displayed family (+ Other) dominates."""
     shares = [float(fracs[families.index(d)]) for d in disp]
     other_share = float(sum(fracs[i] for i in order if families[i] not in disp_idx))
     labels = [fd.NAMES[d] for d in disp]
@@ -133,12 +133,12 @@ def area_fraction_panel(ax, disp, disp_idx, fracs, families, order):
     ax.set_yticklabels(labels, fontsize=7)
     ax.set_ylim(-0.7, len(labels) - 0.3)
     ax.set_xlim(0, max(shares) * 100 * 1.18)
-    ax.set_xlabel("% of in-AOA area", fontsize=7.5)
+    ax.set_xlabel("% of in-AoA cells", fontsize=7.5)
     ax.tick_params(axis="x", labelsize=6.5)
     ax.tick_params(axis="y", length=0)
     for spine in ("left", "right", "top"):
         ax.spines[spine].set_visible(False)
-    ax.set_title("% area where\nfamily dominates", fontsize=7.6,
+    ax.set_title("% cells where\nfamily dominates", fontsize=7.6,
                  color=figstyle.INK, loc="left", pad=6)
 
 

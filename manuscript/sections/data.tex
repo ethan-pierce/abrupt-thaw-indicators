@@ -20,7 +20,7 @@ The non-abrupt thaw label denotes sites undergoing gradual or no thaw rather tha
 	\label{fig:thawdb-map}
 \end{figure}
 
-Because the observations were largely assembled from field campaigns and targeted remote-sensing surveys, the spatial distribution of labeled points reflects the research focus of the contributing studies and physical accessibility of sites. Figure \ref{fig:thawdb-map} shows the distribution of abrupt (a) and non-abrupt (b) thaw observations. The two classes are not evenly balanced across the landscape, with many more abrupt thaw studies focused in the north, and non-abrupt sites spread more evenly across the state. This uneven coverage motivates the spatial cross-validation and area-of-applicability analyses described in Section 3. We carry site coordinates through the pipeline as metadata and use them to build cross-validation blocks, but exclude them from the feature table so that the model cannot use location itself as a predictor.
+Because the observations were largely assembled from field campaigns and targeted remote-sensing surveys, the spatial distribution of labeled points reflects the research focus of the contributing studies and physical accessibility of sites. Figure \ref{fig:thawdb-map} shows the distribution of abrupt (a) and non-abrupt (b) thaw observations. The two classes are not evenly balanced across the landscape, with many more abrupt thaw studies focused in the north, and non-abrupt sites spread more evenly across the state. This uneven coverage motivates the spatial cross-validation and area-of-applicability analyses described in Section 3. We carry site coordinates through the pipeline as metadata and use them to build cross-validation blocks, but exclude them from the feature table so that the model cannot use location itself as a predictor. Excluding coordinates does not remove all geographic information from the model, since many climate features vary systematically across the state and encode regional patterns.
 
 \subsection{Geospatial features}
 
@@ -32,7 +32,7 @@ We obtain soil properties from SoilGrids \citep{poggio2021soilgrids}, including 
 
 Nineteen bioclimatic variables describe annual and seasonal temperature and precipitation, sourced from the WorldClim v1 climatology \citep{hijmans2005very}. Mean annual snow water equivalent (SWE) and multidecadal trends in SWE, precipitation, and temperature come from Daymet v4 \citep{thornton2022daymet}, computed from 1991-2020.
 
-Across all data products, we do not impute missing values, choosing instead to select a classification algorithm that handles missing values natively ($\S$3). Two sources have structured gaps worth noting: SoilGrids is missing at approximately 16\% of our training points, and the MODIS fire domain thins considerably above 70$^\circ$N, leaving the northern Arctic coast without fire history coverage. Table \ref{tab:data-sources} lists all data products with their native resolutions and references.
+Across all data products, we do not impute missing values, choosing instead to select a classification algorithm that handles missing values natively ($\S$3). Two sources have structured gaps worth noting: SoilGrids is missing at approximately 16\% of our training points, and MODIS fire history is unavailable above 70$^\circ$N, leaving the northern Arctic coast without coverage. Table \ref{tab:data-sources} lists all data products with their native resolutions and references.
 
 \subsection{Statewide prediction grid}
 

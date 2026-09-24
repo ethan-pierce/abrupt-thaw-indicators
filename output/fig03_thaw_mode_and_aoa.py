@@ -60,8 +60,13 @@ LAND_EDGE = "#666666"
 # for log-evidence (pale = strongly non-abrupt-favoring, dark = strongly
 # abrupt-favoring), deliberately NOT vik/diverging, so the whole range south of
 # the Brooks Range reads as graded rather than "all equally blue".
-SUSCEPTIBILITY_CMAP = cmc.lajolla_r    # reversed: pale = non-abrupt-favoring, dark = abrupt-favoring
-DI_CMAP = cmc.oslo_r           # mono-hued blue: pale = reliable, dark = extrapolating
+def truncate(cmap, lo, hi=1.0, n=256):
+    """Drop the near-white end so low values stay distinct from the white unanalyzed background."""
+    return LinearSegmentedColormap.from_list(f"{cmap.name}_trunc", cmap(np.linspace(lo, hi, n)), N=n)
+
+
+SUSCEPTIBILITY_CMAP = truncate(cmc.lajolla_r, 0.12)    # reversed: pale = non-abrupt-favoring, dark = abrupt-favoring
+DI_CMAP = truncate(cmc.oslo_r, 0.2)                    # mono-hued blue: pale = reliable, dark = extrapolating
 
 # Panel b grades the continuous DI inside the AoA and paints a single solid red beyond the
 # applicability threshold read from aoa.nc (the 99.9th percentile of the CV training DI =

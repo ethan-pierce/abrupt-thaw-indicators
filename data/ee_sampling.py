@@ -1,27 +1,12 @@
-"""Shared-computation point sampling for deep-reduction GEE features.
+"""Shared-computation point sampling via ``reduceRegions``.
 
-Background (TASKS T30)
-----------------------
-``build_feature_table.py`` samples most features with ``add_feature`` — it maps
-``reduceRegion`` over a FeatureCollection of points and trusts that
-``computeFeatures`` returns rows in input order. That is fine for flat catalog
-rasters (cheap random access), but degrades catastrophically for an image built
-on a deep temporal reduction (e.g. a multi-hundred/thousand-image temporal max or
-trend): mapping the reduction over 19,540 scattered points re-evaluates it at
-every point with no tile sharing, and hangs (>26 min at full N, killed). Such
-deep reductions (Daymet SWE/trends, MODIS MCD64A1 fire history) are now instead
-materialized once to LOCAL rasters (build_daymet_rasters.py /
-build_modis_fire_rasters.py); this module remains for any that still need live
-GEE point sampling.
+Mapping ``reduceRegion`` over scattered points re-evaluates the image at every
+point with no tile sharing, which hangs for images built on deep temporal
+reductions. The approach here is **compute the reduction once, then read every
+point from it**: a single ``image.reduceRegions`` over all points streams the
+collection against tiles computed once over the points' footprint.
 
-This module is the fallback used ONLY for features that cannot be loaded the old
-way (see TASKS T30). The core idea is the one the datacube path already proves
-fast: **compute the reduction once, then read every point from it.** A single
-``image.reduceRegions`` over all points streams the collection against tiles that
-are computed once over the points' footprint — the same reason the datacube's
-``sampleRectangle`` completes in minutes, not hours.
-
-Design notes (both learned empirically, see the T30 parity smoke):
+Design notes:
 
 * **One call, not scattered chunks.** ``reduceRegions`` computes the image over
   the tiles covering the *whole footprint* of the input collection. The Thaw DB
@@ -29,7 +14,7 @@ Design notes (both learned empirically, see the T30 parity smoke):
   and would re-trigger the full statewide computation per chunk (~20x redundant).
   So we issue a single ``reduceRegions`` and retrieve it via
   ``ee.data.computeFeatures`` (which paginates — ``getInfo`` caps at ~5,000
-  features, the only reason chunking was ever considered).
+  features).
 * **Key by row id, never by position.** Each point carries an explicit ``row_id``
   and results are reassembled by that key. ``reduceRegions`` does not preserve
   collection order, and mis-ordering would silently scramble the training table.
@@ -57,7 +42,7 @@ _TRANSIENT = (
     'timed out', 'timeout', 'deadline', 'try again', 'temporarily',
     'backend error', 'internal error', 'service unavailable',
     'rate limit', 'too many requests', 'quota',
-    # Concurrency-limit errors from the tiled fan-out (T47): EE emits these under
+    # Concurrency-limit errors from the tiled fan-out: EE emits these under
     # parallel reduceRegions load; they are transient (back off + retry), not fatal.
     'too many concurrent', 'concurrent aggregations', 'concurrent requests',
     '429', '500', '502', '503',
@@ -153,22 +138,20 @@ def sample_native_multiband_tiled(
     tile: int = 128, workers: int = 8, log=None,
 ) -> dict:
     """Point-sample a MULTI-BAND image at every grid-cell centre via 2-D tiled,
-    concurrent ``reduceRegions`` — the datacube's native-scale server (TASKS T47).
+    concurrent ``reduceRegions`` — the datacube's native-scale server.
 
     ``lon2d``/``lat2d`` are the 2-D ``(row, col)`` cell-centre coordinates of the
     prediction grid in GEE-native (unflipped) orientation. The grid is cut into
     square ``tile``x``tile`` INDEX blocks; each block is spatially compact, so one
     ``reduceRegions`` over its points touches only a bounded footprint of the
-    native mosaic. This replaces ``sample_points_reduceregions_chunked``, whose
-    index chunks of 20k row-major points spanned Alaska's full ~29 deg E-W width,
-    re-triggering a statewide computation per chunk (~1.7 min/chunk) — 0 features
-    in 3h14m at statewide scale.
+    native mosaic. Row-major index chunks would instead span Alaska's full E-W
+    width and re-trigger a statewide computation per chunk.
 
     All ``bands`` must share ``scale``: they are reduced in ONE pass with one
     ``reducer`` (``mean`` by default). Merging bands is numerically identical to
     sampling each alone — ``reduceRegions`` reduces every band independently — so
     train/serve parity (a Point reduces the single native pixel it falls in at
-    ``scale``) is preserved (verified per band by the T47 one-tile parity gate).
+    ``scale``) is preserved.
 
     Results are reassembled by band **name** and ``row_id`` (never position;
     ``reduceRegions`` does not preserve order). Per-band masking yields ragged NaN
@@ -256,13 +239,3 @@ def sample_native_multiband_tiled(
                 log(done, len(tiles))
     return out
 
-
-def add_feature_reduceregions(df, lons, lats, image: ee.Image, reducer: ee.Reducer,
-                              scale: float, name: str, band: str,
-                              crs: str = 'EPSG:4326') -> None:
-    """``add_feature`` analogue for deep-reduction images: assign the shared,
-    key-aligned ``reduceRegions`` result to ``df[name]``. Argument order mirrors
-    ``add_feature`` (minus the FeatureCollection, plus ``lons``/``lats``) so a
-    feature can be flipped from the old path to this one with a one-line change.
-    """
-    df[name] = sample_points_reduceregions(lons, lats, image, reducer, scale, band, crs)

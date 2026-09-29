@@ -1,20 +1,18 @@
-"""Compute + cache the arrays for Figure 5 (redesigned two-panel).
+"""Compute + cache the arrays for Figure 5.
 
-Panel (a) — pooled out-of-fold precision-recall CURVE at the operative 10 km block
-scale. For each of N_REPEATS block->fold reshuffles we pool the OOF predictions and
-build one PR curve per partition (XGBoost operative hparams + logistic baseline),
-then interpolate every curve onto a shared recall grid. The mean curve is drawn with
-a +/-1 sigma ACROSS-PARTITION band -- the same partition-robustness uncertainty the
-repeated-CV AUC-PR (0.852 +/- 0.011) reports. Fold-to-fold / spatial heterogeneity is
-NOT put here; panel (b) shows it as skill-vs-distance, so the two panels never
-double-count the same uncertainty.
+Panel (a) — pooled out-of-fold precision-recall curve at the operative block
+scale. For each of N_REPEATS block->fold reshuffles the OOF predictions are
+pooled into one PR curve per partition (XGBoost and a logistic baseline), then
+interpolated onto a shared recall grid. The band is +/-1 sigma across
+partitions; spatial heterogeneity is left to panel (b) so the two panels don't
+double-count it.
 
-Panel (b) — AUC-PR vs median great-circle distance to the nearest training point, on
-ONE shared axis for both spatial-holdout geometries: the block-CV sweep (square
-albers tiles, 5..200 km) and the leave-region-out sweep (contiguous k-means clusters,
-50..3 regions). Block AUC-PR comes from repeated_cv_results.json; the region series
-(distance + AUC-PR) from extrapolation_range_results.json. Only the block-CV median
-distances are computed here (they were never cached), from the seed-42 partition.
+Panel (b) — AUC-PR vs median great-circle distance to the nearest training
+point, on one axis for both spatial-holdout geometries: the block-CV sweep
+(square Albers tiles) and the leave-region-out sweep (k-means clusters). Block
+AUC-PR comes from repeated_cv_results.json; the region series (distance +
+AUC-PR) from extrapolation_range_results.json. Block-CV distances are computed
+here from the seed-42 partition.
 
 Writes output/fig05_cache.npz. Run: poetry run python output/fig05_cache_build.py
 """
@@ -41,7 +39,7 @@ REPCV_JSON = HERE / "repeated_cv_results.json"
 EXTRAP_JSON = HERE / "extrapolation_range_results.json"
 OUT = HERE / "fig05_cache.npz"
 
-OP_KM = tx.OPERATIVE_CELL_KM       # 10
+OP_KM = tx.OPERATIVE_CELL_KM
 N_REPEATS = 20
 SEED0 = 42
 LOGIT_C = 1.0
@@ -64,9 +62,8 @@ def interp_pr(y, proba, scored):
 
 
 def block_distance_stats(lat, lon):
-    """Great-circle distance (km) from each held-out point to its nearest train point,
-    pooled across folds, per block scale (seed-42 partition). Returns median + IQR so
-    the figure can show the DISTRIBUTION each configuration spans, not just its median."""
+    """Median and IQR of great-circle distance (km) from each held-out point to its
+    nearest train point, pooled across folds, per block scale (seed-42 partition)."""
     scales = tx.SWEEP_CELL_KM
     meds, q25s, q75s = [], [], []
     for s in scales:
@@ -96,7 +93,7 @@ def main():
     xgb_factory = tx.xgb_builder(hp)
     logit_factory = tx.logistic_builder({"C": LOGIT_C})
 
-    # ---- Panel (a): PR curves across partitions at 10 km ---------------------
+    # ---- Panel (a): PR curves across partitions ------------------------------
     blocks = scv.assign_blocks(lat, lon, method=tx.BLOCK_METHOD, cell_km=OP_KM)
     xgb_curves, logit_curves, xgb_aps, logit_aps = [], [], [], []
     for r in range(N_REPEATS):

@@ -1,7 +1,5 @@
 """Fetch UAF SNAP ALFRESCO historical spatial outputs for the two ALFRESCO
-features, replacing the lost custom GEE assets
-(`ALFRESCO-historical-flammability`, `ALFRESCO-historical-vegetation-mode`)
-with a first-party, account-independent source.
+features.
 
 Source
 ------
@@ -9,10 +7,9 @@ UAF SNAP, IEM/ALFRESCO Gen_1a relative spatial outputs:
   https://data.snap.uaf.edu/data/IEM/Outputs/ALF/Gen_1a/alfresco_relative_spatial_outputs/
 Both products are GeoTIFF, EPSG:3338, 1 km, nodata = -9999.
 
-Feature -> file (both the HISTORICAL, observed-climate run, matching the
-original "*-historical-*" asset names; verified by inspection 2026-07-13):
+Feature -> file (both from the HISTORICAL, observed-climate run):
 
-  Flammability Index  (continuous, ~0-0.02; sample bilinear/nearest)
+  Flammability Index  (continuous, ~0-0.02)
     relative_flammability/AR5_CMIP5/
       alfresco_relative_flammability_cru_ts40_historical_1900_1999_iem.tif
     -> CRU TS4.0 observed climate, 1900-1999.
@@ -26,11 +23,8 @@ original "*-historical-*" asset names; verified by inspection 2026-07-13):
        Legend: see relative_flammability/.../*_code.rtf and the product
        metadata on the SNAP portal.
 
-Reconstruction note: original derivation params were lost with the
-`ee-abrupt-thaw` project (see [[ee-project-access-lost]] / TASKS T0, T29); these
-historical products are the documented reconstruction (OK for the v2.0.0
-rebuild). Output: settings.DATA/alfresco/*.tif (git-ignored; regenerate by
-re-running). Idempotent: existing files are skipped.
+Output: settings.DATA/alfresco/*.tif (git-ignored; regenerate by re-running).
+Idempotent: existing files are skipped.
 """
 
 import io

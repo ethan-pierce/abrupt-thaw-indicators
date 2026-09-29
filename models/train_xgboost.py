@@ -1,21 +1,17 @@
-"""Nested spatial-CV training & hyperparameter selection for the thaw-mode model.
+"""Nested spatial-CV training and hyperparameter selection for the thaw-mode model.
 
-Rewritten for the methods-cleanup pipeline (TASKS T8-T12). The leaky random
-`train_test_split` + `StratifiedKFold` `GridSearchCV` is replaced by NESTED buffered
-spatial-block CV (see `spatial_cv.py`) run across a sweep of block sizes:
+Nested spatial-block CV (see `spatial_cv.py`) runs across a sweep of block sizes:
 
-  outer folds  -> headline: pooled out-of-fold AUC-PR + across-fold spread   [B4/D11]
-  inner folds  -> hyperparameter selection on pooled-OOF AUC-PR              [C8]
-  block size   -> inference regime: small = interpolation, large = extrapolation [B5a]
+  outer folds  -> headline: pooled out-of-fold AUC-PR + across-fold spread
+  inner folds  -> hyperparameter selection on pooled-OOF AUC-PR
+  block size   -> inference regime: small = interpolation, large = extrapolation
 
-Design choices tied to the likelihood-ratio framing (E13):
-  * `scale_pos_weight = 1` (no imbalance reweighting) so the divided-out prior stays
-    exactly the sample prevalence.                                          [C9/T10]
-  * Selection & headline are AUC-PR (positive = Non-abrupt, class 1); accuracy is not
-    reported at all (meaningless at ~93% prevalence).                       [D11/T12]
+`scale_pos_weight = 1` (no imbalance reweighting) so the prior divided out of the
+susceptibility index is exactly the sample prevalence. Selection and headline metrics
+are AUC-PR (positive = Non-abrupt, class 1); accuracy is meaningless at ~93% prevalence.
 
-This script produces the CV evidence (sweep curve + config). The single operative
-`model.json` is the all-data refit with the selected hyperparameters -> T14 (not here).
+Outputs the sweep curve and results, the CV config, and the operative `model.json`
+refit on all data with the selected hyperparameters.
 """
 
 import os
@@ -47,20 +43,20 @@ from spatial_cv import (assign_blocks, nested_block_folds, buffered_block_folds,
                         pooled_oof_predict)
 
 # --------------------------------------------------------------------------
-# config — named seeds (42 lineage) and the CV protocol [C10/T11]
+# config — named seeds and the CV protocol
 # --------------------------------------------------------------------------
-SPLIT_SEED = 42   # retained for lineage; the random holdout split is retired (B4)
+SPLIT_SEED = 42   # not used for splitting; recorded in cv_config.json
 MODEL_SEED = 42   # XGBoost estimator randomness
 CV_SEED = 42      # block-fold shuffling (deterministic fold regeneration)
 
-BLOCK_METHOD = 'albers_grid'          # equal-area km grid [B5b]
-BUFFER_KM = 0.0                        # empirical: block holdout already removes near-seam leakage [T43]
+BLOCK_METHOD = 'albers_grid'          # equal-area km grid
+BUFFER_KM = 0.0                        # empirical: block holdout already removes near-seam leakage
 N_OUTER = 5
 N_INNER = 5
-SWEEP_CELL_KM = [5, 10, 25, 50, 100, 200]  # interpolation -> extrapolation [B5a]; 5 km = interpolation-ceiling bookend
-OPERATIVE_CELL_KM = 10  # scale for selecting the operative model's hyperparameters (T14)
+SWEEP_CELL_KM = [5, 10, 25, 50, 100, 200]  # interpolation -> extrapolation; 5 km = interpolation-ceiling bookend
+OPERATIVE_CELL_KM = 10  # scale for selecting the operative model's hyperparameters
 
-# Grid widened on principled axes, small enough for nested CV [C10/T11].
+# Small enough for nested CV.
 PARAM_GRID = {
     'max_depth':        [3, 5],
     'min_child_weight': [5, 20],
@@ -68,14 +64,14 @@ PARAM_GRID = {
     'learning_rate':    [0.05, 0.1],
     'n_estimators':     [200, 400],
 }
-# Penalized-logistic baseline regularization grid [D12/T13].
+# Penalized-logistic baseline regularization grid.
 LOGIT_GRID = {'C': [0.01, 0.1, 1.0]}
 
-# Heavy-tailed non-negative features the LINEAR baseline log-compresses in its own
-# Pipeline [T35 bucket-3 / T45]. XGBoost is scale-invariant and sees these raw; the
-# canonical table stays raw. Un-logged, their orders-of-magnitude tails (Upstream Area
-# spans river-basin scales) blow up StandardScaler + the lbfgs matmul on the finite
-# inputs. Precipitation *amounts* only — Precipitation Seasonality is a bounded CV.
+# Heavy-tailed non-negative features the linear baseline log-compresses in its own
+# Pipeline. XGBoost is scale-invariant and sees these raw; the feature table stays raw.
+# Un-logged, their orders-of-magnitude tails (Upstream Area spans river-basin scales)
+# swamp StandardScaler. Precipitation *amounts* only — Precipitation Seasonality is a
+# bounded CV.
 LOG_BASELINE_COLS = (
     'Height Above Nearest Drainage',
     'Upstream Area',
@@ -95,15 +91,13 @@ LOG_BASELINE_COLS = (
 
 
 def _log1p_nonneg(a):
-    """log1p with negatives clipped to 0 (defensive) and NaN preserved for downstream
-    median-imputation — so the transform never emits invalid-value/overflow warnings."""
+    """log1p with negatives clipped to 0; NaN is preserved for median imputation."""
     return np.log1p(np.clip(a, 0.0, None))
 
 
 def _binary_cols(X):
-    """Columns whose (non-NaN) values are all in {0, 1} — the one-hot Land Cover /
-    Vegetation Mode indicators and Yedoma. Detected by value (not name) so it survives
-    renames. These are passed to the baseline WITHOUT standardization (see below)."""
+    """Columns whose non-NaN values are all in {0, 1}: the one-hot Land Cover /
+    Vegetation Mode indicators and Yedoma. Detected by value, not name."""
     out = []
     for c in X.columns:
         u = pd.unique(X[c].dropna())
@@ -113,13 +107,11 @@ def _binary_cols(X):
 
 
 def _log_cont_cols(X):
-    """Continuous columns that get log-compressed (heavy-tailed, non-binary)."""
     binary = set(_binary_cols(X))
     return [c for c in X.columns if c in LOG_BASELINE_COLS and c not in binary]
 
 
 def _other_cont_cols(X):
-    """Continuous columns standardized without a log (everything not log/not binary)."""
     binary = set(_binary_cols(X))
     return [c for c in X.columns if c not in LOG_BASELINE_COLS and c not in binary]
 
@@ -140,8 +132,8 @@ if SMOKE:
 def xgb_builder(params):
     """`builder(params) -> factory(y_train) -> fresh XGBClassifier`.
 
-    `scale_pos_weight = 1` (T10): no imbalance reweighting. Factories take `y_train`
-    to satisfy the `pooled_oof_predict` interface but ignore it (no reweighting).
+    Factories take `y_train` to satisfy the `pooled_oof_predict` interface but ignore
+    it: there is no imbalance reweighting.
     """
     def factory(y_train):
         return xgb.XGBClassifier(
@@ -160,11 +152,9 @@ class _QuietLinearBaseline:
     """fit/predict_proba wrapper scoping `np.errstate` around the L2-logistic baseline.
 
     liblinear's predict-time decision-function matmul trips numpy's FP sticky-flag
-    reporting even on finite inputs — a known benign numpy SIMD false positive (the
-    decision values are finite; verified T45). Ignoring divide/over/invalid here keeps
-    that noise off stderr WITHOUT masking any real non-finite value, and is scoped to the
-    baseline only (XGBoost is untouched). Implements just the `pooled_oof_predict`
-    interface (`fit`, `predict_proba`)."""
+    reporting even on finite inputs — a benign numpy SIMD false positive (the decision
+    values are finite). Ignoring divide/over/invalid keeps that noise off stderr, scoped
+    to the baseline only."""
     _ERR = dict(divide='ignore', over='ignore', invalid='ignore')
 
     def __init__(self, pipe):
@@ -181,20 +171,18 @@ class _QuietLinearBaseline:
 
 
 def logistic_builder(params):
-    """Penalized-logistic baseline; the linear model owns its preprocessing [D12/T35/T45].
+    """Penalized-logistic baseline; the linear model owns its preprocessing.
 
-    Preprocessing is split by column type so the solver sees well-conditioned inputs
-    (raw un-conditioned inputs flood lbfgs with overflow/invalid-matmul warnings — T45):
+    Preprocessing is split by column type so the solver sees well-conditioned inputs:
       - heavy-tailed non-negative continuous (`LOG_BASELINE_COLS`): log1p -> median-impute
         -> standardize (their orders-of-magnitude tails, e.g. Upstream Area, otherwise
         dominate the scale);
       - other continuous: median-impute -> standardize;
       - binary one-hot indicators (Land Cover / Vegetation Mode / Yedoma): **not
         standardized** — dividing a rare 0/1 column by its tiny std inflates its lone `1`
-        to ~100+ sigma, and on near-separable data lbfgs transiently overflows on it.
-        Missing filled with 0 (absent category).
-    `class_weight=None` mirrors the no-reweighting choice (C9). Every step is fit inside
-    each fold's pipeline (via `pooled_oof_predict`), so nothing leaks across the CV split.
+        to ~100+ sigma. Missing filled with 0 (absent category).
+    `class_weight=None` mirrors the no-reweighting choice. Every step is fit inside each
+    fold's pipeline, so nothing leaks across the CV split.
     """
     prep = ColumnTransformer(
         [
@@ -211,11 +199,9 @@ def logistic_builder(params):
     def factory(y_train):
         pipe = Pipeline([
             ('prep', prep),
-            # solver='liblinear' (coordinate descent) not lbfgs: on this near-separable
-            # data lbfgs floods stderr with transient overflow/invalid-matmul warnings
-            # over its ~100 line-search iterations (the final coef is small & finite —
-            # the warnings are benign optimizer noise). liblinear reaches the identical
-            # fit in <10 iterations, warning-free (T45).
+            # liblinear, not lbfgs: on this near-separable data lbfgs floods stderr with
+            # benign transient overflow warnings; liblinear reaches the same fit
+            # warning-free.
             ('clf', LogisticRegression(penalty='l2', C=params['C'], class_weight=None,
                                        solver='liblinear', max_iter=1000,
                                        random_state=MODEL_SEED)),
@@ -225,7 +211,7 @@ def logistic_builder(params):
 
 
 def dummy_builder(strategy):
-    """No-skill baseline family; `strategy` in {'prior','stratified'} [D12]."""
+    """No-skill baseline family; `strategy` in {'prior','stratified'}."""
     def builder(params):  # params ignored (no hyperparameters)
         def factory(y_train):
             return DummyClassifier(strategy=strategy, random_state=MODEL_SEED)
@@ -233,7 +219,7 @@ def dummy_builder(strategy):
     return builder
 
 
-# Estimator families run through the IDENTICAL nested folds: (name, builder, grid).
+# Estimator families run through identical nested folds: (name, builder, grid).
 def make_families():
     return [
         ('xgboost', xgb_builder, PARAM_GRID),
@@ -244,7 +230,6 @@ def make_families():
 
 
 def grid_combos(param_grid):
-    """Yield every hyperparameter combination as a dict (Cartesian product)."""
     keys = list(param_grid)
     for values in itertools.product(*(param_grid[k] for k in keys)):
         yield dict(zip(keys, values))
@@ -264,7 +249,7 @@ def _safe_ap(y_true, proba, mask):
 # selection + sweep
 # --------------------------------------------------------------------------
 def select_hparams(X, y, inner_folds, builder, param_grid):
-    """Pick the grid combo maximizing pooled-OOF AUC-PR over the inner folds [C8/T9]."""
+    """Pick the grid combo maximizing pooled-OOF AUC-PR over the inner folds."""
     yv = np.asarray(y)
     best_combo, best_ap = None, -np.inf
     for combo in grid_combos(param_grid):
@@ -315,7 +300,7 @@ def run_family(X, y, outer_folds, builder, param_grid):
 
 
 def run_block_size(X, y, lat, lon, cell_km, families):
-    """Nested spatial CV at one block size, all families through the SAME folds [T8/T13]."""
+    """Nested spatial CV at one block size, all families through the same folds."""
     blocks = assign_blocks(lat, lon, method=BLOCK_METHOD, cell_km=cell_km)
     # Materialize once so every family sees identical outer/inner folds.
     outer_folds = list(nested_block_folds(lat, lon, blocks, n_splits_outer=N_OUTER,
@@ -330,7 +315,7 @@ def run_block_size(X, y, lat, lon, cell_km, families):
 # reproducibility check + persistence
 # --------------------------------------------------------------------------
 def assert_folds_reproducible(lat, lon):
-    """Regenerating folds from the same seeds yields identical splits [T11]."""
+    """Regenerating folds from the same seeds yields identical splits."""
     blocks = assign_blocks(lat, lon, method=BLOCK_METHOD, cell_km=SWEEP_CELL_KM[0])
     def signature():
         return [(tuple(otr.tolist()), tuple(ote.tolist()))
@@ -341,7 +326,7 @@ def assert_folds_reproducible(lat, lon):
 
 
 def cv_config_dict():
-    """The CV protocol + seeds; single source of truth for config + manifest [B6/T11]."""
+    """The CV protocol + seeds; single source of truth for config + manifest."""
     return {
         'block_method': BLOCK_METHOD,
         'sweep_cell_km': SWEEP_CELL_KM,
@@ -357,7 +342,7 @@ def cv_config_dict():
 
 
 def write_cv_config():
-    """Persist the CV config + seeds for deterministic fold regeneration [B6/T11]."""
+    """Persist the CV config + seeds for deterministic fold regeneration."""
     path = MODELS / 'cv_config.json'
     path.write_text(json.dumps(cv_config_dict(), indent=2))
     return path
@@ -413,12 +398,11 @@ def write_run_manifest(selected, path=None):
 
 
 def refit_operative_model(X, y, lat, lon, model_path=None, cell_km=None):
-    """Select operative hyperparameters, refit on ALL data, save model.json [B6/T14].
+    """Select operative hyperparameters, refit on all data, save model.json.
 
-    Selection uses single-level buffered block CV over all data at `cell_km` (the
-    interpolation scale that the statewide map serves), maximizing pooled-OOF AUC-PR.
-    This is not double-dipping: the honest performance estimate is the nested sweep
-    (T8); this only picks the final hyperparameters. The refit is on every row, and
+    Selection uses single-level block CV over all data at `cell_km` (the interpolation
+    scale the statewide map serves), maximizing pooled-OOF AUC-PR. The performance
+    estimate comes from the nested sweep; this only picks the final hyperparameters.
     `save_model` embeds `learner.feature_names` for predict.py / shap_values.py.
     """
     cell_km = OPERATIVE_CELL_KM if cell_km is None else cell_km
@@ -441,7 +425,7 @@ def refit_operative_model(X, y, lat, lon, model_path=None, cell_km=None):
 
 
 def plot_sweep_curve(results, family_names, prevalence, path):
-    """AUC-PR vs block size per family, with spread + prevalence floor [D11/T12/T13]."""
+    """AUC-PR vs block size per family, with spread + prevalence floor."""
     cells = [r['cell_km'] for r in results]
     fig, ax = plt.subplots(figsize=(9, 6))
     for name in family_names:
@@ -471,7 +455,7 @@ def plot_sweep_curve(results, family_names, prevalence, path):
 def main():
     feats = pd.read_csv(DATA / 'features_clean.csv')
 
-    # Quarantine coordinates (B6/T7): carried for spatial CV, never in the model matrix.
+    # Coordinates are carried for spatial CV, never in the model matrix.
     X = feats.drop(['Class', 'Latitude', 'Longitude'], axis=1)
     y = feats['Class']
     coords = feats[['Latitude', 'Longitude']]
@@ -516,7 +500,7 @@ def main():
                   f"train Non-abrupt {r['train_non_abrupt']}/{r['train_n']}, "
                   f"fold AUC-PR {r['fold_ap']:.4f}")
 
-    # Headline curve + machine-readable sweep results [D11/T12/T13].
+    # Headline curve + machine-readable sweep results.
     curve_path = OUTPUT / 'aucpr_vs_blocksize.png'
     plot_sweep_curve(results, family_names, prevalence, curve_path)
     print(f"\nWrote AUC-PR vs block-size curve: {curve_path}")
@@ -526,14 +510,14 @@ def main():
     res_path.write_text(json.dumps(summary, indent=2, default=float))
     print(f"Wrote sweep results: {res_path}")
 
-    # Operative model: select hyperparameters + refit on ALL data -> model.json [T14].
+    # Operative model: select hyperparameters + refit on all data -> model.json.
     combo, ap = refit_operative_model(X, y, lat, lon)
     print(f"\nOperative model refit on all {len(y)} rows "
           f"(selection AUC-PR {ap:.4f} @ {OPERATIVE_CELL_KM} km):")
     print(f"  selected hyperparameters: {combo}")
     print(f"  saved: {MODELS / 'model.json'} and {MODELS / 'selected_hparams.json'}")
 
-    # Reproducibility manifest beside model.json [H20.1/T16].
+    # Reproducibility manifest beside model.json.
     selected = {'hyperparameters': combo, 'selection_auc_pr': ap,
                 'operative_cell_km': OPERATIVE_CELL_KM}
     manifest_path = write_run_manifest(selected)

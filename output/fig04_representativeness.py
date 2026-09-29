@@ -1,26 +1,14 @@
-"""Figure 4 — Representativeness / sampling-bias honesty gate (L4c).
+"""Figure 4 — Representativeness of the training sample.
 
-The training sample is lake-/road-biased: points sit systematically in flatter,
-lower, wetter, more valley-bottom locations than the statewide grid the model
-scores. This figure states that plainly, per feature, as the marginal
-distribution of the **training sample** against the **in-AOA statewide grid**
-(2,589,808 cells @ DI<=0.27) — the surface the product actually reports on.
+Compares, per feature, the marginal distribution of the training sample against
+the in-AOA statewide grid the model scores. The training sample is lake- and
+road-biased, so it sits in flatter, lower, wetter locations than the grid. The
+AOA measures coverage, not density: a sample can span every covariate's range
+while over-representing part of it, and this figure shows that density shift.
 
-It is a *scope* statement, not a defect: the marginal shift forbids prevalence /
-calibrated-probability / single-threshold claims (hence the prior-free
-log-evidence index, L4a), while the discriminative signal itself generalizes
-across space (Fig 5 / L3). Coverage (the AOA, Fig 3b) and density
-(this figure) are different things — a sample can span the full range of every
-covariate (so every cell is in-AOA) while wildly over-representing part of that
-range. The AOA cannot see that; this figure is where it is shown.
-
-Cherry-picked, deliberately: the seven features that carry the bias story
-(flat / low-drainage / wet / tundra-not-forest). Distributions and median values
-only — no semi-qualitative annotations; the reader draws the conclusion.
-
-Train side: features_clean.csv (exact model input) via diagnostics/_data.load.
-Grid side: the FULL in-AOA distribution from prediction_data.nc masked by
-aoa.nc (DI <= threshold) — not the matched-cell sample of the parity gate.
+Train side: features_clean.csv via diagnostics/_data.load.
+Grid side: the full in-AOA distribution from prediction_data.nc masked by
+aoa.nc (DI <= threshold).
 
 Writes output/04_representativeness.{pdf,png}.
 """
@@ -57,9 +45,8 @@ RIDGE_H = 0.9
 def sig2(v, n=2):
     """v to n significant figures in fixed (non-scientific) notation.
 
-    2 sig figs is the honest precision here: the training sample (n~19,288)
-    caps a fraction near 0.08 at a standard error of ~0.002, so a third digit
-    would be noise. Applied to every numeric label so the figure is consistent.
+    Two significant figures matches the sample's precision: a fraction near
+    0.08 from ~19k points has a standard error of ~0.002.
     """
     from math import floor, log10
     if not np.isfinite(v) or v == 0:
@@ -71,9 +58,8 @@ TRAIN_COLOR = "#009E73"   # green — the training sample (under scrutiny)
 GRID_COLOR = "#CC79A7"    # reddish-purple — the in-AOA statewide grid (reference)
 
 # Continuous features: (column, axis label, arcsinh linear-threshold, raw x-ticks).
-# arcsinh(v / linthresh) is a symlog-consistent transform — linear near 0 (so the
-# valley-bottom pile-up at ~0 stays honest and zeros map to 0 exactly), log-like in
-# the heavy tail. No additive fudge factor.
+# arcsinh(v / linthresh) is linear near 0 (zeros map to 0 exactly) and log-like
+# in the heavy tail.
 CONTINUOUS = [
     ("Slope", "Slope (°)", 1.0, [0, 1, 3, 10, 30]),
     ("Height Above Nearest Drainage", "Height above nearest drainage (m)", 1.0,
@@ -147,13 +133,10 @@ def continuous_panel(ax, col, xlabel, lt, ticks, train_vals, grid_vals, letter):
     tv = np.asarray(train_vals, float); tv = tv[np.isfinite(tv)]
     gv = np.asarray(grid_vals, float); gv = gv[np.isfinite(gv)]
 
-    # Medians describe the FULL populations — compute them before any subsampling.
     grid_median = float(np.median(gv))
     train_median = float(np.median(tv))
 
-    # Subsampling exists only to keep the grid KDE tractable; it must never feed a
-    # reported statistic (a 150k draw put the HAND median at 14.5 -> "14" while the
-    # 2.58M-cell population is 14.6 -> "15").
+    # Subsample only for the KDE; reported medians use the full population.
     gv_kde = gv
     if gv_kde.size > GRID_SUBSAMPLE:
         gv_kde = RNG.choice(gv_kde, GRID_SUBSAMPLE, replace=False)

@@ -1,44 +1,31 @@
 """Materialize the four Daymet V4 reductions to a local raster, reproducibly.
 
-Why this exists (TASKS T30)
----------------------------
 ``Mean Annual SWE`` and the ``Trend in SWE / precipitation / temperature``
 features are deep temporal reductions of daily Daymet V4 (~30 years x ~365
 daily images, see ``gee_features``). Earth Engine evaluates such graphs lazily
 with no persisted intermediate, so point-sampling them at all 19,540 ThawDB
-points re-runs the whole reduction per point and hangs (SWE killed >10 min at
-1 km; the trends never completed). This is the same shape as the FIRMS max.
+points re-runs the whole reduction per point and hangs.
 
-The fix is to **compute the reduction once per output tile and write it to a
-local raster**, then have the pipeline read that raster cheaply. We pull the
-grid with ``ee.data.computePixels`` — the high-volume raster endpoint, sibling
-of the ``ee.data.computeFeatures`` call in ``ee_sampling.py`` — one tile at a
-time. Each tile computes the reduction once over its own footprint (the bounded
-"compute once over the footprint" pattern the datacube's ``sampleRectangle``
-already relies on); a tile that exceeds the request/compute limit is split into
-quadrants and retried. Tiles are stitched on a single pre-defined pixel grid, so
-alignment is exact by construction.
+Instead, **compute the reduction once per output tile and write it to a local
+raster**, then have the pipeline read that raster cheaply. The grid is pulled
+with ``ee.data.computePixels`` — the high-volume raster endpoint — one tile at a
+time. Each tile computes the reduction once over its own footprint; a tile that
+exceeds the request/compute limit is split into quadrants and retried. Tiles are
+stitched on a single pre-defined pixel grid, so alignment is exact by
+construction.
 
-Asset-free contract (settings.py / TASKS T0)
---------------------------------------------
-No custom uploaded asset is involved — the reduction is computed on the fly from
-public catalog Daymet V4 and streamed straight to disk. (An intermediate GEE
-asset was tried first but the compute project ``abrupt-thaw-indicators`` has no
-asset home; ``geedim``'s tiled downloader is dependency-incompatible with the
-pinned ``earthengine-api``/``rasterio`` stack — hence this direct
-``computePixels`` path.) The pipeline's source of truth is the downloaded local
-GeoTIFF (git-ignored, under ``data/daymet/``), sampled by BOTH tracks like the
-other LOCAL rasters: ``build_feature_table.py`` via ``local_rasters.sample_points``
-and ``build_prediction_data.py`` via ``sample_local`` at cell centres. This
-honors the ``settings.py`` "no ASSET_ROOT / no runtime custom-asset dependency"
-guardrail.
+The reduction is computed on the fly from public catalog Daymet V4 and streamed
+straight to disk. The pipeline's source of truth is the downloaded local GeoTIFF
+(git-ignored, under ``data/daymet/``), sampled by BOTH tracks like the other
+LOCAL rasters: ``build_feature_table.py`` via ``local_rasters.sample_points``
+and ``build_prediction_data.py`` via ``sample_local`` at cell centres.
 
 Reproducibility
 ---------------
 The reductions come verbatim from ``gee_features`` (SWE mean + three
 ``linearFit`` slopes over ``TREND_YEARS`` = 1991-2020). Grid: EPSG:3338 (Alaska
 Albers) at Daymet's native 1 km, snapped to a 1 km origin and covering
-``data/roi.geojson`` (the datacube domain). Re-running reproduces the same
+union(datacube ROI, ThawDB points) + ``MARGIN``. Re-running reproduces the same
 raster; an existing local file is skipped, so it is safe to re-run.
 
 Band order (1-indexed for rasterio; see BANDS):
@@ -67,9 +54,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA, EE_PROJECT
 import gee_features
 
-# --------------------------------------------------------------------------
-# Derivation parameters (single source of truth for the materialized raster).
-# --------------------------------------------------------------------------
 CRS = 'EPSG:3338'          # Alaska Albers, matches the other LOCAL rasters
 SCALE = 1000               # Daymet V4 native resolution (m)
 NODATA = -9999.0           # masked (no-Daymet) pixels; local_rasters maps -> NaN

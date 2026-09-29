@@ -1,27 +1,19 @@
 """Per-feature OOF SHAP cache for Figure 7 (mechanism / dependence shapes).
 
-Figure 7 needs per-FEATURE SHAP paired with the underlying feature VALUES, so it
-can draw family-summed dependence shapes (family-sum SHAP on y vs. the family's
-leading member's value on x) and decompose the Land Cover family per class.
+Figure 7 needs per-feature SHAP paired with the underlying feature values, to draw
+family-summed dependence shapes and decompose the Land Cover family per class. The
+grouped-family cache (output/shap_grouped_matrix.npz) keeps only family-summed SHAP,
+so this script re-runs the same OOF machinery (pooled_oof_shap) and persists the full
+per-feature arrays.
 
-The grouped-family cache (output/shap_grouped_matrix.npz, from shap_groups.py)
-keeps only the family-SUMMED SHAP — it discards the per-column values and the
-feature data. So this script re-runs the SAME canonical OOF machinery
-(pooled_oof_shap: per-fold refit + held-out TreeSHAP, Abrupt-oriented margin)
-and persists the full per-feature arrays instead.
+Same inputs, CV config, hyperparameters, and seed as shap_groups.py, so the family
+sums formed downstream equal the columns of shap_grouped_matrix.npz. Family
+memberships are not stored here; Fig 7 reads them from output/shap_families.json.
 
-Consistency guarantees (so Fig 7 lines up with Fig 6):
-  * Same inputs (data/features_clean.csv), same CV config + selected hparams,
-    same seed  -> identical `scored` set and identical SHAP values.
-  * Family memberships are NOT recomputed here; Fig 7 reads them from
-    output/shap_families.json (written by shap_groups.py), the single source of
-    truth. This cache only supplies per-feature (values, data) so the family sums
-    it forms downstream equal the columns of shap_grouped_matrix.npz exactly.
-
-Run after the operative model / feature set is final:
     poetry run python models/shap_mechanism_cache.py
-Writes output/shap_mechanism_cache.npz. Multi-minute run (fold-refit TreeSHAP).
-SHAP_MECH_SMOKE=1 subsamples for a fast wiring check (writes to output/_smoke/).
+
+Writes output/shap_mechanism_cache.npz (multi-minute). SHAP_MECH_SMOKE=1 subsamples
+for a fast wiring check (writes to output/_smoke/).
 """
 
 import os

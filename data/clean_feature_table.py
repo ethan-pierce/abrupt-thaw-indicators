@@ -1,4 +1,4 @@
-"""feats the feature table."""
+"""Clean the dirty feature table into model-ready training data."""
 
 import sys
 from pathlib import Path
@@ -9,11 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA
 
 feats = pd.read_csv(DATA / 'features_dirty.csv')
-feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # Abrupt = 0 (majority class), Non-abrupt = 1 (minority class)
-# Fire (T36): the FIRMS Maximum Fire Temperature / Fire Detected pair is replaced
-# upstream by the MODIS MCD64A1 fire-history features (Time Since Last Fire, Burn
-# Count). Those pass through here untouched as continuous columns — nothing to
-# derive or fill (XGBoost routes any NaN natively).
+feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # 0 = Abrupt (majority), 1 = Non-abrupt (minority)
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
 feats = feats.drop('DOI', axis = 1)
@@ -25,20 +21,14 @@ feats = feats.drop('Imagery', axis = 1)
 feats = feats.drop('ImageryDates', axis = 1)
 feats = feats.drop('ImageryResolution_meters', axis = 1)
 
-# SNAP projected-climate features removed 2026-07-13 (see PIPELINE.md): a 2090s
-# future-scenario projection cannot causally drive a presently-observed thaw label
-# (only a spatial proxy), and recast as a current-period trend it would duplicate
-# the Daymet observed trend already in the model. `fetch_snap_projections.py` was
-# retired and build_feature_table.py no longer samples them, so a fresh dirty table
-# won't contain these — but drop them defensively here so a stale dirty table can't
-# reintroduce phantom features the datacube (build_prediction_data.py) never builds.
+# Projected-climate columns are excluded from the model; drop them if a dirty table has them.
 for _snap in ['Projected summer temperature change', 'Projected winter temperature change',
               'Projected precipitation change']:
     if _snap in feats.columns:
         feats = feats.drop(_snap, axis = 1)
 
 label = ['Class']
-fillna = []  # no NaN-filling: XGBoost routes missing values natively (T36 dropped the last filled column)
+fillna = []  # XGBoost routes missing values natively
 categorical = ['Land Cover', 'Vegetation Mode']
 land_cover_labels = {
     0: 'NaN',
@@ -105,38 +95,24 @@ for variable in ['Soil Organic Carbon', 'Nitrogen', 'Bulk Density', 'Sand', 'Sil
     for depth in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
         feats.drop(variable + ' (' + depth + ')', axis = 1, inplace = True)
 
-# Compositional closure (T35): Sand + Silt + Clay sum to a constant (~1000 g/kg),
-# so one component is exactly redundant. Drop Silt, keeping Sand + Clay — the
-# best-conditioned pair on this ROI (corr(Sand,Clay)=+0.31; the discarded Sand-Silt
-# axis is near-mirror at -0.945). No information is lost (Silt = const - Sand -
-# Clay, recoverable), and it spares SHAP from splitting credit across three
-# collinear columns. Applied here canonically; the datacube never builds Silt
-# because it gates soil layers on membership in the model's feature list.
+# Sand + Silt + Clay sum to a constant, so one is redundant. Drop Silt: Sand + Clay
+# is the best-conditioned pair here (corr +0.31 vs Sand-Silt -0.945), and it keeps
+# SHAP from splitting credit across three collinear columns.
 for depth in ['0-30 cm', '30-200 cm']:
     feats.drop('Silt (' + depth + ')', axis = 1, inplace = True)
 
-# If preparing for XGBoost, no need to drop NaN values
-# Unless using SMOTE
-# feats = feats.dropna(axis = 0, how = 'any')
-
-# Drop only the NaN one-hot columns — structural cleanup, not feature selection.
-# Retrain #1 keeps the full feature set; rigorous paring (VIF / collinearity /
-# coverage) is a separate documented protocol applied afterward (README to-do #15).
 if 'Land Cover (NaN)' in feats.columns:
     feats.drop('Land Cover (NaN)', axis = 1, inplace = True)
 if 'Vegetation Mode (NaN)' in feats.columns:
     feats.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 
-# Carry Latitude/Longitude through as NON-MODEL columns (B6): spatial CV needs them
-# to build blocks/buffers, and the trainer quarantines them out of X with a hard
-# assertion (T7). Leakage is prevented at model-fit time, not by dropping here.
-# Dedup in FEATURE space only (A3/B6): two sites with identical features but
-# different coordinates are the same training example, so exclude Latitude/Longitude
-# from the duplicate key. keep='first' retains one representative (its coords survive).
+# Latitude/Longitude pass through as non-model columns for spatial CV; the trainer
+# excludes them from X. Dedup ignores them: identical features at different sites
+# are the same training example.
 feature_cols = [c for c in feats.columns if c not in ('Latitude', 'Longitude')]
-n_dropped = int(feats.duplicated(subset = feature_cols).sum())                     # rows removed by dedup
-n_in_dup_groups = int(feats.duplicated(subset = feature_cols, keep = False).sum())  # rows participating in dup groups
-n_groups = n_in_dup_groups - n_dropped                                             # distinct feature-vectors with dups
+n_dropped = int(feats.duplicated(subset = feature_cols).sum())
+n_in_dup_groups = int(feats.duplicated(subset = feature_cols, keep = False).sum())
+n_groups = n_in_dup_groups - n_dropped
 print(f'Feature-space dedup: {n_in_dup_groups} rows in {n_groups} duplicate groups '
       f'-> dropping {n_dropped}, keeping one representative each')
 feats = feats.drop_duplicates(subset = feature_cols, keep = 'first')

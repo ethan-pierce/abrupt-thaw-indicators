@@ -1,14 +1,7 @@
-"""Shared loader for the verify-ml diagnostics suite.
+"""Load the model-input matrix with each row's Latitude/Longitude kept as metadata.
 
-Reconstructs the exact model-input matrix the training pipeline sees
-(`features_clean.csv`) *while retaining each row's Latitude/Longitude* so the
-spatial-leakage probes can group points by location. Coordinates are NEVER
-returned inside X — they are metadata only, exactly as the pipeline intends.
-
-The reconstruction mirrors `data/clean_feature_table.py` step for step and then
-asserts it matches the committed `features_clean.csv` (row count + class
-balance + feature-column set), so the probes are provably testing the real
-pipeline and not a look-alike.
+Mirrors `data/clean_feature_table.py` and asserts the result matches
+`features_clean.csv`. Coordinates are never returned inside X.
 """
 
 import sys
@@ -43,16 +36,10 @@ def _clean_with_coords():
     feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)
     feats = feats.drop(['ThawType'] + DROP_TEXT, axis=1)
 
-    # SNAP projected-climate features removed 2026-07-13 (see PIPELINE.md); drop
-    # defensively so a stale dirty table can't reintroduce them, matching clean_feature_table.py.
     for _snap in ['Projected summer temperature change', 'Projected winter temperature change',
                   'Projected precipitation change']:
         if _snap in feats.columns:
             feats = feats.drop(_snap, axis=1)
-
-    # T36: fire is now the MODIS MCD64A1 history pair (Time Since Last Fire, Burn
-    # Count), continuous columns that pass through untouched — no fill, matching
-    # clean_feature_table.py (the retired FIRMS Maximum Fire Temperature fill is gone).
 
     for col, labels in [('Land Cover', LAND_COVER_LABELS), ('Vegetation Mode', VEGETATION_MODE_LABELS)]:
         for cat in feats[col].unique():
@@ -67,7 +54,6 @@ def _clean_with_coords():
         for d in ['0-5 cm', '5-15 cm', '15-30 cm', '30-60 cm', '60-100 cm', '100-200 cm']:
             feats.drop(f'{v} ({d})', axis=1, inplace=True)
 
-    # Compositional closure: drop Silt, keep Sand + Clay, exactly as clean_feature_table.py (T35).
     for d in ['0-30 cm', '30-200 cm']:
         feats.drop(f'Silt ({d})', axis=1, inplace=True)
 
@@ -75,7 +61,7 @@ def _clean_with_coords():
         if c in feats.columns:
             feats.drop(c, axis=1, inplace=True)
 
-    # Keep coords aside, dedup on feature+Class columns exactly as the pipeline does.
+    # Dedup on feature + Class columns, as the pipeline does.
     coords = feats[['Latitude', 'Longitude']].copy()
     feats = feats.drop(['Longitude', 'Latitude'], axis=1)
     dedup_mask = ~feats.duplicated(keep='first')
@@ -85,19 +71,10 @@ def _clean_with_coords():
 
 
 def load(verify=True):
-    """Return (X, y, lat, lon) — X/y identical to the pipeline; lat/lon are metadata.
-
-    The current features_clean.csv may carry a *pared* subset of the columns this
-    reconstruction produces (the full-set restore is applied at retrain time). We
-    therefore align X to whatever columns features_clean.csv actually contains, and
-    assert row-for-row equality on those, so the probes test the live model input.
-    """
+    """Return (X, y, lat, lon), with X restricted to the columns in features_clean.csv."""
     feats, coords = _clean_with_coords()
     clean = pd.read_csv(DATA / 'features_clean.csv')
 
-    # Latitude/Longitude are carried through features_clean.csv as NON-MODEL
-    # metadata (T6); the reconstruction holds them aside in `coords`, so exclude
-    # them from the feature column-set/value asserts and verify them separately.
     META = {'Latitude', 'Longitude'}
 
     if verify:
@@ -115,7 +92,6 @@ def load(verify=True):
             if not np.allclose(recon_coord, clean[c].values, equal_nan=True):
                 raise AssertionError(f"coordinate mismatch in column {c!r}")
 
-    # Use the pipeline's own column set (features_clean minus Class and metadata).
     feature_cols = [c for c in clean.columns if c not in ({'Class'} | META)]
     X = feats[feature_cols].copy()
     y = feats['Class'].astype(int).copy()

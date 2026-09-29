@@ -84,9 +84,8 @@ def to_rgba(codes_warp, disp, other_code, mask_code):
 
 
 def graticule_labels(ax, extent):
-    """Subtle edge labels for the fig02 graticule (meridians -165/-155/-145°W,
-    parallels 60/65/70°N). Placed where each line crosses the frame — bottom for
-    meridians, left for parallels — so the journal has its lon/lat reference."""
+    """Edge labels for the fig02 graticule, placed where each meridian crosses the
+    bottom frame and each parallel crosses the left frame."""
     xmin, xmax, ymin, ymax = extent
     tf = Transformer.from_crs("EPSG:4326", fig03.DST_CRS, always_xy=True)
     lat_s = np.linspace(45.0, 78.0, 500)

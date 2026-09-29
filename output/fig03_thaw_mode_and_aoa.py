@@ -1,33 +1,21 @@
-"""Figure 3 — Abrupt-thaw susceptibility map + AOA reliability panel (L5 + L4b).
+"""Figure 3 — Abrupt-thaw susceptibility map + AOA reliability panel.
 
-EXPLORATORY VARIANT — deliberately departs from figstyle/STYLE.md's diverging
-vik + binary-AOA convention (2026-07-20 critique): (a) uses a single-hue
-sequential map so the wide range of negative (non-abrupt-favoring) values
-doesn't collapse into one saturated color across most of the state; (b) shows
-the continuous dissimilarity index (``aoa.nc``'s ``DI``), not the binary
-inside/outside flag, so the reliability panel has real spatial structure
-instead of a flat gray field. Colorbars are built locally in this script
-(figstyle.py is shared across every figure and is not touched here).
+(a) Statewide log-evidence susceptibility surface (``data/susceptibility.nc``)
+on a single-hue sequential map, so the wide range of non-abrupt-favoring values
+stays graded rather than saturating. (b) The Area-of-Applicability
+dissimilarity index (``data/aoa.nc``, Meyer & Pebesma 2021 rank-CDF DI), graded
+inside the AOA and flat beyond its threshold.
 
-The headline product. (a) statewide log-evidence susceptibility surface
-(``data/susceptibility.nc``); (b) the Area-of-Applicability dissimilarity
-index (``data/aoa.nc``, Meyer & Pebesma 2021 rank-CDF DI), with the AOA
-threshold contoured on top — merged in as a panel so the product is never
-shown without its reliability caveat (STYLE.md).
-
-Both source rasters are regular EPSG:4326 grids (1 km GEE reproject, T37) with
-per-cell lon/lat carried as coordinates; this script derives their affine
-transform from those coordinates and warps into Alaska Albers (EPSG:3338) to
-match Fig 2's basemap treatment, rather than reusing the flat, distorted
-lon/lat imshow the modeling scripts (predict.py / aoa.py) draw for their own
-diagnostic purposes.
+Both source rasters are regular EPSG:4326 grids (1 km GEE reproject) with
+per-cell lon/lat carried as coordinates; the affine transform is recovered from
+those coordinates and the rasters are warped into Alaska Albers (EPSG:3338) to
+match Fig 2.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 from affine import Affine
@@ -56,10 +44,6 @@ PAD_KM = 40.0                  # context padding around the data's own footprint
 OCEAN = "#ffffff"
 LAND_EDGE = "#666666"
 
-# Crameri Scientific Colour Maps only (house rule) — sequential single-hue map
-# for log-evidence (pale = strongly non-abrupt-favoring, dark = strongly
-# abrupt-favoring), deliberately NOT vik/diverging, so the whole range south of
-# the Brooks Range reads as graded rather than "all equally blue".
 def truncate(cmap, lo, hi=1.0, n=256):
     """Drop the near-white end so low values stay distinct from the white unanalyzed background."""
     return LinearSegmentedColormap.from_list(f"{cmap.name}_trunc", cmap(np.linspace(lo, hi, n)), N=n)
@@ -68,10 +52,6 @@ def truncate(cmap, lo, hi=1.0, n=256):
 SUSCEPTIBILITY_CMAP = truncate(cmc.lajolla_r, 0.12)    # reversed: pale = non-abrupt-favoring, dark = abrupt-favoring
 DI_CMAP = truncate(cmc.oslo_r, 0.2)                    # mono-hued blue: pale = reliable, dark = extrapolating
 
-# Panel b grades the continuous DI inside the AoA and paints a single solid red beyond the
-# applicability threshold read from aoa.nc (the 99.9th percentile of the CV training DI =
-# 0.27, a feature-space envelope, NOT a skill limit -- OOF AUC-ROC stays 0.97-0.99 with no
-# decay across the whole in-sample DI range; see diagnostics/aoa_threshold_decision.md).
 OUTSIDE_AOA_COLOR = "#e34a33"
 
 
@@ -162,11 +142,8 @@ def panel_a_susceptibility(fig, ax, cax, le_warp, extent):
     norm = Normalize(vmin=vmin, vmax=vmax)
     im = ax.imshow(le_warp, extent=extent, origin="upper", interpolation="nearest",
                    cmap=SUSCEPTIBILITY_CMAP, norm=norm, zorder=2, rasterized=True)
-    # NOTE: a contour(levels=[0]) was tried here to mark the neutral boundary, but
-    # the field is noisy at pixel scale in the high-susceptibility north slope (sign
-    # flips between adjacent 1-km cells), so the contour degenerates into thousands
-    # of tiny segments that paint the region solid black. The colorbar's "0" tick
-    # carries that information instead.
+    # No zero contour: the sign flips between adjacent 1-km cells on the north
+    # slope, so a contour fragments into noise. The colorbar's "0" tick marks it.
     cbar = fig.colorbar(im, cax=cax, orientation="horizontal")
     cbar.set_ticks([vmin, 0.0, vmax])
     cbar.set_ticklabels([f"{vmin:.1f}", "0", f"{vmax:.1f}"])
@@ -178,15 +155,7 @@ def panel_a_susceptibility(fig, ax, cax, le_warp, extent):
 
 
 def panel_b_di(fig, ax, cax, di_warp, extent, threshold):
-    """Continuous DI graded inside the AoA; a single solid red beyond `threshold`.
-
-    Above the applicability threshold the model is extrapolating past the training
-    feature envelope, so the DI magnitude there is not a reliability the reader should
-    grade -- it collapses to one 'outside AoA' colour. Inside, the oslo_r ramp still
-    shows how close each cell sits to the training data. A single colormap carries both
-    (a blue ramp for [0, threshold], then a flat red for everything above), so the
-    colorbar communicates the design without any per-pixel contour to over-read.
-    """
+    """Continuous DI graded inside the AoA; a single solid red beyond `threshold`."""
     # Colorbar geometry only: seat the threshold at ~62% of the bar so the red "outside"
     # block has room for its label. `vmax` sets the ramp scale, not a data cap -- every
     # cell with DI > threshold is solid red regardless of how large its DI actually is.
@@ -216,7 +185,7 @@ def panel_b_di(fig, ax, cax, di_warp, extent, threshold):
 
 def main():
     figstyle.use()
-    log_evidence, di, threshold, lon, lat, valid = load_grids()  # threshold from aoa.nc (0.27)
+    log_evidence, di, threshold, lon, lat, valid = load_grids()
     src_tf = source_transform(lon, lat, valid)
     extent_box, (th, tw), dst_tf = dest_grid(lon, lat, valid)
 

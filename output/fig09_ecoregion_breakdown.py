@@ -1,25 +1,11 @@
-"""Figure 9 — Ecoregion breakdown (L7, §5.3 "Landscape-scale pattern").
+"""Figure 9 — Abrupt-thaw susceptibility summarized by EPA Level III ecoregion.
 
-A descriptive translation of the abrupt-thaw susceptibility surface into named
-physiographic regions (EPA Level III Ecoregions of Alaska). NOT a validation and
-NOT causal: it makes the statewide log-evidence>0 fraction legible in the spatial
-vocabulary a permafrost scientist thinks in.
+  (a) choropleth of the kept ecoregions, filled by median log-evidence, numbered 1-N;
+  (b) per-region violins of in-AOA log-evidence, sorted by the fraction of cells
+      with log-evidence > 0, with a Level-I group tab on each row.
 
-Two linked panels on one shared vik (log-evidence) scale:
-  (a) a choropleth of the kept ecoregions, filled by each region's MEDIAN
-      log-evidence, edged by its Level-I physiographic group, numbered 1-N;
-  (b) a ranked column of per-cell log-evidence distributions (one gradient-filled
-      violin per region), sorted by abrupt-favoring fraction (share of in-AOA
-      cells with log-evidence > 0), with the median as a tick and the fraction
-      annotated. Same 1-N key and Level-I colour tab tie each row to its polygon.
-
-Scope: in-AOA cells only; regions with < 50% permafrost coverage are dropped
-(they are majority non-permafrost, so a region-level fraction would be computed
-over an unrepresentative sliver). Every kept region has >= 80% AOA coverage, so
-AOA coverage is stated in the caption rather than drawn.
-
-Class encoding (fixed): 0 = Abrupt (majority), 1 = Non-abrupt (minority).
-Index is prior-free log-evidence (> 0 favors abrupt), never a probability.
+Regions with < 50% permafrost coverage are dropped, since their fraction would
+cover an unrepresentative sliver.
 """
 from __future__ import annotations
 
@@ -30,7 +16,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from affine import Affine  # noqa: F401  (documents the transform contract)
 from matplotlib.patches import Patch, PathPatch
 from matplotlib.path import Path as MplPath
 from rasterio.features import rasterize
@@ -78,12 +63,7 @@ NAME_ABBR = {
 # Data: assign every in-AOA datacube cell to a Level III ecoregion
 # --------------------------------------------------------------------------- #
 def load_cell_regions():
-    """Return (log_evidence, in_AOA mask, region-code raster, code->L3name map).
-
-    The datacube is a regular EPSG:4326 grid carrying per-cell lon/lat; recover
-    its affine (fig03.source_transform) and rasterize the ecoregion polygons onto
-    that exact grid, so each cell inherits the region whose polygon covers it.
-    """
+    """Rasterize the ecoregion polygons onto the datacube's EPSG:4326 grid."""
     le_ds = xr.open_dataset(DATA / "susceptibility.nc")
     aoa_ds = xr.open_dataset(DATA / "aoa.nc")
     log_evidence = le_ds["log_evidence"].values
@@ -147,12 +127,8 @@ def region_stats(log_evidence, valid, inside, region, inv, eco):
 # Rendering
 # --------------------------------------------------------------------------- #
 def _gradient_violin(ax, le, ypos, width, norm, cmap, rng, cap=40000):
-    """Horizontal violin at `ypos`, filled with a log-evidence gradient.
-
-    The fill maps screen-x (== log-evidence value) through `norm`, clipped to the
-    KDE body, so the pale centre sits exactly at 0 and the warm mass to the right
-    of 0 *is* the abrupt-favoring fraction, seen not just labelled.
-    """
+    """Horizontal violin at `ypos`, filled with a log-evidence gradient clipped to
+    the KDE body."""
     sample = le if le.size <= cap else rng.choice(le, cap, replace=False)
     body = ax.violinplot([sample], positions=[ypos], vert=False,
                          widths=width, showextrema=False)["bodies"][0]

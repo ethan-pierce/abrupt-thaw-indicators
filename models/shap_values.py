@@ -1,23 +1,19 @@
-"""Pooled out-of-fold SHAP for the operative thaw-mode model (TASKS T24/T25).
+"""Pooled out-of-fold SHAP for the operative thaw-mode model.
 
-Canonical plumbing (T24): there is NO independent re-split here. The old script did its
-own `default_rng(100)` + `train_test_split`, an arbitrary holdout unrelated to the real
-CV. This loads `features_clean.csv` with the B6 coordinate quarantine (lat/lon carried
-for spatial CV, never in the model matrix) and the persisted CV protocol
-(`models/cv_config.json`) — the same spatial-block scheme the trainer uses.
+Uses `features_clean.csv` (lat/lon carried for spatial CV, never in the model matrix)
+and the persisted CV protocol (`models/cv_config.json`), the same spatial-block scheme
+the trainer uses.
 
-Pooled out-of-fold SHAP (T25): the operative model's SELECTED hyperparameters are held
-fixed (read from `models/selected_hparams.json`, the trainer's canonical output). Over
-single-level buffered spatial-block folds at the operative cell size, per fold we refit
-on the fold-train subset and run TreeSHAP on the HELD-OUT points only, pooling across
-folds so every point receives an attribution from a model that never trained on it. The
-all-data `model.json` is deliberately not used — OOF attribution requires per-fold refits.
+The operative model's selected hyperparameters (`models/selected_hparams.json`) are held
+fixed. Over single-level buffered spatial-block folds at the operative cell size, each
+fold refits on its train subset and runs TreeSHAP on the held-out points only, so every
+point receives an attribution from a model that never trained on it. The all-data
+`model.json` is not used: OOF attribution requires per-fold refits.
 
-Output space: MARGIN (log-odds), `model_output='raw'` with the exact tree-path-dependent
-perturbation (no background dataset). This matches the T19 log-evidence susceptibility
-scale. The raw margin of `binary:logistic` is the log-odds of class 1 (Non-abrupt); we
-negate so positive SHAP pushes toward Abrupt (class 0), preserving the Abrupt-oriented
-sign convention of the earlier figures.
+Output space is the margin (log-odds): `model_output='raw'` with exact tree-path-dependent
+perturbation (no background dataset), matching the log-evidence susceptibility scale.
+The raw margin of `binary:logistic` is the log-odds of class 1 (Non-abrupt); it is
+negated so positive SHAP pushes toward Abrupt (class 0).
 """
 
 import os
@@ -42,13 +38,11 @@ from train_xgboost import xgb_builder, OPERATIVE_CELL_KM, BUFFER_KM, N_OUTER, CV
 SMOKE = bool(os.environ.get('SHAP_SMOKE'))
 SMOKE_N = 1500
 SMOKE_SPLITS = 3
-# Smoke-only fallback hyperparameters (used only if selected_hparams.json is absent AND
-# SHAP_SMOKE is set); real runs require the trainer's selected_hparams.json.
+# Used only if selected_hparams.json is absent and SHAP_SMOKE is set.
 SMOKE_HPARAMS = {'max_depth': 3, 'min_child_weight': 20, 'reg_lambda': 10.0,
                  'learning_rate': 0.1, 'n_estimators': 50}
 
 # Dependence plots to emit: (primary feature, interaction feature, output filename).
-# Guarded against missing columns so the script survives feature-set changes.
 DEPENDENCE_SPECS = [
     ('Slope',                  'Slope',                  'shap_dependence_plot_slope.png'),
     ('Mean curvature (500 m)', 'Mean curvature (500 m)', 'shap_dependence_plot_curvature.png'),
@@ -61,14 +55,10 @@ DEPENDENCE_SPECS = [
 
 
 # --------------------------------------------------------------------------
-# inputs (canonical plumbing — T24)
+# inputs
 # --------------------------------------------------------------------------
 def load_inputs(feats_csv):
-    """Load features with the B6 coordinate quarantine (T7 parity).
-
-    Returns (X, y, lat, lon): X has Class + coords dropped; lat/lon are kept only for
-    spatial-block CV, never entering the model matrix.
-    """
+    """Return (X, y, lat, lon); lat/lon are kept for spatial-block CV, never in X."""
     feats = pd.read_csv(feats_csv)
     drop = [c for c in ('Class', 'Latitude', 'Longitude') if c in feats.columns]
     X = feats.drop(columns=drop)
@@ -81,12 +71,7 @@ def load_inputs(feats_csv):
 
 
 def load_cv_config(path):
-    """Load the persisted CV protocol, resolving missing keys to the trainer defaults.
-
-    An older `cv_config.json` may predate some keys (e.g. `operative_cell_km`); falling
-    back to `train_xgboost`'s constants keeps parity and survives a stale config until
-    the next training run rewrites it [B6/T11/T24].
-    """
+    """Load the persisted CV protocol, resolving missing keys to the trainer defaults."""
     cfg = json.loads(Path(path).read_text())
     cfg.setdefault('operative_cell_km', OPERATIVE_CELL_KM)
     cfg.setdefault('buffer_km', BUFFER_KM)
@@ -97,16 +82,12 @@ def load_cv_config(path):
 
 
 def load_selected_hparams(path):
-    """Load the operative model's selected hyperparameters [T14/T25].
-
-    `selected_hparams.json` is the trainer's canonical record of the hyperparameters
-    the operative model was fit with; OOF SHAP refits every fold with these fixed.
-    """
+    """Load the hyperparameters the operative model was fit with."""
     return json.loads(Path(path).read_text())['hyperparameters']
 
 
 # --------------------------------------------------------------------------
-# pooled out-of-fold SHAP (T25)
+# pooled out-of-fold SHAP
 # --------------------------------------------------------------------------
 def pooled_oof_shap(X, y, lat, lon, *, cell_km, buffer_km, n_splits, seed, hparams):
     """Per-fold refit (fixed hyperparameters) + held-out TreeSHAP, pooled across folds.

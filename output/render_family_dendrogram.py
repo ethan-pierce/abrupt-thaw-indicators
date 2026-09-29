@@ -1,11 +1,8 @@
 """Re-render the SHAP feature-family dendrogram (appendix figure) without recomputing SHAP.
 
-The clustering is a purely mechanical function of feature-space Spearman correlation, so the
-dendrogram, cut, and memberships are fully reproducible from features_clean.csv alone -- no
-out-of-fold SHAP refit needed. We reuse `build_families` from models/shap_groups.py so the
-tree, threshold, and family memberships are byte-for-byte the same as the full pipeline, and
-only redraw with the family-name annotations. A full `poetry run python models/shap_groups.py`
-produces the identical annotated figure (this is just the cheap path for figure iteration).
+The clustering depends only on feature-space Spearman correlation, so the tree, cut, and
+memberships are reproducible from features_clean.csv via `build_families` from
+models/shap_groups.py; `models/shap_groups.py` produces the same figure.
 
 Run: poetry run python output/render_family_dendrogram.py
 """
@@ -40,12 +37,11 @@ def main():
     if missing:
         raise SystemExit(f"features_clean.csv is missing scored columns: {sorted(missing)}")
 
-    # Preserve native CSV column order so the leaf layout matches the committed figure.
+    # Native CSV column order fixes the leaf layout.
     X_scored = X[[c for c in X.columns if c in members]]
     families, meta = build_families(X_scored)
 
-    # Labels for the continuous families (all the annotation touches): mapped name for
-    # multi-member clusters, the column name itself for singletons.
+    # Continuous families only: mapped name for multi-member clusters, column name for singletons.
     labels_by_key = {}
     for key, mem in families.items():
         if not key.startswith('cont_'):

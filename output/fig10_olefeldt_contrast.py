@@ -1,34 +1,13 @@
-"""Figure 10 — Olefeldt incumbent contrast (L7, Form B).
+"""Figure 10 — log-evidence distribution within Olefeldt et al. (2016)
+thermokarst-landscape classes.
 
-Positioning against the only Alaska-statewide comparable incumbent, Olefeldt
-et al. (2016) thermokarst-landscape classes. Our log-evidence index measures
-thaw *mode* (abrupt vs non-abrupt); Olefeldt maps thermokarst *occurrence
-potential + landform type*. The figure shows these are a **largely orthogonal
-axis**: within every Olefeldt thermokarst class the log-evidence spans the full
-range, and Olefeldt class explains only ~1-7% of the variation in mode (per-type
-eta-squared, annotated). The lone weak, mechanistically-sensible lean is
-Hillslope (retrogressive thaw slumps *are* an abrupt form) creeping toward the
-neutral line as its rated potential rises. Positioning, NOT validation — there
-is no statewide mode ground truth.
+One raincloud row (half-violin KDE, subsampled in-AOA cells, median marker) per
+thermokarst type (Wetland / Lake / Hillslope) and potential level (Low to Very
+High), annotated with per-type eta-squared. Olefeldt's "None" level is dropped:
+under per-type faceting it mixes cells with strong potential of another type.
+The dashed line is the all-cell in-AOA median.
 
-Design (raincloud, one shared log-evidence axis, None dropped):
-  * three thermokarst types (Wetland / Lake / Hillslope), each split by ordinal
-    potential Low -> Very High (Olefeldt's "None" is dropped: under per-type
-    faceting it is a cross-contaminated grab-bag — "no *wetland* thermokarst"
-    includes strong-*hillslope* cells — so it is reported in the caption, not
-    plotted);
-  * per class: a half-violin "cloud" (KDE of log-evidence), a subsampled point
-    "rain" (actual in-AOA cells), and a single median marker. No box-and-whisker
-    (redundant with the cloud, and it hides the very data this figure shows);
-  * dashed reference at the all-cell in-AOA median (-2.46): every class median
-    clings to it -> class barely moves mode;
-  * warm above 0 / cool below (house law: warm = abrupt).
-
-The polygon->grid join (Olefeldt LAEA polygons rasterized onto the datacube's
-EPSG:4326 grid, restricted to in-AOA cells) is heavy, so it is cached to
-output/fig10_olefeldt_cache.npz on first run. Reads data/susceptibility.nc +
-data/aoa.nc + data/Circumpolar_Thermokarst_Landscapes/. Writes
-output/10_olefeldt_contrast.{pdf,png}.
+The polygon-to-grid rasterization is cached to output/fig10_olefeldt_cache.npz.
 """
 from __future__ import annotations
 
@@ -57,8 +36,7 @@ GRID_CRS = "EPSG:4326"
 LEVELS = {"None": 1, "Low": 2, "Moderate": 3, "High": 4, "Very High": 5}
 LEVEL_LABEL = {2: "Low", 3: "Moderate", 4: "High", 5: "Very High"}
 
-# type field -> (display name, hue). Wetland teal-green / Lake blue / Hillslope
-# orange: an intuitive, CVD-safe Okabe-Ito triple (checked in main()).
+# (shapefile field, cache key, display name, Okabe-Ito hue)
 TYPES = [
     ("TKWP", "lw", "Wetland", "#009E73"),
     ("TKThLP", "ll", "Lake", "#0072B2"),
@@ -208,7 +186,6 @@ def render(d):
 
 def main():
     d = load_cache()
-    # accessibility gate: the three type hues must stay distinct under CVD
     try:
         figstyle.assert_cvd_safe([c for *_, c in TYPES], min_de=15, name="Fig11 type hues")
         print("CVD check: type hues OK (min ΔE ≥ 15)")

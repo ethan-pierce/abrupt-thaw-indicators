@@ -1,29 +1,25 @@
-"""Materialize the MODIS MCD64A1 fire-history reductions to a local raster (T36).
+"""Materialize the MODIS MCD64A1 fire-history reductions to a local raster.
 
-Why this exists
----------------
 ``Time Since Last Fire`` and ``Burn Count`` are deep temporal reductions of the
 MODIS MCD64A1 monthly burned-area product (~280 monthly images over
 ``FIRE_RECORD``, see ``gee_features``). Earth Engine evaluates such graphs lazily
 with no persisted intermediate, so point-sampling them at all ~19,540 ThawDB
-points re-runs the whole reduction per point and hangs — the same shape as the
-Daymet reductions (T30) and the retired FIRMS max.
+points re-runs the whole reduction per point and hangs, as with the Daymet
+reductions.
 
-The fix, identical to ``build_daymet_rasters.py``, is to **compute the reduction
-once per output tile and write it to a local raster**, then have the pipeline
-read that raster cheaply. Tiles are pulled with ``ee.data.computePixels`` (the
-high-volume raster endpoint) one at a time onto a single pre-defined pixel grid,
-so alignment is exact by construction; a tile that exceeds the request/compute
-limit is split into quadrants and retried.
+As in ``build_daymet_rasters.py``, the reduction is **computed once per output
+tile and written to a local raster**, which the pipeline then reads cheaply.
+Tiles are pulled with ``ee.data.computePixels`` (the high-volume raster
+endpoint) one at a time onto a single pre-defined pixel grid, so alignment is
+exact by construction; a tile that exceeds the request/compute limit is split
+into quadrants and retried.
 
-Asset-free contract (settings.py / TASKS T0)
---------------------------------------------
-No custom uploaded asset is involved — the reduction is computed on the fly from
-the public catalog ``MODIS/061/MCD64A1`` and streamed straight to disk. The
-pipeline's source of truth is the downloaded local GeoTIFF (git-ignored, under
-``data/modis_fire/``), sampled by BOTH tracks like the other LOCAL rasters:
-``build_feature_table.py`` via ``local_rasters.sample_points`` and
-``build_prediction_data.py`` via ``sample_local`` at cell centres.
+The reduction is computed on the fly from the public catalog
+``MODIS/061/MCD64A1`` and streamed straight to disk. The pipeline's source of
+truth is the downloaded local GeoTIFF (git-ignored, under ``data/modis_fire/``),
+sampled by BOTH tracks like the other LOCAL rasters: ``build_feature_table.py``
+via ``local_rasters.sample_points`` and ``build_prediction_data.py`` via
+``sample_local`` at cell centres.
 
 Resolution
 ----------
@@ -65,9 +61,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings import DATA, EE_PROJECT
 import gee_features
 
-# --------------------------------------------------------------------------
-# Derivation parameters (single source of truth for the materialized raster).
-# --------------------------------------------------------------------------
 CRS = 'EPSG:3338'          # Alaska Albers, matches the other LOCAL rasters
 SCALE = 500                # ~MCD64A1 native resolution (m); datacube resamples to 1 km
 NODATA = -9999.0           # off-coverage pixels; local_rasters maps -> NaN

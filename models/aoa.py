@@ -1,76 +1,57 @@
-"""Area-of-Applicability (AOA) reliability layer for the statewide thaw map [T21/G18].
+"""Area-of-Applicability (AOA) reliability layer for the statewide thaw map.
 
-Method: Meyer & Pebesma 2021 (Methods Ecol. Evol.), "Predicting into unknown space?
-Estimating the area of applicability of spatial prediction models". A late-paper
-*caveat* layer, NOT a headline and NOT folded into the susceptibility surface -- the
-Obu permafrost domain (T20) answers "is abrupt-vs-non-abrupt even defined here?"; the
-AOA answers the separate question "does this grid cell fall inside the feature-space the
-model actually learned from, or is the score an extrapolation?" (T20 design note:
-"Reliability stays a separate layer (T21/AOA).")
+Method after Meyer & Pebesma 2021 (Methods Ecol. Evol.), "Predicting into unknown space?
+Estimating the area of applicability of spatial prediction models". The Obu permafrost
+domain answers "is abrupt-vs-non-abrupt defined here?"; the AOA answers the separate
+question "does this grid cell fall inside the feature space the model learned from, or is
+the score an extrapolation?" It is kept as a separate layer, not folded into the
+susceptibility surface.
 
-WHY NOT LITERAL M&P (raw standardized-z distance):
-  The literal metric is Euclidean over train-standardized z. A handful of features have
-  a grid spread 50-77x the training spread (genuine values: Yukon-scale drainage,
-  icefield summer temps, glacier SWE trends -- not fill bugs), so one band's heavy tail
-  dictates the distance: the "dissimilarity" becomes univariate-in-disguise (a single
-  feature contributes up to 93% of it) and the outside-AOA fraction swings 42-64% with
-  the arbitrary transform choice. Per-feature transforms just move the domination to the
-  next feature. We fix the COORDINATE instead of the transform (T21 handoff):
+Why not literal M&P (Euclidean over train-standardized z):
+  A handful of features have a grid spread 50-77x the training spread (genuine values:
+  Yukon-scale drainage, icefield summer temps, glacier SWE trends), so one band's heavy
+  tail dictates the distance (a single feature contributes up to 93% of it) and the
+  outside-AOA fraction swings 42-64% with the transform choice. Per-feature transforms
+  just move the domination to the next feature, so we change the coordinate instead.
 
-RANK -> TRAINING-CDF COORDINATE (the operative metric):
-  Each CONTINUOUS predictor v is mapped to its empirical training CDF rank
-  F_train(v) in [0, 1] (np.interp on the sorted training values). Beyond the training
-  min/max the map is LINEARLY EXTENDED in robust (IQR) units -- 1 + (v-max)/IQR above,
-  (v-min)/IQR below -- so genuinely out-of-range cells still register as extrapolation
-  instead of clipping to 1.0. Rationale: XGBoost splits are rank-based (monotone-
-  invariant), so rank space is the coordinate the model actually perceives; it is
-  bounded, so no single feature can dominate (max single-feature share falls 93% -> ~12%
-  empirically) and it needs no per-feature transform tuning. This DEPARTS from literal
-  M&P; the DI-vs-CV-performance calibration (diagnostics/aoa_calibration.py) is its
-  justification -- rank-CDF DI predicts OOF skill degradation, which is the property an
-  applicability index must have. BINARY one-hots (26: Land Cover / Vegetation Mode /
-  Yedoma) are NOT rank-mapped -- they pass through as 0/1 (a rank CDF of a two-value
-  column is meaningless). Every coordinate is then weighted by mean|SHAP| (below).
+Rank -> training-CDF coordinate:
+  Each continuous predictor v is mapped to its empirical training CDF rank F_train(v) in
+  [0, 1]. Beyond the training min/max the map is extended linearly in IQR units and capped
+  (see OOR_CAP), so out-of-range cells still register as extrapolation. XGBoost splits are
+  rank-based, so rank space is the coordinate the model perceives; it is bounded, so no
+  single feature dominates (max single-feature share ~12% vs 93%). This departs from
+  literal M&P; diagnostics/aoa_calibration.py tests the choice against OOF skill. Binary
+  one-hots (Land Cover / Vegetation Mode / Yedoma) pass through as 0/1.
 
 Algorithm (importance-weighted dissimilarity index, DI):
-  1. Map each predictor to the rank-CDF coordinate above (binaries stay 0/1).
-  2. Weight each coordinate by its variable importance = mean|SHAP| from the operative
-     all-data model (the project's canonical importance currency; T25/T41), normalized to
-     sum 1 -- so features the model barely uses do not drive the dissimilarity geometry.
-  3. dbar = mean pairwise Euclidean distance among training points in weighted rank-CDF
-     space (the natural dissimilarity scale of the training set). NOTE: dbar cancels out
-     of the in/out flag (both the grid DI and the CV-DI threshold divide by it) -- it only
-     sets the DI's absolute scale, not the classification.
-  4. DI(cell) = (distance from the cell to its NEAREST training point) / dbar.
-  5. Threshold: the feature-space envelope written by diagnostics/aoa_calibration.py to
-     models/aoa_threshold.json = the 99.9th percentile of the CV training-DI distribution.
-     This is NOT a skill limit -- OOF AUC-ROC does not decay within the sampled DI range
-     (see aoa_threshold_decision.md); it marks the extent of the training feature envelope.
-     If that file is absent we fall back to the box-plot outlier fence Q75 + 1.5*IQR of the
-     CV training-DI distribution (same-fold neighbours excluded), and say so in the provenance.
-  6. A cell is INSIDE the AOA (reliable) iff DI(cell) <= threshold, else it is flagged as
-     extrapolating beyond the training feature distribution.
+  1. Map each predictor to the rank-CDF coordinate (binaries stay 0/1).
+  2. Weight each coordinate by mean|SHAP| from the all-data model, normalized to sum 1.
+  3. dbar = mean pairwise Euclidean distance among training points. dbar cancels out of
+     the in/out flag (grid DI and the CV-DI threshold both divide by it); it only sets
+     the DI's absolute scale.
+  4. DI(cell) = (distance to the nearest training point) / dbar.
+  5. Threshold: read from models/aoa_threshold.json (written by
+     diagnostics/aoa_calibration.py; the 99.9th percentile of the CV training-DI
+     distribution). It marks the extent of the training feature envelope, not a skill
+     limit: OOF AUC-ROC does not decay within the sampled DI range. If the file is absent,
+     fall back to the box-plot fence Q75 + 1.5*IQR of the CV training DI.
+  6. A cell is inside the AOA iff DI(cell) <= threshold.
 
-NaN handling: reuse predict.py's Obu mask exactly (PerProb>0 AND >=1 feature); NaN
-off-domain. A missing CONTINUOUS predictor is imputed to rank 0.5 (the training median in
-rank space = "a typical value", so it contributes nothing extreme to the distance -- the
-faithful translation of the settled "impute to the feature mean" rule into rank space,
-where the mean/centre is 0.5, not 0). A missing BINARY one-hot -> 0 (absent category, the
-same convention the model's own preprocessing uses). Applied identically to training
-points and grid cells, so dbar, the threshold, and the grid DI share one convention.
+NaN handling: same Obu mask as predict.py (PerProb > 0 and >= 1 feature); NaN off-domain.
+A missing continuous predictor is imputed to rank 0.5 (the median in rank space, so it
+contributes nothing extreme to the distance). A missing binary -> 0 (absent category, as in
+the model's preprocessing). Applied identically to training points and grid cells.
 
-Output (a reliability raster, aligned to susceptibility.nc and NaN off the Obu domain):
-  data/aoa.nc              -- DI (continuous, primary) + inside_aoa (derived binary flag)
+Outputs (aligned to susceptibility.nc, NaN off the Obu domain):
+  data/aoa.nc              -- DI (continuous) + inside_aoa (binary flag)
   output/aoa_map.png       -- binary applicability map
   output/aoa_di_map.png    -- continuous dissimilarity-index map
-  + a per-feature "drivers of extrapolation" readout to stdout (which features carry the
-    distance of the outside-AOA cells).
+  plus a per-feature "drivers of extrapolation" readout to stdout.
 
-Run: poetry run python models/aoa.py       (AOA_SMOKE=1 subsamples the grid for a fast check)
+Run: poetry run python models/aoa.py       (AOA_SMOKE=1 subsamples the grid)
 
-This module is import-safe: the heavy load/score pipeline lives under main(); the
-coordinate + distance helpers are importable (diagnostics/aoa_calibration.py reuses them
-to calibrate the threshold on the identical metric).
+The coordinate and distance helpers are importable; diagnostics/aoa_calibration.py reuses
+them to calibrate the threshold on the identical metric.
 """
 
 import os
@@ -165,10 +146,9 @@ def mean_pairwise_distance(pts, chunk=2000):
 # metric it is meant to justify.
 # ======================================================================================
 def detect_binary(X):
-    """Bool mask over columns of a DataFrame whose non-NaN values are all in {0, 1}.
+    """Bool mask over DataFrame columns whose non-NaN values are all in {0, 1}.
 
-    Detected by VALUE (not name) so it survives renames -- the 26 one-hot Land Cover /
-    Vegetation Mode indicators and Yedoma. Identical rule to train_xgboost._binary_cols.
+    Same rule as train_xgboost._binary_cols.
     """
     mask = np.zeros(X.shape[1], dtype=bool)
     for j, c in enumerate(X.columns):
@@ -207,14 +187,10 @@ def fit_rank_cdf(X_train, binary_mask):
     return fitted
 
 
-# Out-of-range extension is capped at this many coordinate units beyond [0,1]. The
-# extension is graded in IQR units within OOR_CAP of the training extreme, then SATURATES.
-# The cap is essential: a bare linear IQR extension is UNBOUNDED for heavy-tailed features
-# (Upstream Area's grid values reach ~40x its training max in ~1e6 tiny-IQR units), which
-# re-creates exactly the single-feature domination rank space exists to remove (one
-# feature -> 100% of the distance). Capping keeps genuinely out-of-range cells FLAGGED as
-# more-extreme-than-any-training-value (coord 1+cap vs in-range max 1) yet BOUNDED, so no
-# feature can dominate -- the plan's "keeps out-of-range flagged but bounded".
+# Out-of-range extension is graded in IQR units up to OOR_CAP coordinate units beyond
+# [0, 1], then saturates. Uncapped, heavy-tailed features (Upstream Area's grid values reach
+# ~40x its training max, ~1e6 IQR units) would dominate the distance again. Capped,
+# out-of-range cells stay flagged as more extreme than any training value but bounded.
 OOR_CAP = 1.0  # coord range [-OOR_CAP, 1+OOR_CAP]
 
 
@@ -249,8 +225,7 @@ def weight_coords(coords, weights):
     return np.asarray(coords, dtype=np.float64) * weights
 
 
-# --- z-scale coordinate (literal M&P) -- kept ONLY so the calibration can show that
-#     rank-CDF DI predicts OOF degradation better than the raw-z DI (validates the choice).
+# --- z-scale coordinate (literal M&P), used by the calibration as a comparison baseline.
 def fit_zscale(X_train):
     X_train = np.asarray(X_train, dtype=np.float64)
     mu = np.nanmean(X_train, axis=0)
@@ -267,8 +242,7 @@ def transform_zscale(arr, mu, sd):
 def shap_weights(model, X_train_df):
     """mean|SHAP| feature weights (TreeSHAP, tree_path_dependent), normalized to sum 1.
 
-    tree_path_dependent needs no background and handles NaN via the tree default paths --
-    the project's canonical importance currency (T25/T41).
+    tree_path_dependent needs no background and handles NaN via the tree default paths.
     """
     explainer = shap.TreeExplainer(model)
     sv = explainer.shap_values(X_train_df)
@@ -393,7 +367,7 @@ def main():
     grid = feature_stack.reshape(n_pixels, n_features).astype(np.float64)
     grid = np.where(grid == default_value, np.nan, grid)
 
-    # Obu permafrost-domain mask + >=1-feature guard -- IDENTICAL to predict.py [T20].
+    # Obu permafrost-domain mask + >=1-feature guard, identical to predict.py.
     if 'longitude' not in ds.coords or 'latitude' not in ds.coords:
         raise SystemExit("prediction_data.nc lacks longitude/latitude coords (rebuild datacube).")
     lon2d = ds['longitude'].values

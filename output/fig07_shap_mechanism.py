@@ -1,28 +1,8 @@
-"""Figure 7 — SHAP mechanism: own-SHAP dependence for the top-9 indicators (L6b).
+"""Figure 7 — SHAP dependence for the top-9 continuous indicators.
 
-Fig 6 says WHICH families matter and HOW BIG each is. Fig 7 says HOW each of the
-leading *individual* indicators pushes — the functional SHAPE of the model's
-response — the one thing a bar cannot show.
-
-Redesign (grill 2026-07-23; see output/fig07_redesign_spec.md). Each panel plots a
-feature's OWN SHAP (y) against its OWN value (x) — the standard dependence plot —
-for the top-9 continuous, individually interpretable features by own mean|SHAP|.
-This replaces the old family-sum-vs-one-member design, which contaminated the
-coordinate (y summed the whole family, x was one member) and inflated single-
-feature threshold claims. Per-feature dependence supports honest "above ~X°"
-statements and, selected by raw influence, yields a multi-domain roster
-(4 relief / 2 snow / 3 climate) instead of the old manufactured climate-heavy look.
-
-Framing discipline (locked): shapes are reported as FACT about the model's
-response ("evidence for abrupt rises above ~12° slope"), NEVER asserted mechanism.
-Mechanistic reading + the proxy-vs-mechanism defense are reserved for §5.2 / Fig 8.
-
-Land Cover is NOT here — a one-hot has no continuous shape; it is Fig 6b
-(fig06_shap_families.py).
-
-Data: output/shap_mechanism_cache.npz — per-feature OOF SHAP (Abrupt-oriented:
-positive => favors Abrupt) + feature VALUES + names + labels, written by
-models/shap_mechanism_cache.py. Pure plotting. Writes output/07_shap_mechanism.{pdf,png}.
+Each panel plots a feature's own SHAP against its own value, for the top-9
+continuous features by mean |SHAP|. Land Cover is omitted because a one-hot has no continuous shape; it is Fig 6b.
+Reads output/shap_mechanism_cache.npz (out-of-fold SHAP, positive favors Abrupt).
 """
 
 from __future__ import annotations
@@ -48,16 +28,12 @@ COOL = figstyle.NON_ABRUPT      # own SHAP < 0  -> favors Non-abrupt
 N_XBINS = 22                    # fixed-width trend bins across the displayed x-range
 BIN_N_MIN = 40                  # min points per bin to draw a trend node (drops sparse tails)
 
-# Y-axis: per-panel robust range so each density cloud fills its panel and the
-# SHAPE is legible (Fig 7's whole job; magnitude lives in Fig 6). This is the
-# documented fallback from the shared-symmetric default — a shared ±ymax≈3.2 (set
-# by the temperature warm-edge cliff) crushed every cloud into an unreadable
-# strip. Magnitude comparability is preserved by the prominent per-panel
-# own-mean|SHAP| + rank annotation. Set True to restore the shared-y lock.
+# A shared symmetric y-range is set by the temperature warm-edge tail and flattens
+# every other panel, so each panel gets its own robust range by default.
 SHARED_Y = False
 
-# Top-9 continuous features by own mean|SHAP|, fixed reading order (see spec table).
-# scale rescales the stored value to natural display units; logx for crushed tails.
+# Top-9 continuous features by own mean|SHAP|, in reading order.
+# scale rescales the stored value to display units; logx for heavy tails.
 ROSTER = [
     dict(name="Slope", title="Slope", unit="°",
          scale=1.0, floor0=True, slope_mass=True),
@@ -102,7 +78,7 @@ def trend(x, g, xlo, xhi, *, logx=False):
 
 
 def draw_trend(ax, xc, med, q1, q3):
-    """Sign-colored running-median line (no band — it competed with the hexes)."""
+    """Sign-colored running-median line."""
     if len(xc) < 2:
         return
     pts = np.array([xc, med]).T.reshape(-1, 1, 2)
@@ -202,9 +178,7 @@ def main():
         if SHARED_Y:
             ylim = shared_ylim
         else:
-            # Asymmetric robust range so the cloud fills the panel (no wasted empty
-            # half when the response is one-sided, e.g. the curvature/temperature
-            # tails); 0 is always kept in view so the zero line stays meaningful.
+            # Asymmetric robust range, always including 0.
             cc = col[np.isfinite(col)]
             lo, hi = np.percentile(cc, [0.5, 99.5])
             lo, hi = min(lo, 0.0), max(hi, 0.0)
@@ -217,15 +191,11 @@ def main():
             ax.set_yticklabels([])
         if c == 0:
             ax.set_ylabel("SHAP  (margin)", fontsize=9.5)
-            # direction encoded on the y-axis itself: up = Abrupt, down = Non-abrupt.
-            # Short, anchored at the axis ends (color + position carry "favors"),
-            # placed left of the quantity label; ties the red/blue lines to meaning.
             ax.text(-0.46, 0.985, "Abrupt", transform=ax.transAxes, rotation=90,
                     ha="center", va="top", fontsize=8.5, color=WARM, fontweight="bold")
             ax.text(-0.46, 0.015, "Non-abrupt", transform=ax.transAxes, rotation=90,
                     ha="center", va="bottom", fontsize=8.5, color=COOL, fontweight="bold")
         ax.set_xlabel(spec["unit"], fontsize=9)
-        # rank lives in the title (panels are laid out in importance order)
         family = families[j]
         ax.set_title(f"{j + 1}. {spec['title']}", fontsize=10.5, color=figstyle.INK,
                      pad=16)

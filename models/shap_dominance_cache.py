@@ -37,7 +37,7 @@ GATE_FRACTION = 0.60
 
 
 def load_feature_stack():
-    """Return (feature_array (n_cells, 70), (ny, nx), feature_names) in MODEL order."""
+    """Return (feature_array (n_cells, 70), (ny, nx), feature_names) in model order."""
     model_feature_names = json.loads(MODEL_PATH.read_text())["learner"]["feature_names"]
 
     ds = xr.open_dataset(PRED_NC)

@@ -1,22 +1,16 @@
-"""Figure 5 — Spatial out-of-sample performance (L2a, L2c, L3).
+"""Figure 5 — Spatial out-of-sample performance.
 
-The credibility figure, redesigned to two panels that answer two orthogonal
-questions and carry two non-overlapping uncertainties:
+  (a) Pooled out-of-fold precision-recall curve at the operative block scale:
+      XGBoost over the logistic baseline over the chance floor. Band = +/-1 sigma
+      across partition reshuffles.
 
-  (a) pooled out-of-fold PRECISION-RECALL curve at the operative 10 km block scale.
-      XGBoost (hero) over the logistic baseline over the chance floor. Band =
-      +/-1 sigma ACROSS 20 partition reshuffles (partition robustness). The classic
-      ML artifact, in the threshold-free idiom the product actually uses.
+  (b) AUC-PR vs median distance to the nearest training point, for both
+      spatial-holdout geometries on one axis: block-CV (square tiles) and
+      leave-region-out (contiguous clusters). This panel carries the
+      spatial-heterogeneity uncertainty, so (a) does not repeat it.
 
-  (b) AUC-PR vs median distance-to-nearest-training-point, both spatial-holdout
-      geometries on ONE axis: block-CV (square tiles, 5..200 km) and leave-region-out
-      (contiguous clusters, 50..3 regions). They trace a single decay curve and AGREE
-      where they overlap -> distance-to-training governs skill, not the holdout shape.
-      This panel IS the spatial-heterogeneity uncertainty, so (a) needn't repeat it.
-
-House rules: one model = one color (XGBoost blue throughout; the two (b) series are the
-SAME model under two geometries, split by marker/line, never by hue). Floor is the only
-reference anchor. All annotated numbers are read live from output/fig05_cache.npz.
+The two (b) series are the same model under two geometries, split by marker
+and line style. All annotated numbers are read from output/fig05_cache.npz.
 
 Rebuild the cache first: poetry run python output/fig05_cache_build.py
 """
@@ -40,7 +34,7 @@ REGION_COLOR = figstyle.QUALITATIVE[6]  # reddish purple #CC79A7
 
 
 def panel_a_prcurve(ax, d):
-    """Pooled-OOF PR curve at 10 km: XGBoost hero + across-partition band, logistic, floor."""
+    """Pooled-OOF PR curve: XGBoost + across-partition band, logistic, floor."""
     rec = d["recall_grid"]
     floor = float(d["prevalence"])
     xm, xs = d["xgb_prec_mean"], d["xgb_prec_std"]
@@ -82,11 +76,8 @@ def panel_b_distance(ax, d):
     rd, ra = d["region_dist"], d["region_ap"]
     rq25, rq75 = d["region_q25"], d["region_q75"]
 
-    # Each marker is the MEDIAN nearest-train distance a configuration spans; the strip is
-    # its 25-75th percentile. The AUC-PR is pooled over that whole spread, not read at a
-    # point, so the strip keeps the reader from misreading a dot as an exact coordinate.
-    # Strips also show the TRUE method overlap (block's coarse tiles reach into region's
-    # fine clusters) that a median-only band understates. Same hue as the series, behind.
+    # Each marker is a configuration's median nearest-train distance; the strip is its
+    # 25-75th percentile, the spread its pooled AUC-PR is computed over.
     for x0, y0, lo, hi in zip(bd, ba, bq25, bq75):
         ax.plot([lo, hi], [y0, y0], color=BLOCK_COLOR, linewidth=3.4, alpha=0.35,
                 solid_capstyle="round", zorder=2)
@@ -94,18 +85,13 @@ def panel_b_distance(ax, d):
         ax.plot([lo, hi], [y0, y0], color=REGION_COLOR, linewidth=3.4, alpha=0.35,
                 solid_capstyle="round", zorder=2)
 
-    # y is zoomed to the data band — skill never approaches the chance floor, which sits
-    # far off-scale below. Panel (a) carries the floor anchor; repeating it here would
-    # only label an edge of the axis the data never visits.
-
-    # Same operative XGBoost under two holdout geometries — split by hue AND marker.
     ax.plot(bd, ba, color=BLOCK_COLOR, linestyle="-", linewidth=1.7, marker="o",
             markersize=4.5, zorder=3, label="Block-CV")
     ax.plot(rd, ra, color=REGION_COLOR, linestyle="--", linewidth=1.7, marker="s",
             markersize=4.2, markerfacecolor="white", markeredgecolor=REGION_COLOR,
             markeredgewidth=1.3, zorder=4, label="Leave-region-out")
 
-    # Anchor the story at its two ends: near-field skill and the extrapolation floor.
+    # Label the nearest block-CV and farthest region-out points.
     i_near = int(np.argmin(bd))
     ax.annotate(f"{ba[i_near]:.2f}", xy=(bd[i_near], ba[i_near]), xytext=(2, 7),
                 textcoords="offset points", ha="left", va="bottom",

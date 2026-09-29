@@ -1,37 +1,29 @@
 """LOCAL-track feature sourcing: sample downloaded source rasters at point
-coordinates, replacing four of the lost custom GEE assets with first-party,
-account-independent local files.
+coordinates.
 
-Why this exists
----------------
-Access to the original ``ee-abrupt-thaw`` project was lost (2026-07-10) and its
-13 custom uploaded assets have no local copies (see TASKS T0 / memory
-``ee-project-access-lost``). Rather than re-upload assets (and re-inherit the
-project-scoped-asset fragility), the feature side is rebuilt from first-party
-sources with **zero custom uploaded assets**, split into two tracks:
+The feature side has two tracks:
 
   * GEE track   -> ``gee_features.py`` (inline computation on public catalog data)
   * LOCAL track -> this module (rasterio point-sampling of downloaded rasters)
 
-The LOCAL track samples downloaded source rasters at point/grid coordinates:
-ALFRESCO flammability + vegetation mode, NLCD 2016 land cover, and the Daymet V4
-SWE + SWE/precip/temp trends. The first three have no GEE-catalog upstream; the
-Daymet layer does, but its deep temporal reductions hang when sampled live at
-scattered points (T30), so it is materialized once to a local raster by
-``build_daymet_rasters.py``. Source rasters live under ``data/`` (git-ignored;
-regenerate via ``fetch_alfresco.py``, ``build_daymet_rasters.py``, or — for NLCD
-— user-provided) and are documented in ``PIPELINE.md`` -> "Features".
+The LOCAL track samples ALFRESCO flammability + vegetation mode, NLCD 2016 land
+cover, Obu permafrost probability, IRYP yedoma, and the Daymet V4 and MODIS
+MCD64A1 reductions. The Daymet and MODIS layers have GEE-catalog upstreams, but
+their deep temporal reductions hang when sampled live at scattered points, so
+they are materialized once to local rasters by ``build_daymet_rasters.py`` and
+``build_modis_fire_rasters.py``. Source rasters live under ``data/``
+(git-ignored; regenerate via ``fetch_alfresco.py``, ``build_daymet_rasters.py``,
+``build_modis_fire_rasters.py``, or — for NLCD — user-provided) and are
+documented in ``PIPELINE.md`` -> "Features".
 
 Sampling semantics
 ------------------
-The original assets were sampled at points with ``ee.Reducer.mean()`` at native
-scale, which for a single point reduces to the covering pixel. The faithful
+A GEE ``ee.Reducer.mean()`` at a single point reduces to the covering pixel. The
 Python analogue is **nearest-neighbour** sampling of the covering pixel, which is
 also the only correct choice for the categorical layers (land cover, vegetation
-mode). We therefore use nearest for every LOCAL feature and document it in the
-methods table. Points are reprojected from WGS84 lon/lat into each raster's own
-CRS before sampling (CRSs differ: ALFRESCO EPSG:3338, NLCD WGS84-Albers,
-Obu EPSG:3995). Nodata and floating sentinels resolve to ``NaN`` so XGBoost's
+mode), so every LOCAL feature uses nearest. Points are reprojected from WGS84
+lon/lat into each raster's own CRS before sampling (CRSs differ: ALFRESCO
+EPSG:3338, NLCD WGS84-Albers, Obu EPSG:3995). Nodata and floating sentinels resolve to ``NaN`` so XGBoost's
 native missing-value routing applies (matching the points/datacube contract).
 """
 
@@ -55,13 +47,12 @@ NLCD_IMG = DATA / 'NLCD2016' / 'NLCD_2016_Land_Cover_AK_20200724.img'
 OBU_TIF = (DATA / 'Obu2019' /
            'UiO_PEX_PERPROB_5.0_20181128_2000_2016_NH.tif')
 
-# Yedoma (IRYP v2, Strauss et al.) — ice-rich, excess-ground-ice permafrost, the
-# mechanistic control that separates abrupt from non-abrupt thaw (TASKS T33).
+# Yedoma (IRYP v2, Strauss et al.) — ice-rich, excess-ground-ice permafrost.
 # Vector, not raster: polygons of mapped yedoma extent tagged with a mapping-
 # confidence tier via ``conf_id`` (a two-digit code: first digit = confidence
 # {1 confirmed, 2 likely, 3 uncertain}, second digit = mapping source, NOT
-# ordinal). Sampled as a BINARY confirmed/unconfirmed presence feature (decision
-# with Ethan, 2026-07-14): 1 inside a confirmed (tier-1) polygon, 0 elsewhere.
+# ordinal). Sampled as a BINARY confirmed/unconfirmed presence feature: 1 inside
+# a confirmed (tier-1) polygon, 0 elsewhere.
 # Within the Alaska ROI "likely" is absent and "uncertain" is a 0.6% sliver, so
 # confirmed-vs-everything is effectively presence-vs-absence. CRS EPSG:3571.
 YEDOMA_SHP = (DATA / 'IRYP_v2_yedoma_confidence_Shapefile' /
@@ -70,7 +61,7 @@ YEDOMA_CONFIRMED_TIER = 1  # conf_id // 10 == 1  ->  "confirmed"
 
 # Daymet V4 reductions (Mean Annual SWE + SWE/precip/temp trends) materialized to
 # one 4-band local raster by ``build_daymet_rasters.py``. These are deep temporal
-# reductions that hang when point-sampled live on GEE (T30), so they are computed
+# reductions that hang when point-sampled live on GEE, so they are computed
 # once and read from disk here like the other LOCAL rasters.
 DAYMET_TIF = DATA / 'daymet' / 'daymet_v4_reductions_1km_3338.tif'
 DAYMET_BANDS = {            # feature name -> 1-indexed band in DAYMET_TIF
@@ -81,9 +72,9 @@ DAYMET_BANDS = {            # feature name -> 1-indexed band in DAYMET_TIF
 }
 
 # MODIS MCD64A1 fire history (Time Since Last Fire + Burn Count) materialized to
-# one 2-band local ~500 m raster by ``build_modis_fire_rasters.py`` (T36). Deep
-# temporal reductions that hang when point-sampled live on GEE (like Daymet,
-# T30), so computed once and read from disk here. Right-censored to the record
+# one 2-band local ~500 m raster by ``build_modis_fire_rasters.py``. Deep
+# temporal reductions that hang when point-sampled live on GEE (like Daymet),
+# so computed once and read from disk here. Right-censored to the record
 # (see gee_features.FIRE_RECORD). The datacube resamples the ~500 m raster to 1 km.
 MODIS_FIRE_TIF = DATA / 'modis_fire' / 'mcd64a1_fire_history_500m_3338.tif'
 MODIS_FIRE_BANDS = {        # feature name -> 1-indexed band in MODIS_FIRE_TIF
@@ -146,7 +137,7 @@ def _load_yedoma_confirmed():
 
 
 def sample_yedoma(lons, lats) -> np.ndarray:
-    """Binary confirmed-yedoma presence at WGS84 ``lons``/``lats`` (TASKS T33).
+    """Binary confirmed-yedoma presence at WGS84 ``lons``/``lats``.
 
     Returns ``1.0`` where a point falls inside a confirmed (tier-1) IRYP v2
     polygon, ``0.0`` where it does not, and ``NaN`` for non-finite / out-of-range
@@ -154,7 +145,7 @@ def sample_yedoma(lons, lats) -> np.ndarray:
     not be tested — matching ``sample_points``). This is a point-in-polygon test at
     exactly the coordinates the caller supplies, so the point path (training points)
     and the datacube path (1 km cell centres) run the identical construction and
-    agree by construction — the same train/serve-parity principle as T37 terrain.
+    agree by construction.
     """
     import geopandas as gpd
 

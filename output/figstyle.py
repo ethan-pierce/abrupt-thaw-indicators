@@ -10,10 +10,7 @@ Import this in every figure script so the whole paper reads as one system:
     figstyle.panel_label(ax, "a")
     figstyle.save(fig, "03_susceptibility_map")     # writes .pdf (canonical) + .png
 
-The prose rules (what code can't enforce — no in-figure titles, provenance in
-caption, mandatory map furniture, log-evidence language) live in STYLE.md.
-
-Design decisions are recorded in STYLE.md; the load-bearing ones enforced here:
+Prose rules and design decisions live in STYLE.md; this module enforces:
   * Continuous fields use Crameri Scientific Colour Maps (CVD-safe, uniform).
   * Log-evidence uses `vik`, normalized SYMMETRICALLY about 0 (pale = neutral).
   * Class colors are drawn from vik's poles: warm = Abrupt, cool = Non-abrupt.
@@ -36,10 +33,8 @@ _STYLE = _HERE / "abrupt_thaw.mplstyle"
 _FONTS = _HERE / "fonts"
 
 # --------------------------------------------------------------------------- #
-# AGU / Wiley canvas geometry.
-# Verified against AGU "Text & Graphics Requirements" and the Earth's Future
-# (Wiley) graphics page: single column 50-85 mm, two-column 105-170 mm, figure
-# height <= 228 mm, raster 300-600 ppi. We design at the upper column widths.
+# AGU / Wiley canvas geometry: single column 50-85 mm, two-column 105-170 mm,
+# figure height <= 228 mm. Figures use the upper column widths.
 # --------------------------------------------------------------------------- #
 _MM = 1.0 / 25.4
 WIDTHS_IN = {
@@ -72,9 +67,8 @@ MASK_HATCH = "////"                      # out-of-AOA is a HATCH, not a value co
 INK = "#1a1a1a"                          # primary text / marks
 MUTED = "#666666"                        # secondary text
 
-# CVD-safe qualitative palette (Okabe-Ito) for incidental categoricals. The
-# SHAP family palette (top-N + "Other") is designed at Fig 6/9 time (decision 4c);
-# use OTHER_GRAY for the collapsed bucket.
+# CVD-safe qualitative palette (Okabe-Ito) for incidental categoricals;
+# OTHER_GRAY is the collapsed "Other" bucket.
 QUALITATIVE = [
     "#E69F00", "#56B4E9", "#009E73", "#F0E442",
     "#0072B2", "#D55E00", "#CC79A7", "#000000",
@@ -132,11 +126,7 @@ def figure(width: str = "single", *, aspect: float = 0.75, height: float | None 
 # Log-evidence: symmetric-about-zero normalization (enforced)
 # --------------------------------------------------------------------------- #
 def symmetric_norm(vmax: float) -> Normalize:
-    """Normalize locked symmetric about 0 so vik's pale center == log-evidence 0.
-
-    Never build a log-evidence color scale any other way: a drifting center
-    would visually misstate which locations favor abrupt thaw.
-    """
+    """Normalize symmetric about 0 so vik's pale center == log-evidence 0."""
     vmax = abs(float(vmax))
     if not np.isfinite(vmax) or vmax == 0:
         raise ValueError(f"vmax must be a finite non-zero number; got {vmax!r}")
@@ -145,12 +135,7 @@ def symmetric_norm(vmax: float) -> Normalize:
 
 def log_evidence_colorbar(mappable, ax=None, *, label="Log-evidence (abrupt vs. non-abrupt)",
                           **kwargs):
-    """Colorbar for the log-evidence field with an explicit 0 tick and labeled poles.
-
-    The pole labels are the one load-bearing text exception to the minimize-text
-    rule: the reader must be told which end favors which mode, and that it is
-    log-evidence, not probability.
-    """
+    """Colorbar for the log-evidence field with an explicit 0 tick and labeled poles."""
     fig = (ax.figure if ax is not None else plt.gcf())
     cbar = fig.colorbar(mappable, ax=ax, **kwargs)
     vmin, vmax = mappable.norm.vmin, mappable.norm.vmax
@@ -167,7 +152,7 @@ def log_evidence_colorbar(mappable, ax=None, *, label="Log-evidence (abrupt vs. 
 # Panel labels: parenthesized lowercase bold — (a) (b) (c)
 # --------------------------------------------------------------------------- #
 def panel_label(ax, letter: str, *, loc: str = "upper left", pad: float = 0.02):
-    """Place a bold ``(a)``-style panel label. One helper so offset never drifts."""
+    """Place a bold ``(a)``-style panel label."""
     ha, va = ("left", "top")
     x, y = pad, 1.0 - pad
     if "right" in loc:
@@ -199,14 +184,9 @@ def save(fig, name: str, *, outdir: Path | None = None, rasterized_dpi: int = 30
     script) are flattened at ``rasterized_dpi`` (300 default; 600 for fine
     combination detail); vector text/axes stay crisp. Returns the PDF path.
 
-    Set ``tight=False`` for multi-Axes figures with rasterized images (imshow /
-    hexbin) in more than one Axes: the house style's ``savefig.bbox: tight``
-    forces a two-pass PDF render, and matplotlib's mixed-mode PDF renderer
-    mis-places rasterized images across that second pass when multiple Axes
-    each hold one (they all collapse into one Axes' corner, scaled down, with
-    other rasterized content going blank) — a real matplotlib limitation, not
-    a bug in the figure script. Hand-tune margins with ``subplots_adjust``
-    instead of relying on tight-bbox cropping when you pass ``tight=False``.
+    Set ``tight=False`` for figures with rasterized images in more than one Axes:
+    ``savefig.bbox: tight`` forces a two-pass PDF render in which matplotlib's
+    mixed-mode renderer misplaces those images. Set margins by hand instead.
     """
     outdir = Path(outdir) if outdir is not None else _HERE
     outdir.mkdir(parents=True, exist_ok=True)
@@ -219,7 +199,7 @@ def save(fig, name: str, *, outdir: Path | None = None, rasterized_dpi: int = 30
 
 
 # --------------------------------------------------------------------------- #
-# CVD validator — enforces the accessibility constitution
+# CVD validator
 # --------------------------------------------------------------------------- #
 # Machado, Oliveira & Fernandes (2009) severity-1.0 simulation matrices,
 # applied to linear-light RGB.

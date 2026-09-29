@@ -1,13 +1,9 @@
 """Appendix figure: model skill (AUC-PR) versus feature-space dissimilarity.
 
 Reads the per-bin skill table cached by diagnostics/aoa_calibration.py
-(output/aoa_calibration_bins.json) and renders it in house style. Shows that
-per-bin AUC-PR does not decay as the dissimilarity index rises, and stays far
-above the (drifting) per-bin prevalence floor across the whole sampled range.
-The operative rank-CDF bins are drawn with their DI span, so the sample is seen
-to reach across and past the AoA threshold; the raw-z coordinate is overlaid as
-a robustness check. The threshold is the feature-space envelope, not a skill
-limit.
+(output/aoa_calibration_bins.json). Per-bin AUC-PR is plotted against the
+rank-CDF dissimilarity index, with the raw-z coordinate overlaid as a
+robustness check and the per-bin prevalence shaded as the chance floor.
 
 Run: poetry run python output/fig_aoa_skill_vs_di.py
 """

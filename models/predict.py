@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import xarray as xr
 import xgboost as xgb
 
-# Paths
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
@@ -23,12 +22,10 @@ print("="*80)
 print("ABRUPT THAW PREDICTION")
 print("="*80)
 
-# Load model
 print(f"\nLoading model from: {model_path}")
 model = xgb.XGBClassifier()
 model.load_model(str(model_path))
 
-# Extract feature names from model to verify order
 with open(model_path, 'r') as f:
     model_json = json.load(f)
 model_feature_names = model_json['learner']['feature_names']
@@ -36,20 +33,17 @@ model_feature_names = model_json['learner']['feature_names']
 print(f"Model loaded successfully")
 print(f"Number of features expected by model: {len(model_feature_names)}")
 
-# Load prediction data
 print(f"\nLoading prediction data from: {prediction_data_path}")
 ds = xr.open_dataset(prediction_data_path)
 
 print(f"Dataset shape: {ds.dims}")
 print(f"Feature stack shape: {ds['feature_stack'].shape}")
 
-# Get feature stack and feature names from dataset
 feature_stack = ds['feature_stack'].values  # Shape: (y, x, feature)
 dataset_feature_names = ds['feature'].values.tolist()
 
 print(f"Number of features in dataset: {len(dataset_feature_names)}")
 
-# Verify feature names match
 if model_feature_names != dataset_feature_names:
     print("\nWARNING: Feature names don't match exactly!")
     print("Model features:")
@@ -61,7 +55,6 @@ if model_feature_names != dataset_feature_names:
         print(f"  {i}: {name}")
     print(f"  ... ({len(dataset_feature_names)} total)")
     
-    # Reorder dataset features to match model order
     print("\nReordering dataset features to match model order...")
     feature_indices = [dataset_feature_names.index(name) for name in model_feature_names]
     feature_stack = feature_stack[:, :, feature_indices]
@@ -69,45 +62,35 @@ if model_feature_names != dataset_feature_names:
 else:
     print("Feature names match - proceeding with prediction")
 
-# Get spatial dimensions
 y_size, x_size, n_features = feature_stack.shape
 n_pixels = y_size * x_size
 
 print(f"\nSpatial dimensions: {y_size} x {x_size} = {n_pixels} pixels")
 
-# Get default value from dataset attributes
 default_value = ds.attrs.get('default_value', -9999)
 print(f"Default (missing) value: {default_value}")
 
-# Reshape feature stack for prediction: (y, x, feature) -> (n_pixels, feature)
 print("\nReshaping feature stack for prediction...")
 feature_array = feature_stack.reshape(n_pixels, n_features)
 
-# Handle missing values (replace default_value with NaN, which XGBoost handles)
 print("Handling missing values...")
 feature_array = np.where(feature_array == default_value, np.nan, feature_array)
 
-# --- Obu permafrost-domain mask [T20] ---------------------------------------------
-# Replaces the old arbitrary ">= 50% of features non-NaN" keep. The target concept
-# -- abrupt vs non-abrupt thaw -- is only DEFINED where permafrost exists, and the
-# model (trained almost entirely on permafrost sites: 0.4% of training points fall
-# below Obu PerProb 0.01) never saw non-permafrost negatives, so it cannot self-mask
-# and would emit a confident, meaningless log-evidence off-domain. We therefore
-# restrict the surface to the Obu permafrost domain, sampling Obu PerProb at each
-# cell's persisted lon/lat (nearest -- the identical construction the datacube's
-# LOCAL features use, so the mask lands on the same grid).
+# --- Obu permafrost-domain mask ----------------------------------------------------
+# Abrupt vs non-abrupt thaw is only defined where permafrost exists, and the model
+# (0.4% of training points fall below Obu PerProb 0.01) never saw non-permafrost sites,
+# so it would emit confident, meaningless log-evidence off-domain. Obu PerProb is
+# sampled at each cell's lon/lat (nearest, as for the datacube's local features).
 #
-# Keep rule:  keep = (PerProb > 0) AND (>= 1 feature non-NaN)
-#   * PerProb > 0 keeps the WHOLE permafrost domain incl. isolated permafrost: Obu
-#     assigns exactly 0 to modeled non-permafrost and small positives to isolated,
-#     so no epsilon is needed. The low threshold is deliberate -- PerProb is
-#     label-entangled (non-abrupt lives in sporadic/discontinuous permafrost, median
-#     PerProb ~0.37 vs ~0.94 for abrupt), so a higher cut would amputate the minority
-#     class's home range. The mask is BINARY: PerProb never weights the surface
-#     (weighting by it would systematically suppress the minority class).
-#   * the >= 1-feature guard refuses to paint a base-rate pixel from all-NaN input
-#     (XGBoost returns a finite base score, not NaN, on an all-missing row).
-# Reliability / extrapolation is a SEPARATE concern (AOA, T21), not folded in here.
+# keep = (PerProb > 0) AND (>= 1 feature non-NaN)
+#   * Obu assigns exactly 0 to non-permafrost and small positives to isolated
+#     permafrost, so no epsilon is needed. The low cut is deliberate: PerProb is
+#     label-entangled (median ~0.37 for non-abrupt vs ~0.94 for abrupt), so a higher
+#     cut would remove the minority class's range. The mask is binary; PerProb never
+#     weights the surface.
+#   * XGBoost returns a finite base score on an all-missing row, so all-NaN pixels
+#     are dropped.
+# Extrapolation is handled separately by the AOA layer (models/aoa.py).
 if 'longitude' not in ds.coords or 'latitude' not in ds.coords:
     raise SystemExit(
         "prediction_data.nc has no longitude/latitude coords -- the Obu mask needs "
@@ -132,26 +115,20 @@ print(f"Obu permafrost domain (PerProb > 0): {int(in_domain.sum()):,} pixels "
 print(f"Valid pixels (in-domain AND >=1 feature): {n_valid:,} ({n_valid/n_pixels*100:.1f}%)")
 print(f"Masked pixels (off-domain or no data): {n_invalid:,} ({n_invalid/n_pixels*100:.1f}%)")
 
-# Make predictions
 print("\nGenerating predictions...")
 print("  This may take a while for large datasets...")
 
-# Predict probabilities (class 0 = abrupt thaw, class 1 = non-abrupt thaw)
-# Use index 0 for abrupt thaw (majority class, ~94% of training data)
+# class 0 = Abrupt (majority), class 1 = Non-abrupt
 probabilities = model.predict_proba(feature_array)[:, 0]
 
-# T19 [E13]: log-evidence susceptibility index -- the PRIMARY output surface.
+# Log-evidence susceptibility, the primary output surface:
 #   log_evidence = logit(P_model(abrupt|x)) - logit(pi_sample(abrupt))
-# A prior-free log-likelihood-ratio for abrupt vs non-abrupt thaw: 0 = neutral, >0 favours
-# abrupt, <0 favours non-abrupt. This is NOT a calibrated probability and NOT a discrete
-# class -- the sample prior is a lake-/road-biased sampling artifact and the landscape
-# prior is unrecoverable, so only the prior-free evidence is defensible.
+# 0 = neutral, >0 favours abrupt. Not a calibrated probability: the sample prior is a
+# lake-/road-biased sampling artifact and the landscape prior is unrecoverable.
 #
-# pi_sample(abrupt) is the abrupt (class 0) fraction of the SAME features_clean.csv the
-# operative model was refit on. With scale_pos_weight=1 (train_xgboost.py:96-98, T10)
-# that sample prevalence is exactly the prior baked into P_model, so subtracting its
-# logit divides the prior back out. Read at score time so it always tracks the refit
-# data (currently ~0.9428; the older ~0.932 figure predates the v2 table).
+# pi_sample is the abrupt fraction of the features_clean.csv the model was fit on. With
+# scale_pos_weight=1 that is the prior baked into P_model, so subtracting its logit
+# removes it.
 pi_sample = float(
     (pd.read_csv(data_dir / 'features_clean.csv', usecols=['Class'])['Class'] == 0).mean()
 )
@@ -166,28 +143,24 @@ print(f"Sample prior pi_sample(abrupt) = {pi_sample:.4f} (logit = {_logit(pi_sam
 
 print("Predictions completed")
 
-# Additional validation: ensure predictions are finite (not NaN or inf)
+# Exclude non-finite predictions
 finite_predictions = np.isfinite(probabilities)
 valid_pixels = valid_pixels & finite_predictions
 n_finite_invalid = (~finite_predictions).sum()
 if n_finite_invalid > 0:
     print(f"Warning: {n_finite_invalid:,} pixels have non-finite predictions (NaN or inf) and will be excluded")
 
-# Reshape predictions back to spatial dimensions
 print("\nReshaping predictions to spatial dimensions...")
 probabilities_2d = probabilities.reshape(y_size, x_size)
 log_evidence_2d = log_evidence.reshape(y_size, x_size)
 
-# Apply the domain mask to the SAVED products, not just the figures [T20]: outside
-# the permafrost domain (or where a pixel has no data) susceptibility is undefined,
-# so NaN it everywhere -- otherwise susceptibility.nc carries confident values over
-# the ocean. NaN is the datacube's own missing convention, so "off-domain" is
-# indistinguishable-by-design from "no data", which is the intended meaning.
+# Mask the saved products, not just the figures. Off-domain and no-data share the
+# datacube's NaN missing convention by design.
 invalid_mask = (~valid_pixels).reshape(y_size, x_size)
 log_evidence_2d = np.where(invalid_mask, np.nan, log_evidence_2d)
 probabilities_2d = np.where(invalid_mask, np.nan, probabilities_2d)
 
-# Calculate prediction statistics (only for valid pixels with sufficient valid features and finite predictions)
+# Prediction statistics over valid pixels
 print("\nPrediction Statistics (excluding invalid data):")
 valid_probabilities = probabilities[valid_pixels]
 n_valid_predictions = len(valid_probabilities)
@@ -205,7 +178,6 @@ if n_valid_predictions > 0:
 else:
     print("  WARNING: No valid predictions found!")
 
-# Create output dataset
 print("\nCreating output dataset...")
 output_ds = xr.Dataset(
     {
@@ -237,13 +209,12 @@ output_ds = xr.Dataset(
     }
 )
 
-# Save predictions to NetCDF
 output_path = data_dir / 'predictions.nc'
 print(f"\nSaving predictions to: {output_path}")
 output_ds.to_netcdf(output_path)
 print("Predictions saved successfully")
 
-# Primary product: the log-evidence susceptibility surface on its own [T19/E13].
+# Primary product: the log-evidence susceptibility surface on its own.
 susceptibility_path = data_dir / 'susceptibility.nc'
 susceptibility_ds = xr.Dataset(
     {'log_evidence': output_ds['log_evidence']}, coords=output_ds.coords, attrs=output_ds.attrs
@@ -251,18 +222,16 @@ susceptibility_ds = xr.Dataset(
 susceptibility_ds.to_netcdf(susceptibility_path)
 print(f"  Susceptibility (log-evidence) saved to: {susceptibility_path}")
 
-# Also save the diagnostic probability surface as a separate file for easier access
+# Diagnostic probability surface as a separate file
 prob_output_path = data_dir / 'prediction_probabilities.nc'
 prob_ds = xr.Dataset({'probability': output_ds['probability']}, coords=output_ds.coords, attrs=output_ds.attrs)
 prob_ds.to_netcdf(prob_output_path)
 print(f"  Probabilities saved to: {prob_output_path}")
 
-# Create map visualization
 print("\nCreating probability map...")
 
-# Geographic bounds from the datacube's own per-cell lon/lat coords [T20/T46].
-# predict.py no longer reads roi.geojson (removed). Off-ROI cells carry a -9999 fill,
-# so take the extent from finite, in-range coordinates only.
+# Off-ROI cells carry a -9999 lon/lat fill, so take the extent from finite, in-range
+# coordinates only.
 _ok = (np.isfinite(lon2d) & (np.abs(lon2d) <= 180)
        & np.isfinite(lat2d) & (np.abs(lat2d) <= 90))
 lon_min, lon_max = float(lon2d[_ok].min()), float(lon2d[_ok].max())
@@ -273,9 +242,9 @@ print(f"Geographic bounds: Lon [{lon_min:.2f}, {lon_max:.2f}], Lat [{lat_min:.2f
 output_dir = OUTPUT
 output_dir.mkdir(exist_ok=True)
 
-# Primary product map: log-evidence susceptibility, diverging colormap centred at 0 [T19/E13].
+# Primary product map: log-evidence susceptibility, diverging colormap centred at 0.
 print("\nCreating log-evidence susceptibility map (primary product)...")
-# log_evidence_2d is already masked at save time [T20]; np.where is a harmless no-op.
+# log_evidence_2d is already masked; np.where is a no-op.
 masked_log_evidence = np.where(invalid_mask, np.nan, log_evidence_2d)
 le_absmax = float(np.nanmax(np.abs(masked_log_evidence))) if np.isfinite(masked_log_evidence).any() else 1.0
 
@@ -299,38 +268,32 @@ le_map_path = output_dir / 'susceptibility_log_evidence_map.png'
 plt.savefig(le_map_path, dpi=600, bbox_inches='tight')
 print(f"Log-evidence susceptibility map saved to: {le_map_path}")
 
-# Create figure
 fig, ax = plt.subplots(figsize=(14, 10))
 
-# invalid_mask (the Obu domain + evidence mask) was computed once at save time [T20].
 masked_prob = np.where(invalid_mask, np.nan, probabilities_2d)
 
-# Plot probabilities
 im = ax.imshow(
-    np.flipud(masked_prob),  # Flip vertically to match geographic orientation
+    np.flipud(masked_prob),
     extent=[lon_min, lon_max, lat_min, lat_max],
-    cmap='RdYlBu_r',  # Red-Yellow-Blue reversed: red = high probability, blue = low
+    cmap='RdYlBu_r',
     aspect='auto',
     origin='lower',
     interpolation='nearest'
 )
 
-# Add colorbar
 cbar = plt.colorbar(im, ax=ax, label='Probability of Abrupt Thaw', fraction=0.046, pad=0.04)
 cbar.set_label('Probability of Abrupt Thaw', rotation=270, labelpad=20)
 
-# Set labels and title
 ax.set_xlabel('Longitude (°E)', fontsize=12)
 ax.set_ylabel('Latitude (°N)', fontsize=12)
 ax.set_title('Abrupt Thaw Probability', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.0, linestyle='--')
 
-# Save map
 map_output_path = output_dir / 'prediction_probability_map.png'
 plt.savefig(map_output_path, dpi=600, bbox_inches='tight')
 print(f"Probability map saved to: {map_output_path}")
 
-plt.close('all')  # Close all figures to free memory
+plt.close('all')
 
 print("\n" + "="*80)
 print("PREDICTION COMPLETE")

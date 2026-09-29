@@ -1,13 +1,11 @@
-"""Grouped (emergent-family) SHAP for the operative thaw-mode model (TASKS T41).
+"""Grouped (emergent-family) SHAP for the operative thaw-mode model.
 
-Purpose (a): a de-cluttered, geoscientist-legible indicator-FAMILY importance ranking, so
-SHAP credit is not split across the ~70 partly-redundant feature columns. Families emerge
-data-drivenly from feature-space redundancy, then their SHAP is recombined by additivity.
-Family *interpretation* is post-hoc (SCOPE Headline C); this is NOT the mechanism-vs-lake-
-proxy analysis (deferred separately).
+An indicator-family importance ranking, so SHAP credit is not split across the ~70
+partly-redundant feature columns. Families emerge from feature-space redundancy, then
+their SHAP is recombined by additivity. Family interpretation is post-hoc.
 
-Design (grill 2026-07-15; see memory t41-grouped-shap-design):
-- Grouping basis: FEATURE-space (Spearman on feature values), not SHAP-space -- a tree
+Design:
+- Grouping basis: feature-space (Spearman on feature values), not SHAP-space -- a tree
   scatters credit erratically across near-duplicate columns, so SHAP-space can fail to
   group them; feature-space groups by shared information regardless of how the model split
   the credit (25/44 continuous cols have a |Spearman|>0.8 partner here).
@@ -16,18 +14,17 @@ Design (grill 2026-07-15; see memory t41-grouped-shap-design):
   fragment them.
 - Linkage: complete -- a cut at distance t means every within-family pair has |rho| >= 1-t;
   also the linkage that best resists |rho|-induced chaining.
-- Cut: the natural GAP in the merge-height sequence (auto-detected, emergent -- not a round
+- Cut: the natural gap in the merge-height sequence (auto-detected, emergent -- not a round
   number), where tightly-redundant families stop merging and only weak relations remain.
-- Categoricals: collapse one-hots to their SOURCE (Land Cover, Vegetation Mode) by summing
-  member SHAP; a lone binary (Yedoma) stays standalone. A one-hot family IS one variable,
+- Categoricals: collapse one-hots to their source (Land Cover, Vegetation Mode) by summing
+  member SHAP; a lone binary (Yedoma) stays standalone. A one-hot family is one variable,
   so this is definitional redundancy -- the same "recombine split credit" logic.
-- Grouped contribution per point = SUM of signed member SHAP (exact additivity). Grouped
+- Grouped contribution per point = sum of signed member SHAP (exact additivity). Grouped
   global importance = mean over points of |sum|. Abrupt-oriented (positive => toward Abrupt),
   inherited from pooled_oof_shap.
 
-Reuses the canonical OOF-SHAP machinery from shap_values.py (per-fold refit + held-out
-TreeSHAP), so grouping is the only thing added. Run after the operative model / feature set
-is final (post-T23 lock). SHAP_GROUPS_SMOKE=1 subsamples for a fast correctness check.
+Reuses the OOF-SHAP machinery from shap_values.py (per-fold refit + held-out TreeSHAP).
+SHAP_GROUPS_SMOKE=1 subsamples for a fast correctness check.
 """
 
 import os
@@ -45,7 +42,6 @@ from scipy.spatial.distance import squareform
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
-# Reuse the canonical inputs + OOF-SHAP machinery (no re-implementation, exact parity).
 from shap_values import (load_inputs, load_cv_config, load_selected_hparams,
                          pooled_oof_shap, SMOKE_HPARAMS)
 
@@ -55,7 +51,7 @@ SMOKE_N = 1500
 SMOKE_SPLITS = 3
 
 # Gap-cut search band, in distance = 1 - |Spearman| (i.e. |rho| in [0.40, 0.85]). The
-# largest gap between consecutive merge heights INSIDE this band is the emergent cut; the
+# largest gap between consecutive merge heights inside this band is the emergent cut; the
 # band guards against trivial gaps near the root (all-merged) or in the noise floor.
 GAP_BAND = (0.15, 0.60)
 
@@ -63,13 +59,11 @@ GAP_BAND = (0.15, 0.60)
 # remaining lone binary column (e.g. Yedoma) becomes its own standalone family.
 CATEGORICAL_PREFIXES = ('Land Cover', 'Vegetation Mode')
 
-# Manuscript family names for the emergent MULTI-member continuous families, keyed by the
-# exact member set (order-independent). Settled in the grill design (memory
-# t41-grouped-shap-design) and confirmed by the two curation calls (2026-07-16): the
-# alpine-relief four stay fused (all pairwise |rho| 0.69-0.81, no 2+2 seam) and Trend in SWE
-# stays in thermal continentality (|rho| 0.66-0.76 to the thermal block vs -0.29 to Trend in
-# temperature). A cluster whose membership isn't a key here keeps the auto-tag + a warning,
-# so a future re-cluster surfaces instead of silently mislabelling. These labels are stable
+# Manuscript family names for the emergent multi-member continuous families, keyed by the
+# exact member set (order-independent). The alpine-relief four stay fused (all pairwise
+# |rho| 0.69-0.81, no 2+2 seam) and Trend in SWE stays in thermal continentality (|rho|
+# 0.66-0.76 to the thermal block vs -0.29 to Trend in temperature). A cluster whose
+# membership isn't a key here keeps an auto-tag and a warning. These labels are stable
 # cache IDs; figure display names live in output/shap_family_display.py.
 MANUSCRIPT_LABELS = {
     frozenset({'Elevation', 'Slope', 'Height Above Nearest Drainage',
@@ -122,8 +116,8 @@ def continuous_linkage(X, cont):
 def choose_gap_threshold(Z, band=GAP_BAND):
     """Cut at the midpoint of the largest gap between consecutive merge heights in `band`.
 
-    Emergent, data-driven: the merge sequence has a natural discontinuity where tightly-
-    redundant families stop forming and only weakly-related columns remain. Returns
+    The merge sequence has a natural discontinuity where tightly-redundant families stop
+    forming and only weakly-related columns remain. Returns
     (threshold, gap_size, lo_height, hi_height).
     """
     h = np.sort(Z[:, 2])
@@ -180,7 +174,7 @@ def build_families(X, threshold=None):
 def grouped_shap_matrix(expl, families):
     """Sum signed member SHAP per family -> (names, (n_points, n_families)).
 
-    Additivity of SHAP makes a family's per-point contribution to the margin EXACTLY the sum
+    Additivity of SHAP makes a family's per-point contribution to the margin exactly the sum
     of its members' SHAP. Values are already Abrupt-oriented (positive => toward Abrupt).
     """
     cols = list(expl.feature_names)
@@ -196,9 +190,9 @@ def grouped_shap_matrix(expl, families):
 def display_label(key, members, expl):
     """Legible label for a family.
 
-    Multi-member continuous families use the settled manuscript name (MANUSCRIPT_LABELS,
-    keyed by member set); an unmapped multi-member cluster falls back to its top-importance
-    member + "(+k)" and warns, so a re-cluster surfaces rather than mislabelling silently.
+    Multi-member continuous families use the manuscript name (MANUSCRIPT_LABELS, keyed by
+    member set); an unmapped multi-member cluster falls back to its top-importance member
+    + "(+k)" and warns.
     Singletons keep their own column name; categoricals are named by source + class count.
     """
     if key in ('Land Cover', 'Vegetation Mode'):
@@ -234,10 +228,8 @@ def plot_dendrogram(meta, families, labels_by_key, out_dir):
     """Emergent continuous-family dendrogram: gap-cut line plus a named band per family.
 
     Every continuous family (singletons included) gets an alternating-shade horizontal band
-    spanning the full width, so its name reads straight across from its member leaves. The
-    band, not a distant bracket, carries the leaf -> family tie. Categorical one-hot families
-    (Land Cover, Vegetation Mode) collapse by source and are not leaves; the caption names
-    them. Metadata (linkage, cut value, within-family rho floor) lives in the caption too.
+    spanning the full width, so its name reads straight across from its member leaves.
+    Categorical one-hot families collapse by source and are not leaves.
     """
     Z, cont, t = meta['linkage'], meta['continuous'], meta['threshold']
     fig, ax = plt.subplots(figsize=(15, max(6, 0.30 * len(cont))))
@@ -337,13 +329,9 @@ def write_families_json(order, keys, labels, families, importance, meta, n_point
 
 
 def write_grouped_matrix(order, labels, G, importance, out_dir):
-    """Persist the per-point grouped-SHAP matrix so figures can plot distributions.
+    """Persist the per-point grouped-SHAP matrix (for the Fig 6 violins).
 
-    The JSON keeps only summary importances; the per-point signed contributions
-    (needed for the Fig 6 violins) are otherwise discarded when this script ends.
-    Store them column-reordered by descending importance so downstream plotting is
-    a pure load (mirrors the diagnostics -> cached-artifact -> figure pattern used
-    by Fig 5). Labels are saved in the SAME (importance-sorted) column order as G.
+    Columns and labels are sorted by descending importance.
     """
     order = np.asarray(order, dtype=int)
     np.savez(
@@ -391,7 +379,7 @@ def main():
         n_splits=n_splits, seed=cfg['seeds']['CV_SEED'], hparams=hparams,
     )
 
-    # Families are defined on the SAME scored feature matrix the SHAP was computed on.
+    # Families are defined on the same scored feature matrix the SHAP was computed on.
     X_scored = X[scored].reset_index(drop=True)
     families, meta = build_families(X_scored)
     print(f"Cut at dist {meta['threshold']:.3f} (|rho| >= {1 - meta['threshold']:.2f}); "
@@ -403,8 +391,7 @@ def main():
     importance = np.mean(np.abs(G), axis=0)
     order = list(np.argsort(importance)[::-1])
 
-    # Smoke results are non-authoritative (subsampled): keep them out of the real output/
-    # so they can never be mistaken for the deliverable.
+    # Subsampled smoke results stay out of output/.
     out_dir = OUTPUT / '_smoke' if SMOKE else OUTPUT
     out_dir.mkdir(parents=True, exist_ok=True)
     plot_dendrogram(meta, families, dict(zip(keys, labels)), out_dir)

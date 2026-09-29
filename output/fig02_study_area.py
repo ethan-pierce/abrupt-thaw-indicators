@@ -1,13 +1,9 @@
-"""Figure 2 — Study-area / model-training-location map (L1).
+"""Figure 2 — Study-area / model-training-location map.
 
-Maps the exact 19,288 locations retained in ``features_clean.csv``, rather than
-the larger source database. The two panels use the same 25-km hexagon lattice
-and shared logarithmic count scale, so their spatial sampling densities are
-directly comparable.
-
-The available repository has no citable statewide roads or hydrography layer.
-Those contextual layers are deliberately not improvised here; if a sourced
-layer is added later it should be drawn beneath the hexagons in a pale neutral.
+Maps the locations retained in ``features_clean.csv``, rather than the larger
+source database. The two panels use the same 25-km hexagon lattice and shared
+logarithmic count scale, so their spatial sampling densities are directly
+comparable.
 """
 from __future__ import annotations
 

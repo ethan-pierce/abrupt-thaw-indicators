@@ -1,40 +1,25 @@
-"""Set the AOA threshold to a feature-space envelope quantile, and show that skill does
-not decay across it [T21 Part 2; revised 2026-08-10, see aoa_threshold_decision.md].
+"""Set the AOA threshold to a feature-space envelope quantile and show that skill does
+not decay across it.
 
-The box-plot fence (Q75 + 1.5*IQR of the CV training-DI distribution) is an arbitrary
-convention. An earlier version of this diagnostic instead pushed the threshold out to the
-maximum out-of-fold (OOF) DI, on the grounds that pooled-OOF AUC-PR "stayed ~15x the
-prevalence floor across the whole DI range with no decay". That was an artifact: per-bin
-AUC-PR was compared to the GLOBAL prevalence floor while per-bin prevalence drifts ~8x with
-DI, and equal-count binning smeared the sparse high-DI tail into one bin. AUC-PR against a
-fixed floor is the wrong instrument for a decay curve on a ~93/7 imbalanced problem.
+  1. Pooled out-of-fold (OOF) predictions from the operative model and spatial-CV protocol.
+  2. Each held-out point's DI with the rank->CDF SHAP-weighted metric from models/aoa.py,
+     using other-fold points as neighbours.
+  3. Skill vs DI as AUC-ROC, which is prevalence-invariant; AUC-PR is reported for
+     reference only, since per-bin prevalence drifts ~8x with DI and AUC-PR against a
+     fixed floor would misread that as decay.
+  4. Because skill does not decay in-sample, the threshold is not a skill limit but the
+     ENVELOPE_PCTL-th percentile of the CV training-DI distribution.
 
-What this diagnostic now does:
-
-  1. Pooled OOF predictions from the OPERATIVE model (selected hyperparameters, operative
-     spatial-CV protocol), same machinery train_xgboost uses.
-  2. Each held-out point's DI, computed with the IDENTICAL rank->CDF SHAP-weighted metric
-     models/aoa.py uses, OTHER-fold points as neighbours.
-  3. Skill vs DI reported with AUC-ROC (prevalence-INVARIANT) as the primary evidence, with
-     AUC-PR kept only for reference. AUC-ROC stays ~0.97-0.99 flat across the whole in-sample
-     DI range -> no measurable skill decay anywhere the sample reaches.
-  4. Because skill never decays in-sample, the threshold is NOT a skill limit. It is the
-     feature-space envelope: the ENVELOPE_PCTL-th percentile of the CV training-DI
-     distribution. A cell is inside the AOA iff it is no more dissimilar from the training
-     data than all but (100-ENVELOPE_PCTL)% of training points are from one another.
-
-It also recomputes DI with the LITERAL M&P raw-standardized-z coordinate, to check that
-rank-CDF DI tracks OOF error at least as well (validates the coordinate choice).
+DI is also computed with the literal M&P raw-standardized-z coordinate to check that
+rank-CDF DI tracks OOF error at least as well.
 
 Outputs:
-  diagnostics/aoa_calibration.png   -- AUC-ROC vs DI (rank-CDF and raw-z), the box-plot
-                                        fence, and the chosen envelope threshold.
-  models/aoa_threshold.json         -- the chosen threshold + justification; models/aoa.py
-                                        reads this to set its AOA boundary.
+  diagnostics/aoa_calibration.png   -- AUC-ROC vs DI, box-plot fence, chosen threshold.
+  models/aoa_threshold.json         -- threshold read by models/aoa.py.
+  output/aoa_calibration_bins.json  -- per-bin skill table for the manuscript figure.
 
-HONEST CAVEAT (printed + recorded): skill is measurable only over the DI range the biased
-training sample spans (to ~0.25). The envelope threshold sits just past that; beyond it the
-AOA flags, this calibration cannot score.
+Skill is measurable only over the DI range the biased training sample spans (to ~0.25).
+The envelope threshold sits just past that.
 
 Run: poetry run python diagnostics/aoa_calibration.py
 """
@@ -55,11 +40,11 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / 'models'))
 
 from settings import MODELS  # noqa: E402
-import aoa  # noqa: E402  -- the operative metric lives here; reuse it verbatim
+import aoa  # noqa: E402
 from spatial_cv import pooled_oof_predict  # noqa: E402
-from train_xgboost import xgb_builder  # noqa: E402  -- operative estimator factory
+from train_xgboost import xgb_builder  # noqa: E402
 
-N_BINS = 12                # equal-count DI bins for the skill-vs-DI curve
+N_BINS = 12                # equal-count DI bins
 ENVELOPE_PCTL = 99.9       # AOA threshold = this percentile of the CV training-DI distribution
 CAL_PNG = Path(__file__).resolve().parent / 'aoa_calibration.png'
 
@@ -81,8 +66,8 @@ def oof_di(zw_train, folds, dbar):
 
 
 def binned_skill(di, y, proba, scored, n_bins=N_BINS):
-    """Equal-count DI bins over the SCORED points. Per bin: AUC-ROC (prevalence-invariant,
-    the primary skill read) and AUC-PR (reference only; positive = Non-abrupt, class 1)."""
+    """Equal-count DI bins over the scored points, with per-bin AUC-ROC and AUC-PR
+    (positive = Non-abrupt, class 1)."""
     m = scored & np.isfinite(di)
     d, yv, pv = di[m], y[m], proba[m]
     order = np.argsort(d)
@@ -106,14 +91,8 @@ def binned_skill(di, y, proba, scored, n_bins=N_BINS):
 
 
 def choose_threshold(di_train, pctl=ENVELOPE_PCTL):
-    """Applicability boundary = the `pctl`-th percentile of the CV training-DI distribution.
-
-    Feature-space envelope rule: a cell is inside the AOA iff it is no more dissimilar from
-    the training data than all but (100-pctl)% of training points are from one another. This
-    is NOT a skill limit -- OOF AUC-ROC does not decay within the sample (see the bin table);
-    the threshold marks the extent of the training feature envelope, beyond which skill
-    cannot be measured regardless. See diagnostics/aoa_threshold_decision.md.
-    """
+    """A cell is inside the AOA iff it is no more dissimilar from the training data than
+    all but (100 - pctl)% of training points are from one another."""
     return float(np.percentile(di_train, pctl))
 
 
@@ -130,7 +109,7 @@ def main():
 
     weights = aoa.shap_weights(model, X_df)
 
-    # rank-CDF coordinate (operative metric) + raw-z coordinate (literal M&P, for comparison)
+    # raw-z is the literal M&P coordinate, kept for comparison
     fitted = aoa.fit_rank_cdf(X_train, binary_mask)
     zw_rank = aoa.weight_coords(aoa.transform_rank_cdf(X_train, fitted, binary_mask), weights)
     mu, sd = aoa.fit_zscale(X_train)
@@ -142,7 +121,7 @@ def main():
 
     folds = aoa.cv_folds(lat, lon)
 
-    # box-plot fence on the rank-CDF CV training DI (kept for comparison / provenance)
+    # box-plot fence, kept for comparison
     di_train_rank = aoa.cv_training_di(zw_rank, lat, lon, dbar_rank)
     fence, _, _ = aoa.boxplot_fence(di_train_rank)
     print(f"box-plot fence (rank-CDF CV training DI) = {fence:.4f}")
@@ -162,7 +141,6 @@ def main():
     di_rank = oof_di(zw_rank, folds, dbar_rank)
     di_z = oof_di(zw_z, folds, dbar_z)
 
-    # Does DI predict OOF error? (Spearman of DI vs |y - p|; higher = better applicability index.)
     m = scored & np.isfinite(di_rank) & np.isfinite(di_z)
     resid = np.abs(y[m] - proba[m])
     rho_rank = spearmanr(di_rank[m], resid).correlation
@@ -220,8 +198,7 @@ def main():
     (MODELS / 'aoa_threshold.json').write_text(json.dumps(payload, indent=2, default=float))
     print(f"Wrote threshold: {MODELS / 'aoa_threshold.json'}")
 
-    # Per-bin skill table for the manuscript figure (output/). Carries the same
-    # rows the diagnostic prints, so the figure script needs no OOF recompute.
+    # Lets the figure script plot the bins without recomputing OOF predictions.
     bins_payload = {
         'metric': 'rank_cdf',
         'prevalence_floor': float(floor),

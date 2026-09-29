@@ -1,17 +1,14 @@
 """Buffered spatial-block cross-validation for the thaw-mode classifier.
 
-The single protocol settled with the user (develop-model, 2026-07-08), replacing
-the leaky random split. Points are grouped into contiguous spatial BLOCKS; whole
-blocks are held out together; an optional dead-zone BUFFER removes training points
-within `buffer_km` (great-circle) of the held-out block, killing cross-boundary
-leakage. Block SIZE selects the inference regime:
-  * small blocks  -> interpolation (case A): serves the statewide map (Headline A)
-  * large blocks  -> extrapolation  (case B): stress-tests the SHAP story (Headline C)
+Points are grouped into contiguous spatial blocks; whole blocks are held out
+together; an optional dead-zone buffer removes training points within `buffer_km`
+(great-circle) of the held-out block. Block size selects the inference regime:
+  * small blocks  -> interpolation: serves the statewide map
+  * large blocks  -> extrapolation: stress-tests the SHAP interpretation
 
-Estimator-agnostic by design: this module only splits and pools predictions, so it
-can be exercised and checked in isolation (verify-ml / verify-code). The model
-factory lives in the caller. Distances are great-circle (haversine); planar
-degrees would distort ~2x across Alaska's 57N-71N span, so they are never used.
+This module only splits and pools predictions; the model factory lives in the
+caller. Buffer distances are great-circle (haversine); planar degrees would distort
+~2x across Alaska's 57N-71N span.
 
 References for the method: Roberts et al. 2017 (Ecography); Valavi et al. 2019 (blockCV).
 """
@@ -28,7 +25,7 @@ def _equirect_xy(lat, lon):
     """Aspect-corrected planar coords (km-ish) for compact clustering only.
 
     x scaled by cos(mean lat) so a degree of lon and lat are comparable; used for
-    grouping geometry, NOT for the buffer (the buffer uses true great-circle).
+    grouping geometry, not for the buffer.
     """
     lat = np.asarray(lat, float)
     lon = np.asarray(lon, float)
@@ -37,7 +34,7 @@ def _equirect_xy(lat, lon):
 
 
 def within_radius_of_set(query_lat, query_lon, ref_lat, ref_lon, r_km):
-    """Bool mask over QUERY points: True == within r_km great-circle of any ref point."""
+    """Bool mask over query points: True == within r_km great-circle of any ref point."""
     if r_km <= 0 or len(ref_lat) == 0:
         return np.zeros(len(query_lat), dtype=bool)
     ref = np.radians(np.column_stack([np.asarray(ref_lat, float), np.asarray(ref_lon, float)]))
@@ -132,15 +129,15 @@ def buffered_block_folds(lat, lon, blocks, n_splits=5, buffer_km=0.0, seed=0):
 
 def nested_block_folds(lat, lon, blocks, n_splits_outer=5, n_splits_inner=5,
                        buffer_km=0.0, seed=0):
-    """Yield nested buffered block folds for double-dip-free selection (B4).
+    """Yield nested buffered block folds for hyperparameter selection.
 
-    For each OUTER fold produced by `buffered_block_folds` over ALL points, run
-    `buffered_block_folds` again over the outer-TRAIN subset (which already has the
-    buffer dead-zone removed) to produce INNER folds for hyperparameter selection.
+    For each outer fold produced by `buffered_block_folds` over all points, run
+    `buffered_block_folds` again over the outer-train subset (which already has the
+    buffer dead-zone removed) to produce inner folds.
 
     Yields `(outer_train_idx, outer_test_idx, inner_folds)` where `inner_folds` is a
     materialized list of `(inner_train_idx, inner_val_idx)` tuples. All indices refer
-    to the ORIGINAL arrays. Because inner folds are drawn only from the outer-train
+    to the original arrays. Because inner folds are drawn only from the outer-train
     subset, no inner point ever falls in an outer-test block.
     """
     lat = np.asarray(lat, float)
@@ -163,8 +160,7 @@ def fold_class_counts(folds, y, positive=1):
     """Per-fold train/test sizes and minority (positive=Non-abrupt, class 1) counts.
 
     Takes a materialized list of `(train_idx, test_idx)` folds (flat or the inner
-    folds from `nested_block_folds`) and returns a list of dicts. Lets the caller
-    log Non-abrupt sparsity per fold at each block size (B5b): at large blocks some
+    folds from `nested_block_folds`) and returns a list of dicts. At large blocks some
     folds may hold few or zero Non-abrupt points, which pooled scoring must survive.
     """
     y = np.asarray(y)
@@ -183,8 +179,7 @@ def fold_class_counts(folds, y, positive=1):
 def pooled_oof_predict(estimator_factory, X, y, folds):
     """Fit per fold, collect out-of-fold P(class=1); return (proba, mask_scored).
 
-    `estimator_factory(y_train)` returns a fresh estimator (lets the caller set
-    scale_pos_weight from the fold's own class balance). Test points in a fold
+    `estimator_factory(y_train)` returns a fresh estimator. Test points in a fold
     whose training subset lacks a positive class are left unscored (mask False).
     Pool AUC-PR/ROC on the scored points -> robust to folds sparse in the minority.
     """

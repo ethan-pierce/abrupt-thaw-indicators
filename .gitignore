@@ -45,3 +45,6 @@ manuscript/feedback
 
 # EPA Level III ecoregions of Alaska — local download, read by Fig 9
 data/ak_eco_l3
+
+# Zenodo data-record export — regenerate with data/export_zenodo.py
+data/zenodo/

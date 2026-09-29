@@ -6,9 +6,11 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import DATA
+from settings import DATA, METADATA_COLUMNS
 
 feats = pd.read_csv(DATA / 'features_dirty.csv')
+feats['Thaw Database Row'] = np.arange(len(feats))  # features_dirty.csv rows align 1:1 with the Thaw Database
+feats['Thaw Type'] = feats['ThawType']
 feats['Class'] = np.where(feats['ThawType'] == 'Abrupt', 0, 1)  # 0 = Abrupt (majority), 1 = Non-abrupt (minority)
 feats = feats.drop('ThawType', axis = 1)
 feats = feats.drop('Authors', axis = 1)
@@ -28,7 +30,6 @@ for _snap in ['Projected summer temperature change', 'Projected winter temperatu
         feats = feats.drop(_snap, axis = 1)
 
 label = ['Class']
-fillna = []  # XGBoost routes missing values natively
 categorical = ['Land Cover', 'Vegetation Mode']
 land_cover_labels = {
     0: 'NaN',
@@ -69,8 +70,6 @@ vegetation_mode_labels = {
 for col in feats.columns:
     if col in label:
         continue
-    if col in fillna:
-        feats[col] = np.where(np.isnan(feats[col]), 0.0, feats[col])
     if col in categorical:
         categories = feats[col].unique()
         for cat in categories:
@@ -106,10 +105,9 @@ if 'Land Cover (NaN)' in feats.columns:
 if 'Vegetation Mode (NaN)' in feats.columns:
     feats.drop('Vegetation Mode (NaN)', axis = 1, inplace = True)
 
-# Latitude/Longitude pass through as non-model columns for spatial CV; the trainer
-# excludes them from X. Dedup ignores them: identical features at different sites
-# are the same training example.
-feature_cols = [c for c in feats.columns if c not in ('Latitude', 'Longitude')]
+# Metadata columns pass through but are excluded from X. Dedup ignores them (except
+# Class): identical features at different sites are the same training example.
+feature_cols = [c for c in feats.columns if c == 'Class' or c not in METADATA_COLUMNS]
 n_dropped = int(feats.duplicated(subset = feature_cols).sum())
 n_in_dup_groups = int(feats.duplicated(subset = feature_cols, keep = False).sum())
 n_groups = n_in_dup_groups - n_dropped

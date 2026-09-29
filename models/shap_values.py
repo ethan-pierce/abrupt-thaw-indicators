@@ -16,7 +16,6 @@ The raw margin of `binary:logistic` is the log-odds of class 1 (Non-abrupt); it 
 negated so positive SHAP pushes toward Abrupt (class 0).
 """
 
-import os
 import json
 from pathlib import Path
 
@@ -33,14 +32,6 @@ from settings import DATA, MODELS, OUTPUT, METADATA_COLUMNS
 from spatial_cv import assign_blocks, buffered_block_folds
 # Identical estimator factory + protocol defaults -> parity with training.
 from train_xgboost import xgb_builder, OPERATIVE_CELL_KM, BUFFER_KM, N_OUTER, CV_SEED
-
-# Fast smoke config for correctness checks (SHAP_SMOKE=1); does not affect real runs.
-SMOKE = bool(os.environ.get('SHAP_SMOKE'))
-SMOKE_N = 1500
-SMOKE_SPLITS = 3
-# Used only if selected_hparams.json is absent and SHAP_SMOKE is set.
-SMOKE_HPARAMS = {'max_depth': 3, 'min_child_weight': 20, 'reg_lambda': 10.0,
-                 'learning_rate': 0.1, 'n_estimators': 50}
 
 # Dependence plots to emit: (primary feature, interaction feature, output filename).
 DEPENDENCE_SPECS = [
@@ -180,25 +171,15 @@ def main():
     cfg = load_cv_config(MODELS / 'cv_config.json')
 
     hp_path = MODELS / 'selected_hparams.json'
-    if hp_path.exists():
-        hparams = load_selected_hparams(hp_path)
-    elif SMOKE:
-        print("[smoke] selected_hparams.json absent; using SMOKE_HPARAMS")
-        hparams = SMOKE_HPARAMS
-    else:
+    if not hp_path.exists():
         raise FileNotFoundError(
             f"{hp_path} not found — run models/train_xgboost.py first so the operative "
             "hyperparameters are recorded (OOF SHAP refits each fold with them).")
+    hparams = load_selected_hparams(hp_path)
 
     X, y, lat, lon = load_inputs(DATA / 'features_clean.csv')
 
     n_splits = cfg['n_splits_outer']
-    if SMOKE:
-        rng = np.random.default_rng(cfg['seeds']['CV_SEED'])
-        sel = rng.choice(len(y), size=min(SMOKE_N, len(y)), replace=False)
-        X, y, lat, lon = X.iloc[sel].reset_index(drop=True), y[sel], lat[sel], lon[sel]
-        n_splits = SMOKE_SPLITS
-        print(f"[smoke] subsampled to {len(y)} points, {n_splits} folds")
 
     print(f"Pooled OOF SHAP: {len(y)} points | {X.shape[1]} features | "
           f"operative cell {cfg['operative_cell_km']} km | buffer {cfg['buffer_km']} km | "

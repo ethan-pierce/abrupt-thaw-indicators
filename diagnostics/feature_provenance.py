@@ -1,10 +1,9 @@
-"""Feature-provenance trace: does a single feature proxy the target?
+"""Univariate separating power of each feature: AUC-ROC and AUC-PR against the
+Non-abrupt prevalence floor.
 
-A depth-1 stump reaches AUC~0.85 (baseline_and_shuffle.py), so one feature nearly
-separates abrupt from non-abrupt. This scans every feature's univariate separating
-power and flags any that behaves like a target proxy -- especially a water/lake
-indicator, since the DB is lake-dominated (abrupt ~= thermokarst lake), which
-would encode the SAMPLING DESIGN rather than a thaw mechanism (SCOPE.md, README #13).
+Flags any feature that behaves like a target proxy -- especially a water/lake
+indicator, since the Thaw Database is lake-dominated, which would encode the sampling
+design rather than a thaw mechanism.
 
 Run: poetry run python diagnostics/feature_provenance.py
 """

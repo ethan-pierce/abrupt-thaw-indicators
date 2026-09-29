@@ -43,7 +43,7 @@ def load_grid():
     return lon, lat, valid, coord_ok
 
 
-def build_display_codes(fam_raster, families, fracs):
+def build_display_codes(families, fracs):
     """Coded raster + the ordered display families, Other fold, and inset shares.
 
     Codes: 0..K-1 displayed families (share desc); K = Other (folded small families,
@@ -70,7 +70,7 @@ def coded_raster(fam_raster, valid, fam_to_disp, mask_code):
     return coded
 
 
-def to_rgba(codes_warp, disp, other_code, mask_code):
+def to_rgba(codes_warp, disp):
     """Categorical RGBA image from the warped integer codes."""
     palette = [fd.COLORS[d] for d in disp] + [figstyle.OTHER_GRAY, BACKDROP_GRAY]
     th, tw = codes_warp.shape
@@ -147,7 +147,7 @@ def main():
     lon, lat, valid, coord_ok = load_grid()
 
     disp, disp_idx, K, other_code, mask_code, fam_to_disp, order = \
-        build_display_codes(fam_raster, families, fracs)
+        build_display_codes(families, fracs)
 
     figstyle.assert_cvd_safe([fd.COLORS[d] for d in disp], min_de=15,
                              name="Fig 8 displayed-family palette")
@@ -160,7 +160,7 @@ def main():
     extent_box, (th, tw), dst_tf = fig03.dest_grid(lon, lat, coord_ok)
     codes_warp = fig03.warp_to_albers(coded, src_tf, (th, tw), dst_tf,
                                       resampling=Resampling.nearest)
-    rgba = to_rgba(codes_warp, disp, other_code, mask_code)
+    rgba = to_rgba(codes_warp, disp)
 
     ak = fig03.mainland_outline()
     fig = figstyle.figure("full", height=4.35, subplots=False)

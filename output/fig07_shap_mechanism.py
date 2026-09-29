@@ -63,21 +63,20 @@ def load():
 
 
 def trend(x, g, xlo, xhi, *, logx=False):
-    """Running median + 25/75 band over fixed-width x-bins with a min-count floor."""
+    """Running median over fixed-width x-bins with a min-count floor."""
     edges = (np.geomspace(xlo, xhi, N_XBINS + 1) if logx
              else np.linspace(xlo, xhi, N_XBINS + 1))
-    xc, med, q1, q3 = [], [], [], []
+    xc, med = [], []
     for a, b in zip(edges[:-1], edges[1:]):
         m = (x >= a) & (x < b)
         if m.sum() < BIN_N_MIN:
             continue
         xc.append(float(np.median(x[m])))
-        lo, mid, hi = np.percentile(g[m], [25, 50, 75])
-        med.append(mid); q1.append(lo); q3.append(hi)
-    return np.array(xc), np.array(med), np.array(q1), np.array(q3)
+        med.append(float(np.median(g[m])))
+    return np.array(xc), np.array(med)
 
 
-def draw_trend(ax, xc, med, q1, q3):
+def draw_trend(ax, xc, med):
     """Sign-colored running-median line."""
     if len(xc) < 2:
         return

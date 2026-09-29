@@ -13,10 +13,10 @@ operative-scale margin is a stable signal or within partition noise.
 Fixed configs (NO per-fold re-selection) so the measured spread is PURE partition variance,
 not hyperparameter-selection noise:
   - XGBoost: the operative selected hyperparameters (`models/selected_hparams.json`),
-    scale_pos_weight=1 (T10) -- i.e. the operative model itself, held constant across scales.
-  - Logistic: the T45 baseline pipeline (`logistic_builder`) at fixed C=1.0.
-Single-level `N_OUTER`-fold block folds via the production splitter, buffer = BUFFER_KM (0,
-T43). Only `CV_SEED` varies across repeats. Positive class = 1 (Non-abrupt); chance = prevalence.
+    scale_pos_weight=1 -- i.e. the operative model itself, held constant across scales.
+  - Logistic: the baseline pipeline (`logistic_builder`) at fixed C=1.0.
+Single-level `N_OUTER`-fold block folds via the production splitter, buffer = BUFFER_KM (0).
+Only `CV_SEED` varies across repeats. Positive class = 1 (Non-abrupt); chance = prevalence.
 Extension not done here: jittering the grid ORIGIN (block boundaries are fixed for
 albers_grid) would add a second partition-variance source.
 
@@ -63,14 +63,14 @@ def main():
     prevalence = float((yv == 1).mean())
 
     hp = json.loads((tx.MODELS / 'selected_hparams.json').read_text())['hyperparameters']
-    xgb_factory = tx.xgb_builder(hp)                 # operative config, spw=1 (T10)
+    xgb_factory = tx.xgb_builder(hp)                 # operative config, spw=1
     logit_factory = tx.logistic_builder({'C': LOGIT_C})
 
     print("=" * 78)
     print(f"Repeated block-CV: {N_REPEATS} block->fold reshuffles/scale | "
           f"{tx.N_OUTER}-fold | buffer {tx.BUFFER_KM} km")
     print(f"XGBoost operative hparams: {hp}")
-    print(f"Logistic baseline: T45 pipeline, C={LOGIT_C} | positive=Non-abrupt "
+    print(f"Logistic baseline: C={LOGIT_C} | positive=Non-abrupt "
           f"(chance AUC-PR={prevalence:.4f})")
     print("=" * 78)
     print(f"{'cell_km':>8} | {'XGBoost AUC-PR mean±std [min,max]':^34} | "
@@ -131,7 +131,7 @@ def main():
     fig, ax = plt.subplots(figsize=(8, 5))
     cells = np.array(SCALES)
     for key, label, color in [('xgb', 'XGBoost (operative)', 'C0'),
-                              ('logit', 'Logistic (T45 baseline)', 'C1')]:
+                              ('logit', 'Logistic baseline', 'C1')]:
         m = np.array([stats[c][f'{key}_mean'] for c in SCALES])
         sd = np.array([stats[c][f'{key}_std'] for c in SCALES])
         ax.plot(cells, m, marker='o', color=color, label=label)

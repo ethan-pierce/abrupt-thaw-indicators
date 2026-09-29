@@ -186,11 +186,7 @@ def render(d):
 
 def main():
     d = load_cache()
-    try:
-        figstyle.assert_cvd_safe([c for *_, c in TYPES], min_de=15, name="Fig11 type hues")
-        print("CVD check: type hues OK (min ΔE ≥ 15)")
-    except Exception as exc:  # noqa: BLE001
-        print(f"CVD check WARNING: {exc}")
+    figstyle.assert_cvd_safe([c for *_, c in TYPES], min_de=15, name="Fig 10 type hues")
     fig = render(d)
     pdf = figstyle.save(fig, "10_olefeldt_contrast")
     print(f"wrote {pdf}")

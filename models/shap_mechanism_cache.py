@@ -12,11 +12,9 @@ memberships are not stored here; Fig 7 reads them from output/shap_families.json
 
     poetry run python models/shap_mechanism_cache.py
 
-Writes output/shap_mechanism_cache.npz (multi-minute). SHAP_MECH_SMOKE=1 subsamples
-for a fast wiring check (writes to output/_smoke/).
+Writes output/shap_mechanism_cache.npz (multi-minute).
 """
 
-import os
 from pathlib import Path
 
 import numpy as np
@@ -25,36 +23,22 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
 from shap_values import (load_inputs, load_cv_config, load_selected_hparams,
-                         pooled_oof_shap, SMOKE_HPARAMS)
-
-SMOKE = bool(os.environ.get('SHAP_MECH_SMOKE'))
-SMOKE_N = 1500
-SMOKE_SPLITS = 3
+                         pooled_oof_shap)
 
 
 def main():
     cfg = load_cv_config(MODELS / 'cv_config.json')
 
     hp_path = MODELS / 'selected_hparams.json'
-    if hp_path.exists():
-        hparams = load_selected_hparams(hp_path)
-    elif SMOKE:
-        print("[smoke] selected_hparams.json absent; using SMOKE_HPARAMS")
-        hparams = SMOKE_HPARAMS
-    else:
+    if not hp_path.exists():
         raise FileNotFoundError(
             f"{hp_path} not found -- run models/train_xgboost.py first so the operative "
             "hyperparameters are recorded (OOF SHAP refits each fold with them).")
+    hparams = load_selected_hparams(hp_path)
 
     X, y, lat, lon = load_inputs(DATA / 'features_clean.csv')
 
     n_splits = cfg['n_splits_outer']
-    if SMOKE:
-        rng = np.random.default_rng(cfg['seeds']['CV_SEED'])
-        sel = rng.choice(len(y), size=min(SMOKE_N, len(y)), replace=False)
-        X, y, lat, lon = X.iloc[sel].reset_index(drop=True), y[sel], lat[sel], lon[sel]
-        n_splits = SMOKE_SPLITS
-        print(f"[smoke] subsampled to {len(y)} points, {n_splits} folds")
 
     print(f"Per-feature OOF SHAP: {len(y)} points | {X.shape[1]} features | "
           f"operative cell {cfg['operative_cell_km']} km | buffer {cfg['buffer_km']} km | "
@@ -66,16 +50,13 @@ def main():
         n_splits=n_splits, seed=cfg['seeds']['CV_SEED'], hparams=hparams,
     )
 
-    out_dir = OUTPUT / '_smoke' if SMOKE else OUTPUT
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / 'shap_mechanism_cache.npz'
+    out = OUTPUT / 'shap_mechanism_cache.npz'
     np.savez(
         out,
         values=expl.values.astype(np.float32),          # (n_scored, F) per-feature SHAP, Abrupt-oriented
         data=np.asarray(expl.data, dtype=np.float32),   # (n_scored, F) feature values
         feature_names=np.array(list(expl.feature_names), dtype=object),
         y=y[scored].astype(np.int8),                    # labels for the scored points (0=Abrupt,1=Non-abrupt)
-        smoke=np.array(SMOKE),
     )
     print(f"\nWrote {out}  "
           f"[values {expl.values.shape}, {int(scored.sum())} points explained out-of-fold]")

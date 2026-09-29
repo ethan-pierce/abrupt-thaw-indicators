@@ -230,13 +230,6 @@ def _selftest():
         assert set(tr).isdisjoint(set(te))
     assert (seen == 1).all()
 
-    # Buffer removes near neighbours of the held-out block from train.
-    lat2 = np.array([60.0, 60.005, 70.0])   # first two ~0.55 km apart, in block A
-    lon2 = np.array([-150., -150., -140.])
-    b2 = np.array([0, 0, 1])                 # block 0 held out -> train candidates are idx 2 only anyway
-    # hold out block 1 (idx2); buffer shouldn't remove the distant block-0 points
-    folds = list(buffered_block_folds(lat2, lon2, b2, n_splits=2, buffer_km=1.0, seed=0))
-
     # Nested folds: inner train/val never touch an outer-test block. Build a few
     # blocks so both outer and inner splits are non-degenerate.
     latn = np.array([60., 60.01, 62., 62.01, 68., 68.01, 70., 70.01])

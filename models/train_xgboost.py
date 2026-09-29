@@ -14,7 +14,6 @@ Outputs the sweep curve and results, the CV config, and the operative `model.jso
 refit on all data with the selected hyperparameters.
 """
 
-import os
 import json
 import hashlib
 import itertools
@@ -45,7 +44,6 @@ from spatial_cv import (assign_blocks, nested_block_folds, buffered_block_folds,
 # --------------------------------------------------------------------------
 # config — named seeds and the CV protocol
 # --------------------------------------------------------------------------
-SPLIT_SEED = 42   # not used for splitting; recorded in cv_config.json
 MODEL_SEED = 42   # XGBoost estimator randomness
 CV_SEED = 42      # block-fold shuffling (deterministic fold regeneration)
 
@@ -114,16 +112,6 @@ def _log_cont_cols(X):
 def _other_cont_cols(X):
     binary = set(_binary_cols(X))
     return [c for c in X.columns if c not in LOG_BASELINE_COLS and c not in binary]
-
-
-# Fast smoke config for correctness checks (TRAIN_SMOKE=1); does not affect real runs.
-SMOKE = bool(os.environ.get('TRAIN_SMOKE'))
-if SMOKE:
-    SWEEP_CELL_KM = [50, 200]
-    N_OUTER, N_INNER = 3, 3
-    PARAM_GRID = {'max_depth': [3, 5], 'min_child_weight': [20],
-                  'reg_lambda': [10.0], 'learning_rate': [0.1], 'n_estimators': [100]}
-    LOGIT_GRID = {'C': [0.1, 1.0]}
 
 
 # --------------------------------------------------------------------------
@@ -334,10 +322,9 @@ def cv_config_dict():
         'buffer_km': BUFFER_KM,
         'n_splits_outer': N_OUTER,
         'n_splits_inner': N_INNER,
-        'seeds': {'SPLIT_SEED': SPLIT_SEED, 'MODEL_SEED': MODEL_SEED, 'CV_SEED': CV_SEED},
+        'seeds': {'MODEL_SEED': MODEL_SEED, 'CV_SEED': CV_SEED},
         'param_grid': PARAM_GRID,
         'logit_grid': LOGIT_GRID,
-        'smoke': SMOKE,
     }
 
 
@@ -369,25 +356,29 @@ def _sha256(path):
 
 
 def _product_versions():
-    """Identify the upstream permafrost products by their versioned filenames [H20.1]."""
+    """Identify the upstream permafrost products by their versioned filenames."""
     def names(pattern):
         return sorted(p.name for p in DATA.glob(pattern))
     obu = sorted(set(names('*PERPROB*') + names('Obu*')))
-    brown = 'arctic-permafrost-map' if (DATA / 'arctic-permafrost-map').is_dir() else None
     thawdb = names('Alaska_Permafrost_Thaw_Database_v*.csv')
-    return {'obu': obu, 'brown_ipa': brown, 'thawdb': thawdb}
+    return {'obu': obu, 'thawdb': thawdb}
 
 
 def write_run_manifest(selected, path=None):
-    """Write the reproducibility manifest beside model.json, each run [H20.1/T16]."""
+    """Write the reproducibility manifest beside model.json, each run."""
     path = (MODELS / 'run_manifest.json') if path is None else Path(path)
-    feats_csv = DATA / 'features_clean.csv'
+
+    def file_record(p):
+        return {'path': str(p.relative_to(ROOT)),
+                'sha256': _sha256(p) if p.exists() else None}
+
     manifest = {
         'created_utc': datetime.now(timezone.utc).isoformat(),
         'git': _git_info(),
-        'features_clean_csv': {
-            'path': str(feats_csv),
-            'sha256': _sha256(feats_csv) if feats_csv.exists() else None,
+        'features_clean_csv': file_record(DATA / 'features_clean.csv'),
+        'upstream_inputs': {
+            'features_dirty_csv': file_record(DATA / 'features_dirty.csv'),
+            'prediction_data_nc': file_record(DATA / 'prediction_data.nc'),
         },
         'cv_config': cv_config_dict(),
         'product_versions': _product_versions(),
@@ -473,7 +464,7 @@ def main():
           f"Non-abrupt prevalence (AUC-PR floor): {prevalence:.4f}")
     print(f"Block method: {BLOCK_METHOD} | buffer: {BUFFER_KM} km | "
           f"outer/inner folds: {N_OUTER}/{N_INNER} | seeds: "
-          f"SPLIT={SPLIT_SEED} MODEL={MODEL_SEED} CV={CV_SEED}")
+          f"MODEL={MODEL_SEED} CV={CV_SEED}")
 
     assert_folds_reproducible(lat, lon)
     cfg_path = write_cv_config()

@@ -120,7 +120,7 @@ def _ridge(ax, t, baseline, color, *, span, label=None):
     return d
 
 
-def _median_mark(ax, raw_median, lt, baseline, color, span):
+def _median_mark(ax, raw_median, lt, baseline, color):
     """Vertical median tick within a ridge band + numeric label above it."""
     t = _asinh(raw_median, lt)
     ax.plot([t, t], [baseline, baseline + RIDGE_H], color=color, lw=1.3, zorder=4)
@@ -129,7 +129,7 @@ def _median_mark(ax, raw_median, lt, baseline, color, span):
                 fontsize=6.5, color=figstyle.INK, zorder=5)
 
 
-def continuous_panel(ax, col, xlabel, lt, ticks, train_vals, grid_vals, letter):
+def continuous_panel(ax, xlabel, lt, ticks, train_vals, grid_vals, letter):
     tv = np.asarray(train_vals, float); tv = tv[np.isfinite(tv)]
     gv = np.asarray(grid_vals, float); gv = gv[np.isfinite(gv)]
 
@@ -151,8 +151,8 @@ def continuous_panel(ax, col, xlabel, lt, ticks, train_vals, grid_vals, letter):
     # grid ridge at the axis, train ridge raised clear of it — a two-group ridgeline.
     _ridge(ax, t_grid, GRID_BASE, GRID_COLOR, span=span)
     _ridge(ax, t_train, TRAIN_BASE, TRAIN_COLOR, span=span)
-    _median_mark(ax, grid_median, lt, GRID_BASE, GRID_COLOR, span)
-    _median_mark(ax, train_median, lt, TRAIN_BASE, TRAIN_COLOR, span)
+    _median_mark(ax, grid_median, lt, GRID_BASE, GRID_COLOR)
+    _median_mark(ax, train_median, lt, TRAIN_BASE, TRAIN_COLOR)
 
     ax.set_xlim(*span)
     ax.set_ylim(-0.05, TRAIN_BASE + RIDGE_H + 0.2)
@@ -210,7 +210,7 @@ def main():
     letters = iter("abcdefg")
     for i, (col, xlabel, lt, ticks) in enumerate(CONTINUOUS):
         ax = fig.add_subplot(gs[0, i * 3:(i + 1) * 3])
-        continuous_panel(ax, col, xlabel, lt, ticks,
+        continuous_panel(ax, xlabel, lt, ticks,
                          X[col].values, grid[col], next(letters))
 
     # Bottom row: 3 one-hot paired-bar panels, 4 grid-columns each.

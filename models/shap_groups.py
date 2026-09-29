@@ -24,10 +24,8 @@ Design:
   inherited from pooled_oof_shap.
 
 Reuses the OOF-SHAP machinery from shap_values.py (per-fold refit + held-out TreeSHAP).
-SHAP_GROUPS_SMOKE=1 subsamples for a fast correctness check.
 """
 
-import os
 import json
 from pathlib import Path
 
@@ -43,12 +41,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import DATA, MODELS, OUTPUT
 from shap_values import (load_inputs, load_cv_config, load_selected_hparams,
-                         pooled_oof_shap, SMOKE_HPARAMS)
+                         pooled_oof_shap)
 
-# Fast smoke config for correctness checks (SHAP_GROUPS_SMOKE=1); no effect on real runs.
-SMOKE = bool(os.environ.get('SHAP_GROUPS_SMOKE'))
-SMOKE_N = 1500
-SMOKE_SPLITS = 3
 
 # Gap-cut search band, in distance = 1 - |Spearman| (i.e. |rho| in [0.40, 0.85]). The
 # largest gap between consecutive merge heights inside this band is the emergent cut; the
@@ -103,7 +97,7 @@ def split_columns(X):
 def continuous_linkage(X, cont):
     """Complete-linkage tree over continuous columns, distance = 1 - |Spearman|.
 
-    A constant/degenerate column (Spearman NaN, e.g. a rare feature in a smoke subsample) is
+    A constant/degenerate column (Spearman NaN) is
     treated as unrelated (|rho| -> 0, distance -> 1) so the linkage never sees a NaN.
     """
     S = np.nan_to_num(X[cont].corr(method='spearman').abs().values, nan=0.0)
@@ -309,7 +303,6 @@ def write_families_json(order, keys, labels, families, importance, meta, n_point
             'categorical_collapse': list(CATEGORICAL_PREFIXES) + ['(lone binaries standalone)'],
             'importance_metric': 'mean over points of |sum of signed member SHAP| (margin, Abrupt-oriented)',
             'n_points_scored': int(n_points),
-            'smoke': SMOKE,
         },
         'families': [
             {
@@ -349,25 +342,15 @@ def main():
     cfg = load_cv_config(MODELS / 'cv_config.json')
 
     hp_path = MODELS / 'selected_hparams.json'
-    if hp_path.exists():
-        hparams = load_selected_hparams(hp_path)
-    elif SMOKE:
-        print("[smoke] selected_hparams.json absent; using SMOKE_HPARAMS")
-        hparams = SMOKE_HPARAMS
-    else:
+    if not hp_path.exists():
         raise FileNotFoundError(
             f"{hp_path} not found -- run models/train_xgboost.py first so the operative "
             "hyperparameters are recorded (OOF SHAP refits each fold with them).")
+    hparams = load_selected_hparams(hp_path)
 
     X, y, lat, lon = load_inputs(DATA / 'features_clean.csv')
 
     n_splits = cfg['n_splits_outer']
-    if SMOKE:
-        rng = np.random.default_rng(cfg['seeds']['CV_SEED'])
-        sel = rng.choice(len(y), size=min(SMOKE_N, len(y)), replace=False)
-        X, y, lat, lon = X.iloc[sel].reset_index(drop=True), y[sel], lat[sel], lon[sel]
-        n_splits = SMOKE_SPLITS
-        print(f"[smoke] subsampled to {len(y)} points, {n_splits} folds")
 
     print(f"Grouped OOF SHAP: {len(y)} points | {X.shape[1]} features | "
           f"operative cell {cfg['operative_cell_km']} km | buffer {cfg['buffer_km']} km | "
@@ -391,8 +374,7 @@ def main():
     importance = np.mean(np.abs(G), axis=0)
     order = list(np.argsort(importance)[::-1])
 
-    # Subsampled smoke results stay out of output/.
-    out_dir = OUTPUT / '_smoke' if SMOKE else OUTPUT
+    out_dir = OUTPUT
     out_dir.mkdir(parents=True, exist_ok=True)
     plot_dendrogram(meta, families, dict(zip(keys, labels)), out_dir)
     plot_grouped_importance(order, labels, importance, out_dir)
@@ -411,10 +393,6 @@ def main():
               f"[{len(families[keys[i]])} feat{rho_s}]")
     print(f"\nWrote family figures + shap_families.json to {out_dir} "
           f"({int(scored.sum())} points explained out-of-fold)")
-    print("NOTE: multi-member families carry their settled manuscript labels "
-          "(MANUSCRIPT_LABELS); an unmapped cluster would fall back to an auto-tag and warn. "
-          "Both curation calls resolved (2026-07-16): alpine-relief four stay fused, Trend in "
-          "SWE stays in thermal continentality (see memory t41-grouped-shap-design).")
 
 
 if __name__ == '__main__':

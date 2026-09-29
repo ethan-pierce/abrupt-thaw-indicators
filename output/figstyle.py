@@ -10,7 +10,7 @@ Import this in every figure script so the whole paper reads as one system:
     figstyle.panel_label(ax, "a")
     figstyle.save(fig, "03_susceptibility_map")     # writes .pdf (canonical) + .png
 
-Prose rules and design decisions live in STYLE.md; this module enforces:
+This module enforces:
   * Continuous fields use Crameri Scientific Colour Maps (CVD-safe, uniform).
   * Log-evidence uses `vik`, normalized SYMMETRICALLY about 0 (pale = neutral).
   * Class colors are drawn from vik's poles: warm = Abrupt, cool = Non-abrupt.

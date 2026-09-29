@@ -29,7 +29,6 @@ except Exception:
     ee.Initialize(project=EE_PROJECT)
 
 
-import os
 import numpy as np
 import pandas as pd
 
@@ -40,16 +39,9 @@ import gee_features
 import local_rasters
 
 data = DATA
-OUT = Path(os.environ.get('FEATURE_BUILD_OUT', data / 'features_dirty.csv'))
+OUT = data / 'features_dirty.csv'
 
 thawdb = pd.read_csv(data / 'Alaska_Permafrost_Thaw_Database_v2.0.0.csv', sep = ',', encoding = 'latin1')
-
-# FEATURE_BUILD_LIMIT=<N> subsets to N evenly spaced points for a quick end-to-end test.
-_limit = os.environ.get('FEATURE_BUILD_LIMIT')
-if _limit:
-    _idx = np.linspace(0, len(thawdb) - 1, int(_limit)).astype(int)
-    thawdb = thawdb.iloc[_idx].reset_index(drop=True).copy()
-    print(f'[FEATURE_BUILD_LIMIT] self-test on {len(thawdb)} evenly-spaced points -> {OUT}')
 
 print(thawdb['ThawType'].value_counts()) # 6.79% non-abrupt, 93.21% abrupt (v2.0.0)
 thawdb['Class'] = np.where(thawdb['ThawType'] == 'Abrupt', 0, 1) # 0 = Abrupt (majority), 1 = Non-abrupt (minority)
@@ -60,7 +52,7 @@ def sample_raster(
     reducer: ee.Reducer,
     scale: float,
     crs: str = 'EPSG:4326'
-) -> float:
+) -> ee.Feature:
     """Sample a raster at the point corresponding to a single feature."""
     point = feat.geometry(proj = crs)
     value = image.reduceRegion(
@@ -124,7 +116,7 @@ def finalize():
                if np.issubdtype(thawdb[c].dtype, np.number) and thawdb[c].isna().all()]
 
     print('\n' + '=' * 70)
-    print('[T30/T39] Feature import report')
+    print('Feature import report')
     print('=' * 70)
     if failed_features:
         print('Features that raised during import (missing from the table):')
@@ -302,7 +294,7 @@ try:
         thawdb['Northness'] = _north
         thawdb['Eastness'] = _east
         thawdb.drop(columns=['Aspect'], inplace=True)
-        print('Encoded aspect -> Northness/Eastness (flats < 1 deg neutralized); dropped raw Aspect (T32)')
+        print('Encoded aspect -> Northness/Eastness (flats < 1 deg neutralized); dropped raw Aspect')
     try:
         _encode_aspect()
     except Exception as e:

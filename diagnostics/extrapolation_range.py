@@ -7,7 +7,7 @@ held-out point to its nearest training point (the actual extrapolation reach),
 down toward the AUC-PR chance floor (= prevalence).
 
 Scores the OPERATIVE model itself — `models/selected_hparams.json` via
-`train_xgboost.xgb_builder` (scale_pos_weight=1, T10) — so this curve is the same
+`train_xgboost.xgb_builder` (scale_pos_weight=1) — so this curve is the same
 model panel (a) uses, just under progressively harder spatial regimes. No leaky
 random-split or interpolation reference points: the leave-region-out curve is one
 internally consistent methodology, anchored only to the chance floor.
@@ -61,7 +61,7 @@ def main():
     prev = float(yv.mean())
 
     hp = json.loads((tx.MODELS / 'selected_hparams.json').read_text())['hyperparameters']
-    op_factory = tx.xgb_builder(hp)   # operative model, spw=1 (T10) -- identical to panel (a)
+    op_factory = tx.xgb_builder(hp)   # operative model, spw=1 -- identical to panel (a)
 
     print(f"n={len(y)}  Non-abrupt={int((yv==1).sum())}  prevalence={prev:.4f}  "
           f"buffer={BUFFER_KM}km  (AUC-PR floor={prev:.4f})")

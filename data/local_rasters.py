@@ -13,8 +13,8 @@ their deep temporal reductions hang when sampled live at scattered points, so
 they are materialized once to local rasters by ``build_daymet_rasters.py`` and
 ``build_modis_fire_rasters.py``. Source rasters live under ``data/``
 (git-ignored; regenerate via ``fetch_alfresco.py``, ``build_daymet_rasters.py``,
-``build_modis_fire_rasters.py``, or — for NLCD — user-provided) and are
-documented in ``PIPELINE.md`` -> "Features".
+``build_modis_fire_rasters.py``, or — for NLCD — user-provided); see the
+README's data-inputs list.
 
 Sampling semantics
 ------------------

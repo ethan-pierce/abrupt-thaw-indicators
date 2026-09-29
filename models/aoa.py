@@ -48,13 +48,12 @@ Outputs (aligned to susceptibility.nc, NaN off the Obu domain):
   output/aoa_di_map.png    -- continuous dissimilarity-index map
   plus a per-feature "drivers of extrapolation" readout to stdout.
 
-Run: poetry run python models/aoa.py       (AOA_SMOKE=1 subsamples the grid)
+Run: poetry run python models/aoa.py
 
 The coordinate and distance helpers are importable; diagnostics/aoa_calibration.py reuses
 them to calibrate the threshold on the identical metric.
 """
 
-import os
 import json
 from pathlib import Path
 
@@ -84,7 +83,6 @@ CV_SEED = 42
 
 THRESHOLD_JSON = MODELS / 'aoa_threshold.json'  # written by diagnostics/aoa_calibration.py
 
-SMOKE = bool(os.environ.get('AOA_SMOKE'))
 CHUNK = 20000  # grid rows per nearest-distance chunk (bounds the BLAS distance matrix)
 
 
@@ -309,7 +307,7 @@ def boxplot_fence(di):
 # ======================================================================================
 def main():
     print("=" * 80)
-    print("AREA OF APPLICABILITY (AOA) -- reliability layer [T21/G18]")
+    print("AREA OF APPLICABILITY (AOA) -- reliability layer")
     print("=" * 80)
 
     model, names, model_path = load_model_and_features()
@@ -380,10 +378,6 @@ def main():
     print(f"  valid (in-domain AND >=1 feature) pixels: {int(valid.sum()):,} of {n_pixels:,}")
 
     valid_idx = np.flatnonzero(valid)
-    if SMOKE:
-        rng = np.random.default_rng(0)
-        valid_idx = np.sort(rng.choice(valid_idx, size=min(50000, len(valid_idx)), replace=False))
-        print(f"  [SMOKE] scoring {len(valid_idx):,} sampled valid pixels")
 
     # --- grid DI + AOA flag + nearest-neighbour index (for drivers) ---------------------
     print("\nComputing grid dissimilarity index (nearest training distance / dbar)...")
@@ -416,7 +410,7 @@ def main():
     AOA2d = AOA.reshape(y_size, x_size)
 
     attrs = {
-        'description': 'Area-of-Applicability reliability layer [T21/G18], Meyer & Pebesma 2021',
+        'description': 'Area-of-Applicability reliability layer, Meyer & Pebesma 2021',
         'method': ('Importance-weighted dissimilarity index over a rank->training-CDF '
                    'coordinate (continuous features mapped to empirical training-CDF rank '
                    'in [0,1] with linear IQR extension beyond range; binaries 0/1), '
@@ -444,7 +438,7 @@ def main():
                                'range the biased training sample itself spans; the region '
                                'far beyond the sample is uncertain by definition -- the AOA '
                                'flags it, the calibration cannot score it.'),
-        'note': 'Separate reliability layer -- NOT folded into susceptibility.nc (T20 design).',
+        'note': 'Separate reliability layer -- NOT folded into susceptibility.nc.',
     }
     attrs.update(thr_extra)
     out_ds = xr.Dataset(
@@ -476,7 +470,6 @@ def resolve_threshold(fence):
         if cal.get('metric') == 'rank_cdf' and np.isfinite(cal.get('threshold', np.nan)):
             extra = {
                 'threshold_prevalence_floor': float(cal.get('prevalence_floor', np.nan)),
-                'threshold_calibration_note': cal.get('note', ''),
                 'threshold_boxplot_fence_from_calibration': float(cal.get('boxplot_fence', np.nan)),
             }
             return (float(cal['threshold']), cal.get('rule', 'calibration'),

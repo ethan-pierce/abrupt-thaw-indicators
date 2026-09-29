@@ -12,8 +12,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from settings import EE_PROJECT
 
-ee.Authenticate()
-ee.Initialize(project=EE_PROJECT)
+# Try cached credentials first so an unattended run never blocks on a browser prompt.
+try:
+    ee.Initialize(project=EE_PROJECT)
+except Exception:
+    ee.Authenticate()
+    ee.Initialize(project=EE_PROJECT)
 
 import json
 import math
@@ -151,7 +155,7 @@ def load_all_features(feature_names: list, scale: float, region: ee.Geometry, de
         assert oriented > mirror, (
             f"{layer_name}: LOCAL categorical appears vertically mirrored "
             f"against the stack (footprint agreement {oriented:.3f} <= mirror "
-            f"{mirror:.3f}) — check for a reintroduced double np.flipud (T31)."
+            f"{mirror:.3f}) — check for a reintroduced double np.flipud."
         )
 
     # Native-scale sampling: collect -> sample -> distribute.

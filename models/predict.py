@@ -10,7 +10,7 @@ import xgboost as xgb
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import DATA, MODELS, OUTPUT
+from settings import ROOT, DATA, MODELS, OUTPUT
 from data import local_rasters
 
 data_dir = DATA
@@ -95,7 +95,7 @@ if 'longitude' not in ds.coords or 'latitude' not in ds.coords:
     raise SystemExit(
         "prediction_data.nc has no longitude/latitude coords -- the Obu mask needs "
         "per-cell coordinates. Rebuild the datacube with the current "
-        "data/build_prediction_data.py (T20/T46) before running predict.py."
+        "data/build_prediction_data.py before running predict.py."
     )
 lon2d = ds['longitude'].values
 lat2d = ds['latitude'].values
@@ -191,16 +191,16 @@ output_ds = xr.Dataset(
         'latitude': ds.coords['latitude'],
     },
     attrs={
-        'model_path': str(model_path),
-        'prediction_data_path': str(prediction_data_path),
+        'model_path': str(model_path.relative_to(ROOT)),
+        'prediction_data_path': str(prediction_data_path.relative_to(ROOT)),
         'description': 'Abrupt-thaw susceptibility (log-evidence) from XGBoost model',
-        'log_evidence_description': ('Primary surface [E13]: logit(P_model(abrupt|x)) '
+        'log_evidence_description': ('Primary surface: logit(P_model(abrupt|x)) '
                                      '- logit(pi_sample(abrupt)); 0 = neutral, >0 favours '
                                      'abrupt. Prior-free log-likelihood-ratio index, NOT a '
                                      'calibrated probability and NOT a discrete class.'),
         'pi_sample_abrupt': pi_sample,
         'probability_description': 'Diagnostic only: P_model(abrupt, class 0), calibrated to the sample prior',
-        'domain_mask_description': ('[T20] Off-permafrost pixels are NaN: kept iff Obu PerProb '
+        'domain_mask_description': ('Off-permafrost pixels are NaN: kept iff Obu PerProb '
                                     '(UiO_PEX_PERPROB_5.0) > 0 at the cell centre AND >=1 feature '
                                     'is non-NaN. Concept-validity mask (permafrost domain), '
                                     'binary -- PerProb does NOT weight the surface.'),
@@ -281,13 +281,12 @@ im = ax.imshow(
     interpolation='nearest'
 )
 
-cbar = plt.colorbar(im, ax=ax, label='Probability of Abrupt Thaw', fraction=0.046, pad=0.04)
+cbar = plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 cbar.set_label('Probability of Abrupt Thaw', rotation=270, labelpad=20)
 
 ax.set_xlabel('Longitude (°E)', fontsize=12)
 ax.set_ylabel('Latitude (°N)', fontsize=12)
 ax.set_title('Abrupt Thaw Probability', fontsize=14, fontweight='bold')
-ax.grid(True, alpha=0.0, linestyle='--')
 
 map_output_path = output_dir / 'prediction_probability_map.png'
 plt.savefig(map_output_path, dpi=600, bbox_inches='tight')

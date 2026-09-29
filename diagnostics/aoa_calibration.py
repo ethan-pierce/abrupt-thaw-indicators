@@ -98,7 +98,7 @@ def choose_threshold(di_train, pctl=ENVELOPE_PCTL):
 
 def main():
     print("=" * 80)
-    print("AOA THRESHOLD -- feature-space envelope quantile [T21 Part 2, rev 2026-08-10]")
+    print("AOA THRESHOLD -- feature-space envelope quantile")
     print("=" * 80)
 
     model, names, _ = aoa.load_model_and_features()
@@ -164,18 +164,9 @@ def main():
     source = 'training_envelope_quantile'
     print(f"\nChosen AOA threshold = {threshold:.4f}  [{source}: p{ENVELOPE_PCTL} of CV training DI]")
 
-    caveat = ('Skill is measurable only over the DI range the biased training sample spans '
-              '(to ~0.25); the envelope threshold sits just past that. Beyond it the AOA '
-              'flags, this calibration cannot score.')
-    rule = (f'{ENVELOPE_PCTL}th percentile of the cross-validated training DI distribution '
-            f'(feature-space envelope). A cell is inside the AOA iff no more dissimilar from '
-            f'the training data than all but {100 - ENVELOPE_PCTL:g}% of training points. NOT '
-            f'a skill limit: OOF AUC-ROC stayed {min(_finite_roc):.2f}-{max(_finite_roc):.2f} '
-            f'with no decay across the whole sampled DI range.')
-    note = ('Threshold set to the training feature-space envelope (p{:g} of CV training DI), '
-            'not a skill boundary: OOF ranking skill (AUC-ROC) does not decay within the '
-            'sample. ' + caveat).format(ENVELOPE_PCTL)
-    print(f"  {note}")
+    rule = (f'{ENVELOPE_PCTL}th percentile of the cross-validated training DI. A cell is '
+            f'inside the AOA iff it is no more dissimilar from the training data than all '
+            f'but {100 - ENVELOPE_PCTL:g}% of training points are from one another.')
 
     payload = {
         'metric': 'rank_cdf',
@@ -192,8 +183,6 @@ def main():
         'spearman_di_resid_raw_z': float(rho_z),
         'cv_protocol': f'{aoa.BLOCK_METHOD} {aoa.OPERATIVE_CELL_KM}km, {aoa.N_SPLITS} folds, '
                        f'buffer {aoa.BUFFER_KM}km, seed {aoa.CV_SEED}',
-        'note': note,
-        'caveat': caveat,
     }
     (MODELS / 'aoa_threshold.json').write_text(json.dumps(payload, indent=2, default=float))
     print(f"Wrote threshold: {MODELS / 'aoa_threshold.json'}")

@@ -1,6 +1,6 @@
 # Abrupt-thaw-indicators house figure style — Earth's Future / AGU (Wiley).
 # Applied via `figstyle.use()`. Do not override these inside figure scripts;
-# change the guide, not the figure. See STYLE.md for the decision record.
+# change the guide, not the figure.
 #
 # Point sizes are LITERAL printed sizes: figures are drawn at true AGU column
 # widths (figstyle.figure(...)), so 7 pt here is 7 pt on the page.

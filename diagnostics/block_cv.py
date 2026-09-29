@@ -7,7 +7,7 @@ will impose. Three questions:
   (1) GEOMETRY: for the pipeline's albers_grid cell sizes, how do the minority
       Non-abrupt points spread across folds? A fold with ~no positives
       makes AUC-PR unstable -> informs the block-size sweep.
-  (2) BUFFER (T43): sweep the dead-zone buffer at the OPERATIVE block size
+  (2) BUFFER: sweep the dead-zone buffer at the OPERATIVE block size
       (albers_grid, 10 km -> interpolation/case A, the map-serving regime) with a
       matched-count random-removal CONTROL. Unlike point-buffering, block holdout
       keeps the training set intact, so the targeted curve can actually plateau,
@@ -15,7 +15,7 @@ will impose. Three questions:
       operative buffer is where the targeted AUC-PR plateaus with the control
       confirming a real leakage-driven drop (positive gap). A flat curve with ~no
       gap is a valid finding: block holdout already removes the leakage, so
-      BUFFER_KM = 0 is defensible (no nominal-scale floor -- T43).
+      BUFFER_KM = 0 is defensible.
   (3) A vs B: honest AUC-PR for small-block (interpolation) vs large-block
       (extrapolation) geometry at the buffer chosen in (2).
 
@@ -24,7 +24,7 @@ Estimator: a fixed regularized XGBoost config shared with leakage_decay.py (NOT 
 operative-selected hyperparameters, which are stale pending the retrain, and would
 be circular: the buffer feeds the CV the retrain runs). scale_pos_weight=balanced
 matches leakage_decay for cross-probe continuity; it differs from the pipeline's
-scale_pos_weight=1 (T10), but the buffer *range* is a property of the data's spatial
+scale_pos_weight=1, but the buffer *range* is a property of the data's spatial
 autocorrelation, not the estimator, so the read-off is unaffected.
 
 Run: poetry run python diagnostics/block_cv.py
@@ -171,7 +171,7 @@ def buffer_sweep(X, yv, lat, lon, prev):
         chosen = 0
         print(f"=> no targeted-vs-control gap exceeds {GAP_EPS} at any buffer: block "
               f"holdout at {OPERATIVE_CELL_KM} km already removes near-seam leakage.")
-        print(f"   BUFFER_KM = 0 is defensible (no nominal-scale floor, T43).")
+        print(f"   BUFFER_KM = 0 is defensible.")
     elif plateau_r is not None:
         chosen = plateau_r
         print(f"targeted curve plateaus at ~{plateau_r} km (AUC-PR {pl_ap:.4f}, "

@@ -1,18 +1,16 @@
-"""Per-cell dominant SHAP family for Figure 9.
+"""Per-cell dominant SHAP family for Figure 8.
 
 For every in-AOA cell: TreeSHAP over the all-data model, sum signed SHAP within each
 emergent family, and take the family with the largest |net contribution|.
 
     poetry run python models/shap_dominance_cache.py
 
-Writes output/shap_dominance_cache.npz (multi-minute). SHAP_DOM_SMOKE=1 subsamples
-in-AOA cells and writes to output/_smoke/.
+Writes output/shap_dominance_cache.npz (multi-minute).
 """
 
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -30,8 +28,6 @@ MODEL_PATH = MODELS / "model.json"
 PRED_NC = DATA / "prediction_data.nc"
 AOA_NC = DATA / "aoa.nc"
 
-SMOKE = bool(os.environ.get("SHAP_DOM_SMOKE"))
-SMOKE_N = 60_000
 CHUNK = 200_000
 GATE_FRACTION = 0.60
 
@@ -78,18 +74,11 @@ def dominant_family(X, feature_names, booster, family_col_idx, n_families):
 
 
 def main():
-    print(f"{'[SMOKE] ' if SMOKE else ''}Figure 9 dominant-family cache")
+    print("Figure 8 dominant-family cache")
     arr, (ny, nx), feature_names = load_feature_stack()
     in_aoa = load_in_aoa((ny, nx))
     idx_in_aoa = np.nonzero(in_aoa)[0]
     print(f"grid {ny}x{nx} = {ny*nx:,} cells | in-AOA {idx_in_aoa.size:,}")
-
-    if SMOKE:
-        rng = np.random.default_rng(42)
-        sel = rng.choice(idx_in_aoa.size, size=min(SMOKE_N, idx_in_aoa.size),
-                         replace=False)
-        idx_in_aoa = np.sort(idx_in_aoa[sel])
-        print(f"[SMOKE] subsampled to {idx_in_aoa.size:,} in-AOA cells")
 
     X = arr[idx_in_aoa]
 
@@ -122,9 +111,7 @@ def main():
     print(f"\nVALIDATION GATE: top family '{fd.NAMES[top_fam]}' = {top_frac*100:.1f}% "
           f"(threshold {GATE_FRACTION*100:.0f}%) -> {'PASS' if gate_ok else 'FAIL'}")
 
-    out_dir = OUTPUT / "_smoke" if SMOKE else OUTPUT
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / "shap_dominance_cache.npz"
+    out = OUTPUT / "shap_dominance_cache.npz"
     np.savez(
         out,
         dominant_family=fam_raster,
@@ -135,7 +122,6 @@ def main():
         gate_top_family=np.array(top_fam, dtype=object),
         gate_top_fraction=np.float64(top_frac),
         gate_ok=np.array(gate_ok),
-        smoke=np.array(SMOKE),
     )
     print(f"\nwrote {out}  [raster {fam_raster.shape}, {idx_in_aoa.size:,} cells scored]")
 

@@ -1,0 +1,47 @@
+\documentclass[final]{agujournal2025}
+
+\usepackage{subfiles}
+\let\citep\cite
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+\begin{document}
+
+\journalname{Earth's Future}
+
+\title{Supporting Information for ``Susceptibility to Abrupt Thaw across Alaska's Permafrost Landscapes''}
+
+\authors{
+Ethan Pierce\affil{1,2,3},
+Irina Overeem\affil{2,3},
+Hailey Webb\affil{4,5},
+Kevin Rozmiarek\affil{2,3},
+Merritt Turetsky\affil{4,5}
+}
+
+\affiliation{1}{Thayer School of Engineering, Dartmouth College, Hanover, NH, USA}
+\affiliation{2}{Institute of Arctic and Alpine Research, University of Colorado Boulder, Boulder, CO, USA}
+\affiliation{3}{Department of Earth Science, University of Colorado Boulder, Boulder, CO, USA}
+\affiliation{4}{Renewable and Sustainable Energy Institute, University of Colorado Boulder, Boulder, CO, USA}
+\affiliation{5}{Ecology and Evolutionary Biology, University of Colorado Boulder, Boulder, CO, USA}
+
+\correspondingauthor{Ethan Pierce}{ethan.g.pierce@dartmouth.edu}
+
+\maketitle
+\bigskip
+
+\noindent\textbf{Introduction}
+This file discusses the grid search used to select hyperparameters for the final XGBoost configuration (Text S1) and an analysis of out-of-fold skill and the dissimilarity index (Figure S1).
+
+\section*{Text S1. Hyperparameters}\label{si:hyperparameters}
+\subfile{appendices/hyperparameters}
+
+\clearpage
+\subfile{appendices/dissimilarity}
+
+\bibliography{bib}
+
+\end{document}

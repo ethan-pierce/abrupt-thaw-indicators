@@ -1,4 +1,4 @@
-\documentclass[paper]{agujournal2025}
+\documentclass[final]{agujournal2025}
 
 \usepackage{subfiles}
 \let\citep\cite
@@ -20,7 +20,6 @@ Ethan Pierce\affil{1,2,3},
 Irina Overeem\affil{2,3},
 Hailey Webb\affil{4,5},
 Kevin Rozmiarek\affil{2,3},
-MURI team\affil{*},
 Merritt Turetsky\affil{4,5}
 }
 
@@ -29,11 +28,8 @@ Merritt Turetsky\affil{4,5}
 \affiliation{3}{Department of Earth Science, University of Colorado Boulder, Boulder, CO, USA}
 \affiliation{4}{Renewable and Sustainable Energy Institute, University of Colorado Boulder, Boulder, CO, USA}
 \affiliation{5}{Ecology and Evolutionary Biology, University of Colorado Boulder, Boulder, CO, USA}
-\affiliation{*}{placeholder}
 
-\authoraddr{
-    Ethan Pierce, Thayer School of Engineering, Dartmouth College, Hanover, NH, ethan.g.pierce@dartmouth.edu
-}
+\correspondingauthor{Ethan Pierce}{ethan.g.pierce@dartmouth.edu}
 
 \authorrunninghead{Ignored.}
 \titlerunninghead{Ignored.}
@@ -64,31 +60,24 @@ Merritt Turetsky\affil{4,5}
 \newpage
 % Your Data Availability Statement is an unnumbered section right before the bibliography.
 \section*{Open Research Statement}
-Placeholder.
+\noindent Placeholder.
 
+\section*{Conflict of Interest declaration}
+\noindent The authors declare there are no conflicts of interest for this manuscript.
+
+\acknowledgments
+The research reported here was funded in part by the Army Research Office/Army Research Laboratory via grant \#W911NF-23-1-0311 to the University of Colorado Boulder.  Any errors and opinions are not those of the Army Research Office and are attributable solely to the author(s). This material is also based upon work supported by the Broad Agency Announcement Program and the Cold Regions Research and Engineering Laboratory (ERDC-CRREL) under Contract No. W913E524C0003.
 
 % Bibliography
 %\cite{*} % If you have uncited bibliography items.
 \bibliography{bib} % Replace ``wiley'' with your bibliography's file name.  Do not specify its extension, e.g., .bib.
 
-
-% Appendix sections are numbered differently than article ones.
 \appendix  % Put this first.
 
 % Can repeat for each appendix.
 \newpage
 \section{Data sources}\label{appx:data-sources}
 \subfile{tables/data-sources}
-\clearpage
-
-\newpage
-\section{Hyperparameters}\label{appx:hyperparameters}
-\subfile{appendices/hyperparameters}
-\clearpage
-
-\newpage
-\section{Dissimilarity index}\label{appx:dissimilarity}
-\subfile{appendices/dissimilarity}
 \clearpage
 
 \newpage

@@ -42,4 +42,7 @@ With the feature families defined, we quantify each group's contribution to the 
 
 We compute two different sets of SHAP values, for two purposes. First, to rank the families by importance, we compute SHAP values on held-out points during spatial cross-validation, refitting the model within each fold so that every attribution is made on data the model did not see in training. This provides an unbiased ranking on held-out data. Second, to map how the drivers of abrupt thaw vary across the state, we compute SHAP values from the final model at every grid cell and record the family that dominates in each. This gives a spatially complete display, using the actual deployed model. Both computations share the same family definitions, so the ranking and the map remain consistent.
 
+\subsection{Use of large language models}
+We used Claude Code (Anthropic), a large language model (LLM) coding harness, primarily with the Claude Opus 4.8 model. LLM agents helped prepare figures, generate code for individual analysis tasks, and document the software pipeline. LLM assistance was limited to discrete, author-specified tasks, and the authors were responsible for all high-level direction and design of the analysis. The authors wrote all manuscript text, using LLM tools only to proofread and check for internal consistency. The first author reviewed all LLM output.
+
 \end{document}

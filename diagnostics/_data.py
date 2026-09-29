@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import DATA
+from settings import DATA, METADATA_COLUMNS
 
 LAND_COVER_LABELS = {
     0: 'NaN', 11: 'Open Water', 12: 'Perennial Ice/Snow', 21: 'Developed, Open Space',
@@ -80,10 +80,10 @@ def load(verify=True):
     if verify:
         assert len(feats) == len(clean), f"row mismatch: recon {len(feats)} vs clean {len(clean)}"
         assert (feats['Class'].values == clean['Class'].values).all(), "Class column mismatch"
-        missing = set(clean.columns) - set(feats.columns) - META
+        missing = set(clean.columns) - set(feats.columns) - set(METADATA_COLUMNS)
         assert not missing, f"clean has columns the reconstruction lacks: {missing}"
         for c in clean.columns:
-            if c in META:
+            if c in METADATA_COLUMNS:
                 continue
             if not np.allclose(feats[c].values, clean[c].values, equal_nan=True):
                 raise AssertionError(f"value mismatch in column {c!r}")
@@ -92,7 +92,7 @@ def load(verify=True):
             if not np.allclose(recon_coord, clean[c].values, equal_nan=True):
                 raise AssertionError(f"coordinate mismatch in column {c!r}")
 
-    feature_cols = [c for c in clean.columns if c not in ({'Class'} | META)]
+    feature_cols = [c for c in clean.columns if c not in METADATA_COLUMNS]
     X = feats[feature_cols].copy()
     y = feats['Class'].astype(int).copy()
     return X, y, coords['Latitude'].values, coords['Longitude'].values

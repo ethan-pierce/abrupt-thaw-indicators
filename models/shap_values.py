@@ -29,7 +29,7 @@ import shap
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import DATA, MODELS, OUTPUT
+from settings import DATA, MODELS, OUTPUT, METADATA_COLUMNS
 from spatial_cv import assign_blocks, buffered_block_folds
 # Identical estimator factory + protocol defaults -> parity with training.
 from train_xgboost import xgb_builder, OPERATIVE_CELL_KM, BUFFER_KM, N_OUTER, CV_SEED
@@ -60,8 +60,7 @@ DEPENDENCE_SPECS = [
 def load_inputs(feats_csv):
     """Return (X, y, lat, lon); lat/lon are kept for spatial-block CV, never in X."""
     feats = pd.read_csv(feats_csv)
-    drop = [c for c in ('Class', 'Latitude', 'Longitude') if c in feats.columns]
-    X = feats.drop(columns=drop)
+    X = feats.drop(columns=[c for c in METADATA_COLUMNS if c in feats.columns])
     y = feats['Class'].to_numpy()
     lat = feats['Latitude'].to_numpy()
     lon = feats['Longitude'].to_numpy()

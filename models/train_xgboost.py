@@ -38,7 +38,7 @@ from sklearn.compose import ColumnTransformer
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from settings import ROOT, DATA, MODELS, OUTPUT
+from settings import ROOT, DATA, MODELS, OUTPUT, METADATA_COLUMNS
 from spatial_cv import (assign_blocks, nested_block_folds, buffered_block_folds,
                         pooled_oof_predict)
 
@@ -456,7 +456,7 @@ def main():
     feats = pd.read_csv(DATA / 'features_clean.csv')
 
     # Coordinates are carried for spatial CV, never in the model matrix.
-    X = feats.drop(['Class', 'Latitude', 'Longitude'], axis=1)
+    X = feats.drop(columns=[c for c in METADATA_COLUMNS if c in feats.columns])
     y = feats['Class']
     coords = feats[['Latitude', 'Longitude']]
     assert 'Latitude' not in X.columns and 'Longitude' not in X.columns, \

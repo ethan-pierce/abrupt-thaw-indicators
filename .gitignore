@@ -42,3 +42,6 @@ output/*_600dpi.png
 
 # Feedback from co-authors
 manuscript/feedback
+
+# EPA Level III ecoregions of Alaska — local download, read by Fig 9
+data/ak_eco_l3

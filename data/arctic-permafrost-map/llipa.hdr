@@ -1,9 +1,0 @@
-nrows 360
-ncols 720
-nbits 8
-byteorder I
-ulxmap -179.75
-ulymap 89.75
-xdim .5
-ydim .5
-

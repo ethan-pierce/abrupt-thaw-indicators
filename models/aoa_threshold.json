@@ -1,7 +1,7 @@
 {
   "metric": "rank_cdf",
   "threshold": 0.26728563615173656,
-  "rule": "99.9th percentile of the cross-validated training DI distribution (feature-space envelope). A cell is inside the AOA iff no more dissimilar from the training data than all but 0.1% of training points. NOT a skill limit: OOF AUC-ROC stayed 0.97-1.00 with no decay across the whole sampled DI range.",
+  "rule": "99.9th percentile of the cross-validated training DI. A cell is inside the AOA iff it is no more dissimilar from the training data than all but 0.1% of training points are from one another.",
   "source": "training_envelope_quantile",
   "envelope_pctl": 99.9,
   "prevalence_floor": 0.05739319784321858,
@@ -11,7 +11,5 @@
   "dbar": 0.11554657459174965,
   "spearman_di_resid_rank_cdf": 0.48915284703872675,
   "spearman_di_resid_raw_z": 0.5319694412417205,
-  "cv_protocol": "albers_grid 10km, 5 folds, buffer 0.0km, seed 42",
-  "note": "Threshold set to the training feature-space envelope (p99.9 of CV training DI), not a skill boundary: OOF ranking skill (AUC-ROC) does not decay within the sample. Skill is measurable only over the DI range the biased training sample spans (to ~0.25); the envelope threshold sits just past that. Beyond it the AOA flags, this calibration cannot score.",
-  "caveat": "Skill is measurable only over the DI range the biased training sample spans (to ~0.25); the envelope threshold sits just past that. Beyond it the AOA flags, this calibration cannot score."
+  "cv_protocol": "albers_grid 10km, 5 folds, buffer 0.0km, seed 42"
 }

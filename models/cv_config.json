@@ -1,6 +1,7 @@
 {
   "block_method": "albers_grid",
   "sweep_cell_km": [
+    5,
     10,
     25,
     50,
@@ -12,7 +13,6 @@
   "n_splits_outer": 5,
   "n_splits_inner": 5,
   "seeds": {
-    "SPLIT_SEED": 42,
     "MODEL_SEED": 42,
     "CV_SEED": 42
   },
@@ -44,6 +44,5 @@
       0.1,
       1.0
     ]
-  },
-  "smoke": false
+  }
 }

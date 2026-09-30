@@ -16,8 +16,7 @@
       "(lone binaries standalone)"
     ],
     "importance_metric": "mean over points of |sum of signed member SHAP| (margin, Abrupt-oriented)",
-    "n_points_scored": 19288,
-    "smoke": false
+    "n_points_scored": 19288
   },
   "families": [
     {

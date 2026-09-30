@@ -1,16 +1,27 @@
 {
-  "created_utc": "2026-07-15T21:05:16.359267+00:00",
+  "created_utc": "2026-09-29T22:25:56.484690+00:00",
   "git": {
-    "sha": "5b250ae6acfa24e10f26bd98a179a15ecc8401fc",
+    "sha": "98e9c89613d9794d1ea080c39d41c03f886a338d",
     "dirty": true
   },
   "features_clean_csv": {
-    "path": "/Users/f007s79/Documents/repos/abrupt-thaw-indicators/data/features_clean.csv",
-    "sha256": "faf00fecd366c5de58db863fd217565f9e874603730a2b7e549bf7a16ca4d41b"
+    "path": "data/features_clean.csv",
+    "sha256": "1bd00ea459d02f3b2b57c01d466710f303f1495139bc351994859fdc1b06bb1f"
+  },
+  "upstream_inputs": {
+    "features_dirty_csv": {
+      "path": "data/features_dirty.csv",
+      "sha256": "20409ec9edeab4fe8ee446b7e8e46998088e3ab146f25654dab42d5fbaba47ac"
+    },
+    "prediction_data_nc": {
+      "path": "data/prediction_data.nc",
+      "sha256": "252cb5342ca2a71ca9600ce2c169a1ecad56dfecefe55c921fca16d4b4c26d15"
+    }
   },
   "cv_config": {
     "block_method": "albers_grid",
     "sweep_cell_km": [
+      5,
       10,
       25,
       50,
@@ -22,7 +33,6 @@
     "n_splits_outer": 5,
     "n_splits_inner": 5,
     "seeds": {
-      "SPLIT_SEED": 42,
       "MODEL_SEED": 42,
       "CV_SEED": 42
     },
@@ -54,16 +64,13 @@
         0.1,
         1.0
       ]
-    },
-    "smoke": false
+    }
   },
   "product_versions": {
     "obu": [
       "Obu2019"
     ],
-    "brown_ipa": "arctic-permafrost-map",
     "thawdb": [
-      "Alaska_Permafrost_Thaw_Database_v1.0.0-alpha.csv",
       "Alaska_Permafrost_Thaw_Database_v2.0.0.csv"
     ]
   },

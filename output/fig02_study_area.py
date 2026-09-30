@@ -34,7 +34,7 @@ sys.path.insert(0, str(REPO))
 from data import local_rasters as lr  # noqa: E402  (OBU_TIF path)
 
 FEATURES = REPO / "data" / "features_clean.csv"
-AK_OUTLINE = REPO / "archive" / "data" / "no-thermokarst-sites" / "alaska-outline.geojson"
+AK_OUTLINE = REPO / "data" / "alaska-outline.geojson"
 
 DST_CRS = "EPSG:3338"          # Alaska Albers
 DISPLAY_W = 1600               # target raster width (px) for the warped domain

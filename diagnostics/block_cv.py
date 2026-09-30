@@ -20,10 +20,9 @@ will impose. Three questions:
       (extrapolation) geometry at the buffer chosen in (2).
 
 Positive class = 1 (Non-abrupt, minority); headline metric AUC-PR (chance = prevalence).
-Estimator: a fixed regularized XGBoost config shared with leakage_decay.py (NOT the
-operative-selected hyperparameters, which are stale pending the retrain, and would
-be circular: the buffer feeds the CV the retrain runs). scale_pos_weight=balanced
-matches leakage_decay for cross-probe continuity; it differs from the pipeline's
+Estimator: a fixed regularized XGBoost config (NOT the operative-selected
+hyperparameters, which would be circular: the buffer feeds the CV the retrain runs).
+scale_pos_weight=balanced differs from the pipeline's
 scale_pos_weight=1, but the buffer *range* is a property of the data's spatial
 autocorrelation, not the estimator, so the read-off is unaffected.
 
@@ -271,10 +270,6 @@ def main():
     geometry(lat, lon, yv)
     chosen = buffer_sweep(X, yv, lat, lon, prev)
     a_vs_b(X, yv, lat, lon, chosen)
-
-    print("\nCross-check vs the random-split probe (leakage_decay.py): the random-split "
-          "AUC-PR is inflated by near-twin leakage, and the leakage-specific gap is "
-          "contiguous only over the first few km before the training pool depletes.")
 
 
 if __name__ == '__main__':

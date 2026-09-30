@@ -26,10 +26,10 @@ from settings import DATA
 
 OUT = DATA / 'zenodo'
 
-DATA_DOI = '10.5281/zenodo.XXXXXXX'
+DATA_DOI = '10.5281/zenodo.23068691'
 PAPER = ("Pierce, E., Overeem, I., Webb, H., Rozmiarek, K., & Turetsky, M. (in review). "
          "Susceptibility to Abrupt Thaw across Alaska's Permafrost Landscapes. Earth's Future.")
-SOURCE = 'https://github.com/ethan-pierce/abrupt-thaw-indicators (tag v1.0)'
+SOURCE = 'https://github.com/ethan-pierce/abrupt-thaw-indicators (tag v1.0.0)'
 INSTITUTION = ('Thayer School of Engineering, Dartmouth College; Institute of Arctic and '
                'Alpine Research, University of Colorado Boulder')
 LICENSE = 'CC-BY-4.0'

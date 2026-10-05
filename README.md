@@ -2,7 +2,7 @@
 
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
-[![Code DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![Code DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23166368.svg)](https://doi.org/10.5281/zenodo.23166368)
 [![Data DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23068691.svg)](https://doi.org/10.5281/zenodo.23068691)
 
 Code for "Susceptibility to Abrupt Thaw across Alaska's Permafrost Landscapes" (Earth's Future, submitted). Using 19,288 expert-labeled sites from the Alaska Permafrost Thaw Database as training data, a gradient-boosted classifier (XGBoost) learns which geospatial indicators separate abrupt from non-abrupt permafrost thaw. The model is evaluated under spatial cross-validation, interpreted post-hoc with grouped SHAP values, and applied statewide on a 1 km grid. The main product is a thaw mode index across Alaska's permafrost domain, indicating the relative susceptibility to abrupt thaw, paired with an area-of-applicability layer that flags where the regions lie outside the training data.
@@ -111,8 +111,8 @@ settings.py    paths, metadata column names, and the Earth Engine project
 ## Citation
 
 - **Paper:** Pierce, E., Overeem, I., Webb, H., Rozmiarek, K., & Turetsky, M. (submitted). Susceptibility to Abrupt Thaw across Alaska's Permafrost Landscapes. *Earth's Future*.
-- **Code:** Pierce, E. (2026). abrupt-thaw-indicators v1.0.0. Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
-- **Data:** Pierce, E., Overeem, I., Webb, H., Rozmiarek, K., & Turetsky, M. (2026). Map of Abrupt Thaw Susceptibility across Alaska's Permafrost Domain (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.23068691
+- **Code:** Pierce, E. (2026). abrupt-thaw-indicators v1.0.0. Zenodo. https://doi.org/10.5281/zenodo.23166369
+- **Data:** Pierce, E. (2026). Map of Abrupt Thaw Susceptibility across Alaska's Permafrost Domain (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.23068691
 
 The data record holds the susceptibility map (`log_evidence`, `DI`, `inside_aoa`), the prediction datacube, the training feature table, and a data dictionary.
 
